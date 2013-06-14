@@ -1,0 +1,36 @@
+function subsize=load_subsize(sizefile)
+fid=fopen(sizefile,'r');
+%   int id;
+% 	int nbin;
+% 	int flag_badbins;//1 means badbin,-1 means bad host,0 normal
+% 	float rmax;
+% 	float rvir;
+% 	float req_bk_1;
+% 	float req_all_1;
+% 	float req_bk_02;
+% 	float req_all_02;
+% 	float rtidal;
+% 	float rcen;
+subsize.id=fread(fid,'int32',10*4);
+fseek(fid,1*4,'bof');
+subsize.nbin=fread(fid,'int32',10*4);
+fseek(fid,2*4,'bof');
+subsize.flag_badbins=fread(fid,'int32',10*4);
+fseek(fid,3*4,'bof');
+subsize.rmax=fread(fid,'float32',10*4);
+fseek(fid,4*4,'bof');
+subsize.rvir=fread(fid,'float32',10*4);
+fseek(fid,5*4,'bof');
+subsize.req_bk_1=fread(fid,'float32',10*4);
+fseek(fid,6*4,'bof');
+subsize.req_all_1=fread(fid,'float32',10*4);
+fseek(fid,7*4,'bof');
+subsize.req_bk_02=fread(fid,'float32',10*4);
+fseek(fid,8*4,'bof');
+subsize.req_all_02=fread(fid,'float32',10*4);
+fseek(fid,9*4,'bof');
+subsize.rtidal=fread(fid,'float32',10*4);
+fseek(fid,10*4,'bof');
+subsize.rcen=fread(fid,'float32',10*4);
+fclose(fid);
+subsize.nsubs=numel(subsize.nbin);

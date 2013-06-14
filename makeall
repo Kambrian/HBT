@@ -1,0 +1,12 @@
+for run in `cd ~/data8/;ls 61* -d`
+do
+echo $run
+make clean
+export RUN_NUM=$run
+make -e
+make iolib -e
+cd anal
+make haloprof -B -e
+mv haloprof haloprof.$run
+cd ..
+done

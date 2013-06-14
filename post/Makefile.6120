@@ -1,0 +1,26 @@
+BTDIR=..
+
+RUN_NUM=6120
+PARAM =param/param$(RUN_NUM).h
+IODIR=$(BTDIR)/$(RUN_NUM)_io
+#~ IODIR=$(BTDIR)/gadget_io
+#PARAM_LOW=param6702low.h
+
+CC			=icc
+#~ IFORTLIB=/opt/intel/fc/10.1.018/lib		#kam-desk
+IFORTLIB=/opt/intel/fc/10.1.008/lib		#a4700
+#~ IFORTLIB=/SANdisk5/kambrain/opt/intel/Compiler/10.1.022/fc/lib  #altix
+FTNLIB=-L$(IFORTLIB) -lifport -lifcore
+USRINCL=-I /home/kambrain/opt/include
+USRLIB=-L /home/kambrain/opt/lib
+CFLAGS=-I$(BTDIR) -I$(IODIR) -include $(PARAM) -openmp $(USRINCL)
+LDFLAGS= -L$(IODIR) -lbtio $(FTNLIB) -openmp $(USRLIB)
+
+sp2pro:sp2pro.c Makefile
+				$(CC) -o sp2pro sp2pro.c $(CFLAGS) $(LDFLAGS) 
+				
+tidal_tree: tidal_tree.o treesearch.o tree.o 
+		$(CC) -o tidal_tree tidal_tree.o treesearch.o tree.o  $(LDFLAGS) 
+	
+tree.o: $(BTDIR)/tree.c	Makefile
+				$(CC) -c $(BTDIR)/tree.c $(CFLAGS) -g

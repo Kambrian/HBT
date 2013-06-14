@@ -1,0 +1,17 @@
+#!/bin/bash
+#PBS -S /bin/bash
+#PBS -N FoF.$run
+#PBS -l nodes=32:ppn=12
+#PBS -j oe
+
+cd $PBS_O_WORKDIR
+
+ulimit -s unlimited
+
+#~ source /etc/profile.d/modules.csh
+module load openmpi
+export OMPI_MCA_plm_rsh_num_concurrent=1024
+cat $PBS_NODEFILE | uniq >mynodefile.$run
+
+export OMP_NUM_THREADS=1
+$MPIROOT/bin/mpirun -np 32 -machinefile mynodefile.$run ./FoF_mpi.$run

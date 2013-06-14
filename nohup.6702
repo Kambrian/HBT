@@ -1,0 +1,5 @@
+ 
+Wed May  1 03:23:49 BST 2013
+HBT.6702 started using schedule dynamic and omp_dynamic state is FALSE
+with 64 threads
+nohup: failed to run command `./HBT.6702': No such file or directory

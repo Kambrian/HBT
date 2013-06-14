@@ -1,0 +1,37 @@
+#!/bin/bash
+#run=$1
+
+export OMP_NUM_THREADS=56
+
+export HBT_VERSION=8.7a
+export OMP_SCHEDULE=dynamic
+export OMP_DYNAMIC=FALSE # this works for icc v11.1.072, 
+# but seems not always use the maximum available number of cpus allowed by NUM_THREADS
+# so better not allow it to adjust. shit.
+export KMP_BLOCKTIME=0  # this seems to help a lot, to reuse thread immediately after its job is finished
+export OMP_NESTED=0
+
+
+for run in 6127 6140 6141 6113 6114 6115  6116  6117  6119 6128  6129  6142  6143  6144 6118
+do
+	export RUN_NUM=$run
+	
+	echo " " >>nohup.$RUN_NUM
+	date >>nohup.$RUN_NUM
+	echo "HBT.$RUN_NUM started using schedule $OMP_SCHEDULE and omp_dynamic state is $OMP_DYNAMIC" >>nohup.$RUN_NUM
+	echo "with $OMP_NUM_THREADS threads" >>nohup.$RUN_NUM
+	
+	./HBT.$RUN_NUM "$@" 1>>nohup.$RUN_NUM 2>&1 
+	#HBTpid=$!
+	#wait $HBTpid
+
+	cd anal
+	for((i=0;i<100;i+=1))
+	do
+		echo "Snap=$i:" >>log/makeprof.$run.log 2>&1
+        	./haloprof.$run $i 1>>log/makeprof.$run.log 2>&1
+	done
+	chmod a-w ~/data8/$run/subcat/profile/logbin/*
+	cd ..
+done
+

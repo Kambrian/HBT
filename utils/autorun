@@ -1,0 +1,45 @@
+#!/bin/bash
+export RUN_NUM=$1
+make clean 
+make iolib 
+cd GasCat
+make clean
+make gasio 
+
+cd ../anal
+make clean
+make haloprof 
+make gashaloprof 
+make dynamprof.sph 
+chmod u+w ~/data/$1/subcat/profile/logbin -R
+rm  -f ~/data/$1/subcat/profile/logbin/*
+cd Profile
+chmod u+x makeprofile.sh
+./makeprofile.sh
+
+cd ..
+make NFW_fit 
+./NFW_fit 1>NFW_fit.log 2>&1
+
+chmod a-w ~/data/$1/subcat/profile/logbin -R
+
+make massfun_cosm 
+make massfun_plot 
+./massfun_cosm 99 1>massfun_cosm.log 2>&1
+
+cd ../history
+make clean 
+make 
+make history_rev 
+make histio 
+chmod u+w ~/data/$1/subcat/history -R
+./history.$1 1>history.log 2>&1
+./history_rev 1>history.log 2>&1
+chmod a-w ~/data/$1/subcat/history -R
+
+cd ../anal
+make trace_bin_rev 
+./trace_bin_rev 0 0.05 1>trace.log 2>&1
+
+
+

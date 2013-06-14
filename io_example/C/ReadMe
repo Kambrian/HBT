@@ -1,0 +1,3 @@
+brief: stand-alone io routines for HBT's subhalo catalog
+library: collection of HBT's io routines, which can be compiled into a static library and linked against by your program.
+ 

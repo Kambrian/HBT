@@ -1,0 +1,46 @@
+改进：
+并行化模式：
+	根据粒子数定内部是否并行 vs. 根据haloid定
+	1。nest x
+	2。先首halo内部并行，再其他halo外部并行 x
+	3. unbind并行 vs.嵌入并行的效率 －>unbind内部并行 ok
+unbind：
+	1。相对收敛误差 ok
+	2。添加式收敛法 ＝
+	3。中心定法 －
+	4. tree CoM addition method (v2.01a) －
+	5. len 在NodeReso处的模糊化 －
+	6. NboundMin改为20 ok
+完善：
+	美化code
+	file write lock ＝
+	sub吸积能力的判断方法－－main sub的确定 ？
+
+调试：
+	nest 同 threadprivate的问题 ok
+	possible sol: threadprivate变量设为局部变量，作为参数传递； barrier and flush;
+	check for race and lock conditions
+
+unbind 收敛／误差曲线; theoretical vs. practical (submass,subpos) =
+
+
+问题：
+1。unbind的唯一性问题。self-bound依赖粒子集合。
+	因此unbind的结果存在两个问题：
+		1。过大。对main-sub更新粒子（吸积）后得到的bound结构未必有意义，可以很弥散。－－main-sub的过度吸积问题。
+				对于sattellite 也可能会过多保留。比如对多体公共束缚系统，其中的弥散粒子可能对每一个sub都可以bound上去。从上一代过来的sub，虽然有些粒子已经游离，但unbind时仍被保留。而也许这些粒子更能bind到别的sub或main（当然如果总有一天它不再bind。。。）。
+		2。过小。粒子混合后其合集bound但每一部分未必单独bound－－sattellite sub的局地吸积问题。
+		若在定义sub时不仅考虑bound，同时考虑几何，则问题会自恰完备得多。
+
+----------------
+Done:
+global variable declaration and definition
+main program decomposition
+sublen2 update
+memory allocation problem
+unbind_sub_recursive(accret from other fof's sub?) + mask_main_sub inconsistent: solution: update hiearachy before unbinding after splitting
+narrow_srccat (update in particles from other fof?) +mask_main_src inconsistent : solution: do not require mask_main_src to be inside just one halo
+sat-accretion ON and OFF switch macro
+allocation-deallocation check
+io unification
+nullify for safety

@@ -1,0 +1,29 @@
+BTDIR=../../..
+GASDIR=$(BTDIR)/GasCat
+HISTDIR=$(BTDIR)/history
+
+RUN_NUM=6702
+PARAM =param/param$(RUN_NUM).h
+#IODIR=$(BTDIR)/$(RUN_NUM)_io
+IODIR=$(BTDIR)/gadget_io
+
+CC			=icc
+#~ IFORTLIB=/opt/intel/fc/10.1.018/lib		#kam-desk
+#IFORTLIB=/opt/intel/fc/10.1.008/lib		#a4700
+#~ IFORTLIB=/SANdisk5/kambrain/opt/intel/Compiler/10.1.022/fc/lib  #altix
+#FTNLIB=-L$(IFORTLIB) -lifport -lifcore
+USRINCL=-I /home/kambrain/opt/include
+USRLIB=-L /home/kambrain/opt/lib
+CFLAGS=-I$(BTDIR) -I$(IODIR) -I$(GASDIR) -I$(HISTDIR) -include $(PARAM) -openmp $(USRINCL)
+LDFLAGS= -L$(IODIR) -lbtio $(FTNLIB) -openmp $(USRLIB) 
+GASLIB= -L$(GASDIR) -lgasio
+HISTLIB= -L$(HISTDIR) -lhistio
+
+NFW_fit: NFW_fit.c NFW_fun.c lnNFW_fun.c Makefile
+	$(CC) -o NFW_fit NFW_fit.c $(CFLAGS) $(LDFLAGS) -lgsl -lgslcblas
+	
+NFW_halo: NFW_halo.c NFW_fun.c lnNFW_fun.c Makefile
+	$(CC) -o NFW_halo NFW_halo.c $(CFLAGS) $(LDFLAGS) -lgsl -lgslcblas
+		
+clean:
+	rm -f *.o	a.out NFW_fit NFW_halo

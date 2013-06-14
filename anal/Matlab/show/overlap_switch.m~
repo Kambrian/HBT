@@ -1,0 +1,42 @@
+RunNum='8213';Nsnap=59;grpid=3;
+datadir=['/mnt/A4700/data/',RunNum,'/subcat/anal/image/conf/'];
+fofmap=load([datadir,'fofmapyz_',num2str(Nsnap,'%03d'),'_',num2str(grpid,'%d')]);
+btpos=load([datadir,'subcen_',num2str(Nsnap,'%03d'),'_',num2str(grpid,'%d')]);  %position of most bound particle better marks subhalo than CoM
+% subcom=load([datadir,'subcom_',num2str(Nsnap,'%03d'),'_',num2str(grpid,'%d')]);
+% subpos=subcom(:,2:4);
+fofsize=load([datadir,'fofsize_',num2str(Nsnap,'%03d'),'_',num2str(grpid,'%d')]);
+
+datadir=['/mnt/A4700/data/',RunNum,'/subcatS/anal/image/'];
+sfpos=load([datadir,'subcen_',num2str(Nsnap,'%03d'),'_',num2str(grpid,'%d')]);
+
+% halo=readhalo_size(['/mnt/A4700/data/',RunNum,'/subcatS/profile/logbin'],Nsnap,'halo');
+halo=readhalo_size(['/mnt/A4700/data/',RunNum,'/subcat/profile/logbin'],Nsnap,'halo');
+rvir=halo.Rvir(grpid+1,1);
+%%
+outputdir='/home/kam/Documents/research/Galaxy/code/BoundTracing/data/show';
+figure;
+% set(gcf,...
+%     'DefaultLineLineWidth',2,'DefaultAxesLineWidth',.5,...
+%     'DefaultAxesFontName','Helvetica',...
+%     'DefaultAxesFontSize',20,...
+%     'DefaultAxesTickLength',[0.02,0.02],... 
+%     'DefaultAxesXMinorTick','on','DefaultAxesYMinorTick','on',...
+%     'DefaultTextInterpreter','latex');
+% set(gcf,'DefaultLineMarkersize',7);
+imagesc(fofsize(2,:),fofsize(3,:),log(fofmap)');colormap('gray');
+hold on;
+% tc=0:0.1:2*pi+0.1;
+% plot(rvir*sin(tc)+subpos(1,1),rvir*cos(tc)+subpos(1,2),'r--');
+
+plot(btpos(2,2),btpos(2,3),'ro','markersize',15);
+plot(btpos(7,2),btpos(7,3),'rx');
+plot(sfpos(2,2),sfpos(2,3),'go','markersize',15);
+plot(sfpos(33,2),sfpos(33,3),'gx');
+axis equal
+axis([fofsize(2,:),fofsize(3,:)]);
+set(gca,'xtick',[],'ytick',[]);
+title(RunNum);
+
+% print('-depsc',[outputdir,'/halo_image',RunNum,'S',num2str(Nsnap),'G',num2str(grpid),'.eps']);
+% print('-depsc',[outputdir,'/halo_image',RunNum,'S',num2str(Nsnap),'G',num2str(grpid),'.sf.eps']);
+%hgsave([outputdir,'/halo_image_',RunNum,'.fig']);

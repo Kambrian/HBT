@@ -1,0 +1,28 @@
+/* [wxMaxima batch file version 1] [ DO NOT EDIT BY HAND! ]*/
+/* [ Created by wxMaxima version 0.7.6 ] */
+
+/* [wxMaxima: input   start ] */
+Rho(x):=Rhos/x/(1+x)^2;
+/* [wxMaxima: input   end   ] */
+
+/* [wxMaxima: input   start ] */
+Sigr2(x):=4^(2/3)*Sigrs2/(x^(1-alpha)*(1+x)^2)^(2/3);
+/* [wxMaxima: input   end   ] */
+
+/* [wxMaxima: input   start ] */
+M(x):=4*%pi*Rhos*rs^3*(log(1+x)-x/(1+x));
+/* [wxMaxima: input   end   ] */
+
+/* [wxMaxima: input   start ] */
+ani(x):=(-diff(log(Rho(x)*Sigr2(x)),x,1)*x-G*M(x)/Sigr2(x)/rs/x)/2;
+/* [wxMaxima: input   end   ] */
+
+/* [wxMaxima: input   start ] */
+ani(x);
+/* [wxMaxima: input   end   ] */
+
+/* [wxMaxima: input   start ] */
+wxplot2d([subst([rs=331,Sigrs2=1.7e6,Rhos=0.025*0.008848,alpha=1.9,G=43007.1],ani(x))],[x,0.1,20], [gnuplot_preamble, "set logscale x; set grid;"])$
+/* [wxMaxima: input   end   ] */
+
+"Created with wxMaxima"$

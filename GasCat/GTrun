@@ -1,0 +1,13 @@
+#!/bin/bash
+export OMP_SCHEDULE=dynamic
+export OMP_DYNAMIC=TRUE
+export OMP_NUM_THREADS=64
+export OMP_NESTED=0
+export RUN_NUM=6702
+
+echo " " >>nohup.$RUN_NUM
+date >>nohup.$RUN_NUM
+echo "GT.$RUN_NUM started using schedule $OMP_SCHEDULE and omp_dynamic state is $OMP_DYNAMIC" >>nohup.$RUN_NUM
+echo "with $OMP_NUM_THREADS threads" >>nohup.$RUN_NUM
+
+nohup ./GT.$RUN_NUM "$@" 1>>nohup.$RUN_NUM 2>&1 &

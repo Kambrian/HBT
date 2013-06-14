@@ -1,0 +1,202 @@
+monopole formula
+Core-unbinding: test binding with respect to a core (CoreFrac percent of particles out of all the particles),and iteratively
+applicable to both resimulations and cosmological simulations with periodic boundary conditions (controlled through HALO_PARA and PERIODIC_BDR macros)
+hierarchical accretion
+relaxed tracing--lost particles are allowed to be reaccretted
+fullly parallelized for cosmological simulation (halo level) since v6.3
+reading fortran unformatted files using fortran routines through mixed-language progamming
+pro2dest saved 
+/**Minor Changes**/
+Since V6.0:
+2009年03月27日 星期五 17时02分46秒(v6.1) :
+*improved treatment of SubArr2 during split_srccat()  (only discard SubArr2 for major splittings and those too big Len2)
+*SAT_ACCR_ON macro added for switch of sattellite accretion
+2009年05月07日 星期四 16时05分11秒(v6.2) :
+*modified(extended) snapshot headers.
+2009年05月15日 星期五 16时44分22秒(v6.2) :
+*bug fix: SrcCat.PSubArr2 missed to be freshed between different snaps; 
+		PID_ORDERED also got freshed (all PID's for input data should start from 1 rather than 0)
+18.05.2009 (v6.2):
+*bug fix: mask_src_recursive() with all head-subs rather than with main-sub's from prev. snapshot. 
+27.05.2009 (v6.4):
+*bug fix: self-potential should be excluded rather than double-included
+*bug fix: comoving virial radius rather than physical virial radius
+2009年05月31日 星期日 20时07分26秒 (v6.5)
+*bug fix: memory allocation and freeing consistency checked
+				user_IO.c:233               HaloMask alloc
+				binding.c: 218:		free(SubPIndex_removed);
+				BT.c:242 	            myfree(SrcCatA.PSubArr2[GrpChain[0].ProSubID]);
+				hierarchy.c:553 free()   moveout
+2009年06月01日 星期一 17时39分21秒 (v6.6)
+*bug fix: quasi-halos are all break-up to isolation since no meaningful sat-sat accretion should be expected among quasi-halos,
+	  also to make-up for the bug that quasi-halos were not processed for crossing-out or death mask
+	  (still one-step accretion right after the quasi-halos come out to the background is allowed whence they haven't been broken up of their hierarchy chain)
+*Improvement: over-growth or merger (when sublen>srclen) SubArr2 reset 
+2009年06月02日 星期二 10时10分08秒 (v6.7)
+*Improvement: pro2dest saved 
+2009年06月08日 星期一 01时53分37秒 (v6.7)
+*bug fix: 6120/8213 Pdat.Pos and Pdat.Vel arr reading bug fixed
+2009年06月08日 星期一 01时55分39秒 (v6.8=v6.7)
+11.06.2009 (v6.9)
+*bug fix: sublen2 reset when len2 too big during splitting src (len2*Relax>newlen rather than >oldlen)
+*para-split algorithm improvement
+11.06.2009 (v7.0=v6.9 tidy-up)
+*splitters.log removed,sp2pro_*** written directly
+13.06.2009 (v7.0)
+*minor change: record desID for failed mainsub only when grplen>400
+14.06.2009 (v7.1)
+*improvement: omp for schedule set to (dynamic 1) rather than using BTrun which does not really take effect in setting schedule
+2009年06月23日 星期二 13时39分49秒 (v7.2)
+*improvement: add treesearch code to postprocessing dir
+2009年06月25日 星期四 01时40分40秒 (v7.2)
+*minor change: removed timing for split_srccat
+2009年08月27日 星期四 16时36分33秒 (v7.3-a)
+*improvement: Add nearest-gas-of-dm to gascat
+*improvement: More Flexibility to Tree code
+2009年08月28日 星期五 16时11分56秒 (v7.3)
+*minor change: removed the adding of nearest-gas-of-dm to gascat
+*improvement: More Flexibility to Tree code
+2009年08月30日 星期日 15时14分19秒 (v7.4)
+*improvement: Even More Flexibility to Tree code (treetree_evaluate_potential)
+*bug fix: gas potential calc, no need to correct for self-energy
+2009年09月09日 星期三 16时00分23秒 (v7.5,patch version)
+*improvement: BT patch to add CoM Vel,Kinetic energy,potential energy, and angular momentum to subcat
+2009年09月12日 星期六 16时39分42秒 (v7.6)
+*improvement: add CoM Vel,Kinetic energy,potential energy, and angular momentum to subcat during BT saving
+	      changed SUBCATALOGUE structure (use struct SubProperty);
+	      functions affected: save_subcat,load_subcat,creat_subcat,free_subcat,unbind;
+				  transfer_subcat,PARAmake_srcsub,migrate_sub,restore_mainsub
+				  unbind_recursive,BT
+2009年09月13日 星期日 20时57分39秒 (v7.7)
+*add gas trace
+2009年09月14日 星期一 13时47分44秒 (v7.8)
+*improvement: SubPot calculated the same way as SubKin and AM, rather than from the particles of last unbinding cycle
+*bug fix: in post/traceup.c: use the Nsplitter_dest rather than Nsplitter_pro when load_sp2pro 
+improvement: more integration to load_sp2pro and free_sp2pro
+2009年09月15日 星期二 06时57分04秒 (v7.8)
+*bug fix: VCoM.patch.c
+	  restore_Index2ID first before saving subhalos!!!
+*improvement: more integration to load_pro2dest() and free_pro2dest(), to allow for pro2dest[-1]; save in pro2dest dir.
+	     more integration to load_sp2pro() and free_sp2pro(),changes the file format to add Nsplitter and Npro in the header;save using Nsnap_dest rather than Nsnap_pro.
+*bug fix: post/pro2dest.c  pro2dest also include entries for splitters,as done in BT main prog.
+*Add history
+*bug fix: hierarchy.c: PARAsplit_srccat() reset Nsplitter=0 when reduction is not done
+2009年09月17日 星期四 16时15分53秒 (v7.9)
+*v7.8 tidy-up version
+2009/11/02 11:39:37(v7.9)
+*bug fix: quasi-halo considered when extracting history (history.c)
+2009年11月23日 星期一 00时12分36秒 (v7.95)
+*bug fix: gas unbinding input VCoM is physcial rather than internal, attention when subtracting from internal vel
+*bug fix: make_gassrccat if Nspl!=subcat.nsubs should be Nspl!=subcat.Nsplitters when checking load_sp2pro
+*bug fix: sp2pro.patch.c fixed and applied to 6501 v7.2
+*improvement: gashaloprof.c dynamprof.c dynamprof_sph.c use gaslib's io rather than contain the functions in itself
+			  gashalo.c save to correct directory
+*fortran io example complete
+======================================================================The same subcat for all the v8.*===================================================
+2010年01月09日 星期六 02时50分15秒  (v8.0)
+*bug fix: add macro VEL_INPUT_PHYSICAL to allow for physical velocity rather than gadget velcoty input, for Jing's data
+2010年01月30日 星期六 14时50分31秒  (v8.1)
+*bug fix: floating point error in histr_log when making profiles and tidal radius fixed
+2010/03/04 00:10:09 (v8.1)
+*improvement: in history_revised.c, Dstrp=1.25*(1+k_t)^(1/3), add the factor 1.25;
+									also give SnapTidal using the bigger mass snapshot around Dstrp;
+2010/03/05 17:58:30 (v8.1)
+*improvement: in trace_bin_rev.c, Add Maximum iteration to the recursive function is_main_family() for safety;
+*improvement: in anal/ Makefile updated
+
+2010年03月12日 星期五 16时33分58秒 (v8.1a)
+*improvement: in trace_bin_rev.c, select direct_infall to central cluster rather than is_main_family()
+*improvement: history and shard_param now include concentration parameters
+
+2010/03/14 22:43:53 (v8.1a)
+*improvement: delete Kself param in trace_bin_rev.c and Matlab files
+
+2010/04/07 03:44:05 (v8.1a)
+*improvement: add Umsat param in trace_bin_rev.c and Matlab files
+* completion: update BTtest dir to match current version
+
+2010/05/11 21:14:12 (v8.1a)
+*improvement: change OMP_DYNAMIC=TRUE for dynamical adjustion of thread nums, 
+				to avoid performance degradation when cpus get shared with other progs
+2010/05/11 21:14:12 (v8.1a)
+rotate back:	OMP_DYNAMIC=TRUE won't help, and runs even worse,it seems. so rotate back.	
+				
+2010/05/11 21:16:01 (v8.1b)
+insert timing info for test into BT.c				
+
+2010年05月13日 星期四 16时03分26秒 (v8.1c)
+*improvement: anal/Image/snaps.c io improvement
+2010年05月21日 星期五 15时51分43秒 (v8.1c)
+*completion: anal/Profile/haloprof.c generalized to apply to cosmo simu (Omega0 vs. header.Omega0)
+
+2010年05月23日 星期日 00时36分10秒 (v8.2)
+*bug fix: virial_factor_tophat calculation, x=OmegaZ-1 rather than 1-OmegaZ !
+	files affected: mymath.c, haloprof.c, comoving_virial_radius.m
+	results affected: haloprof,halosize,concentration,history,massfunction,image,robustness,gas_follow
+			Dstrip,sqrt(Delta),concentration dependence, gas_strip analysis !!!!
+			perhaps orbital parameters as well.
+	results not affected: subcat,gascat
+
+2010年05月25日 星期二 14时57分53秒 (v8.3)
+*bug fix: linked-list rounding error, floating point error could cause grid_id out of range, thus memory leak
+	files affected: follow_gashalo.c,follow_fof_local.c,follow_sub_local.c
+			tidal_radius_*.c,Lx_sub.c,gasprofile*.c
+			haloprof.c,dynamprof*.c,gashaloprof.c,subprof.c,subfindprof.c
+			massfun_plot.c
+*improvements: Makefile automation
+		io_example more complete
+		libbtio.a --> lib$(RUN_NUM)io.a
+		6120_io  --> JING_io
+		
+27.05.2010 19:42:40 (v8.3)
+*bug fix: 
+		Problem: load_particle_data for JING's data do not work sometimes on A4700 after a recent reboot,
+			exits on open_fortran_files_.
+			seems to work fine only if load_group_catalogue is called before load_particle_data
+			also always work correctly on altix.
+		Workaround: Disable parallel sections in load_particle_data		
+			(OMP or Fortran Problem?)
+
+2010/07/02 16:29:41 (v8.3)
+minor improvement: Nff and Nfm reset in case no parallel loop reduction done
+
+2010年07月12日 星期一 21时08分31秒 (v8.4)
+iolib improvement
+history without gas
+public catalogue
+*bug fix: some minor bug fixes for evocat_rev (equiv. to bug fix for history_rev)
+*io change: different SubNodeExp for trace_bin_rev and hence its output, also different Matlab input
+*improvement: BTtest generalized to cosmological unbinding with periodic box
+*minor bug fix: floating point rounding error in subprofile.c and tidalradius*.c
+
+=================convention:==============
+each sub has an unique id, even those splitted out, but may have same rank+host
+the splitted part are not subs in the last snap, so not saved;use splitters.log to find their progenitors.
+backgound has the haloid -1; desthaloid=-2 means death of sub;
+subhaloid=-1 means no sub in that position;
+quasi-fof sub is ranked as if the background is their shared host,so they do not necessarily have rank 0;
+
+all saved catalogue contain particle IDs rather than indices.so be careful before saving!!
+
+
+splitters:
+the splitted subs are self bound subs, (diff from previous version BT).
+if a previous (src-)sub split into several parts in the current epoch, it is processed in the following steps:
+1.find those splitted parts with N>NSRCMIn as independent srcsubs. (*Note)
+2.the biggest part is the main splitter which is set as the descendent of the sub
+3. unbind the srcsubs  to get descendent subs
+	*Note:
+	1). the splitted parts with N<NSRCMIn are all discarded from srccat
+	2).if no part greater than NboundMin,the srcsub is splitted to death, so does the corresponding sub
+*:to deal with splitters, always remember to check prosubid>=Npro when getting progenitors and fix by load_sp2pro() and free_sp2pro()
+
+====================IO interface=============
+To create your own IO interface, you have to read-in the following data:
+  # particle positions and velocities in gadget units into struct ParticleData; also particle IDs in the range [1,Np] if pids are not ordered (ifndef PIDORDERED)
+  # a header with at least the three quantities:
+         * header.Hz (current hubble param in gadget units),
+         * header.mass[2] (gas and dm particle masses in gadget units),
+         * header.time (current reduced scale factor a=1/(1+z))
+  # the fof catalogue (each fof's particle ids) into CATALOGUE. 
+	with pids in the range [1,Np] (not [0,Np-1]).
+	or PIndex in the range [0,Np-1] if you define GRPINPUT_INDEX in parameter file

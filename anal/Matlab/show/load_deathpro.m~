@@ -1,0 +1,7 @@
+function M=load_deathpro(basedir,SnapDeath,grpid)
+file=[basedir,'steller/DeathInfall_first_',num2str(Nsnap,'%03d'),'_',num2str(grpid)];
+for Nsnap=Snaps(1):Snaps(2)
+    disp();
+    data=importdata([basedir,'steller/DeathInfall_first_',num2str(Nsnap,'%03d'),'_0'],',',1);
+    M=[M;data.data(:,2)];
+end

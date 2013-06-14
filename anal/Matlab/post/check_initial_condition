@@ -1,0 +1,50 @@
+dir='/work/Projects/HBT/code/data/6402Ini/';
+fp=fopen([dir,'DM_Ini_Sample.pos']);
+Xdm=fread(fp,[3,1000],'float32');
+fp=fopen([dir,'DM_Ini_Sample.vel']);
+Vdm=fread(fp,[3,1000],'float32');
+fp=fopen([dir,'GAS_Ini_Sample.pos']);
+Xgas=fread(fp,[3,1000],'float32');
+fp=fopen([dir,'GAS_Ini_Sample.vel']);
+Vgas=fread(fp,[3,1000],'float32');
+
+Xdm=Xdm';
+Vdm=Vdm';
+Xgas=Xgas';
+Vgas=Vgas';
+DX=Xdm-Xgas;
+DV=Vdm-Vgas;
+%%
+figure;
+plot3(Xdm(:,1),Xdm(:,2),Xdm(:,3),'o')
+hold on;
+plot3(Xgas(:,1),Xgas(:,2),Xgas(:,3),'x')
+
+figure;
+plot3(Vdm(:,1),Vdm(:,2),Vdm(:,3),'o')
+hold on;
+plot3(Vgas(:,1),Vgas(:,2),Vgas(:,3),'x')
+%%
+figure;
+plot(Xdm(:,2),Xdm(:,3),'o')
+hold on;
+plot(Xgas(:,2),Xgas(:,3),'x')
+
+figure;
+plot(Vdm(:,2),Vdm(:,3),'o')
+hold on;
+plot(Vgas(:,2),Vgas(:,3),'x')
+%%
+figure;
+hist(DX(:,3));
+figure;
+hist(DX(:,1));
+figure;
+hist(DX(:,2));
+
+figure;
+hist(DV(:,3));
+figure;
+hist(DV(:,1));
+figure;
+hist(DV(:,2));

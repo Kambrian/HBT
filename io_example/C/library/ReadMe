@@ -1,0 +1,51 @@
+This directory includes all the files necessary for building a library providing io routines for halo and subhalo catalogues. 
+
+Directories:
+gadget_io: snapshot and halo catalogues io routines for gadget data format
+JING_io: same as above, for the 1024^3 series simualtion,including 611*,612*
+param:parameter files for different simulations
+history_io: io routines for subhalo histories
+
+Files:
+*.c,*.h: files for reading subhalo catalogues
+Makefile.*: io library makefile for different simulations
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+To build the library for a particular simulation, make sure you have the correct path set in para/param$RUN_NUM.h,
+
+1. edit Makefile.runs, set the correct RUN_NUM and IODIR
+
+2. clear object files from previous make:
+
+	make clean
+
+3. then issue the following command to produce a library file "lib$(RUN_NUM)io.a":
+
+	make
+   
+   This will give you both the subcat io-library "lib$(RUN_NUM)io.a" and the history library "libhistio.a"
+   
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+To link your program against the io libraries, include the following header files in your  source code:
+
+datatypes.h
+intra_vars.h 
+iovars.h
+proto.h
+history_vars.h
+history_proto.h
+
+Then compile and link with
+
+CFLAGS=-include $(PARAM) -I library -I library/$(IODIR) -I library/history
+LDFLAGS=-openmp $(FTNLIB) -L library -l$(RUN_NUM)io -L library -lhistio
+
+The variables $(PARAM) $(IODIR) $(FTNLIB) and $(RUN_NUM) are defined in "Makefile.runs".
+
+A sample program loadview.c which loads all the data for a given snapshot is provided with Makefile in the upper directory.
+load_virial.c loads the virial mass and virial radius
+load_history.c loads the subhalo merger history
+
+

@@ -14,9 +14,32 @@ extern void read_fortran_record2_(void *arr,long int *arr_len,int *fileno);
 extern void read_fortran_record4_(void *arr,long int *arr_len,int *fileno);
 extern void read_fortran_record8_(void *arr,long int *arr_len,int *fileno);
 extern void close_fortran_file_(int *fileno);
-extern void read_part_arr_(float partarr[][3],int *np,int *fileno);
-extern void read_part_header_(int *np,int *ips,float *ztp,float *omgt,float *lbdt,
-									float *boxsize,float *xscale,float *vscale,int *fileno);
+extern void read_part_arr_imajor_(float partarr[][3],long int *np,int *fileno);//old format
+extern void read_part_arr_xmajor_(float partarr[][3],long int *np,int *fileno);//newest format
+extern void read_part_header_int4_(int *np,int *ips,float *ztp,float *omgt,float *lbdt,
+			      float *boxsize,float *xscale,float *vscale,int *fileno);
+extern void read_part_header_int8_(long int *np,long int *ips,float *ztp,float *omgt,float *lbdt,
+			      float *boxsize,float *xscale,float *vscale,int *fileno);
+extern void read_group_header_int4_(float *b,int *ngrp, int *fileno);
+extern void read_group_header_int8_(float *b,long int *ngrp, int *fileno);
+
+//Caution:: only support SAME_INTTYPE and SAME_REALTYPE; if they differ, need further modification of code!
+#ifdef HBT_INT8
+#define read_fortran_record_HBTInt read_fortran_record8_
+#define read_part_header read_part_header_int8_
+#define read_group_header read_group_header_int8_
+#else
+#define read_fortran_record_HBTInt read_fortran_record4_
+#define read_part_header read_part_header_int4_
+#define read_group_header read_group_header_int4_
+#endif
+
+#ifdef PDAT_XMAJOR
+#define read_part_arr read_part_arr_xmajor_
+#else
+#define read_part_arr read_part_arr_imajor_
+#endif
+
 #ifdef BIGENDIAN
 #define FLG_ENDIAN 1
 #else
@@ -24,14 +47,15 @@ extern void read_part_header_(int *np,int *ips,float *ztp,float *omgt,float *lbd
 #endif
 
 #ifndef PID_ORDERED
-static int read_part_id_JING(int Nsnap,char *snapdir)
+static HBTInt read_part_id_JING(int Nsnap,char *snapdir)
 {
 	char buf[1024];
-	int i,flag_endian,filestat,fileno=10;
+	HBTInt i;
 	long int nread;
+	int flag_endian,filestat,fileno=10;
 	
 	flag_endian=FLG_ENDIAN;
-	sprintf(buf,"%s/id%d.%04d",snapdir,RUN_NUM,Nsnap);
+	sprintf(buf,"%s/id%d.%04d",snapdir,RUN_NUM,(int)Nsnap);
 	open_fortran_file_(buf,&fileno,&flag_endian,&filestat);
 	if(filestat)
 	{
@@ -39,20 +63,22 @@ static int read_part_id_JING(int Nsnap,char *snapdir)
 		exit(1);
 	}
 	nread=NP_DM;
-	Pdat.PID=mymalloc(sizeof(int)*NP_DM);
-	read_fortran_record4_(Pdat.PID,&nread,&fileno);	
+	Pdat.PID=mymalloc(sizeof(HBTInt)*NP_DM);
+	read_fortran_record_HBTInt(Pdat.PID, &nread, &fileno);
+	
 	for(i=0;i<NP_DM;i++)
 		if(Pdat.PID[i]<1||Pdat.PID[i]>NP_SIM)
-			fprintf(logfile,"error: id not in the range 0~%d, for i=%d, pid=%d, snap=%d\n",NP_SIM,i,Pdat.PID[i],Nsnap);fflush(logfile);
+			fprintf(logfile,"error: id not in the range 0~"HBTIFMT", for i="HBTIFMT", pid="HBTIFMT", snap=%d\n",NP_SIM,i,Pdat.PID[i],Nsnap);fflush(logfile);
 	close_fortran_file_(&fileno);
 	return NP_DM;
 }
 #endif
-static int read_part_pos_JING(int Nsnap,char *snapdir)
+static HBTInt read_part_pos_JING(int Nsnap,char *snapdir)
 {
 	char buf[1024];
 	short *tmp;
-	int i,j,flag_endian,filestat,fileno=11;
+	HBTInt i,j;
+	int flag_endian,filestat,fileno=11;
 	long int nread;
 	
 	flag_endian=FLG_ENDIAN;		
@@ -66,19 +92,20 @@ static int read_part_pos_JING(int Nsnap,char *snapdir)
 
 //	#pragma omp critical (fill_header)
 	{
-	read_part_header_(&header.Np,&header.ips,&header.ztp,&header.Omegat,&header.Lambdat,
+	read_part_header(&header.Np,&header.ips,&header.ztp,&header.Omegat,&header.Lambdat,
 						&header.rLbox,&header.xscale,&header.vscale,&fileno);
 	//~ printf("Np=%d,ips=%d,Omegat=%g,Lambdat=%g,Lbox=%g\nztp=%g,xscale=%g,vscale=%g\n",
 		//~ header.Np,header.ips,header.Omegat,header.Lambdat,header.rLbox,header.ztp,header.xscale,header.vscale);
-	if(header.Np!=NP_DM){fprintf(logfile,"error:particle number do not match(pos) %d\n",NP_DM);fflush(logfile);exit(1);}
+	if(header.Np!=NP_DM){fprintf(logfile,"error:particle number do not match(pos) "HBTIFMT"\n",header.Np);fflush(logfile);exit(1);}
 	}
-	Pdat.Pos=mymalloc(sizeof(float)*3*NP_DM);
+	
+	Pdat.Pos=mymalloc(sizeof(HBTReal)*3*NP_DM);
 	if(Nsnap<=SNAP_DIV_SCALE)//has scale
 	{
 		nread=header.Np;
 		if(sizeof(short)!=2)
 		{
-			fprintf(logfile,"error: sizeof(short)=%ld, !=2\n",sizeof(short));fflush(logfile);
+			fprintf(logfile,"error: sizeof(short)=%zd, !=2\n",sizeof(short));fflush(logfile);
 			exit(1);
 		}
 		tmp=malloc(sizeof(short)*nread);
@@ -94,16 +121,18 @@ static int read_part_pos_JING(int Nsnap,char *snapdir)
 	{
 		//~ nread=3*header.Np;
 		//~ read_fortran_record4_(&(Pdat.Pos[0][0]),&nread,&fileno);
-		read_part_arr_(Pdat.Pos,&header.Np,&fileno);
+	  nread=header.Np;
+		read_part_arr(Pdat.Pos,&nread,&fileno);
 	}
 	close_fortran_file_(&fileno);
 	return header.Np;
 }
-static int read_part_vel_JING(int Nsnap,char *snapdir)
+static HBTInt read_part_vel_JING(int Nsnap,char *snapdir)
 {
 	char buf[1024];
 	short *tmp;
-	int i,j,flag_endian,filestat,fileno=12;
+	HBTInt i,j;
+	int flag_endian,filestat,fileno=12;
 	long int nread;
 	
 	flag_endian=FLG_ENDIAN;
@@ -117,20 +146,20 @@ static int read_part_vel_JING(int Nsnap,char *snapdir)
 
 //	#pragma omp critical (fill_header)
 	{	
-	read_part_header_(&header.Np,&header.ips,&header.ztp,&header.Omegat,&header.Lambdat,
+	read_part_header(&header.Np,&header.ips,&header.ztp,&header.Omegat,&header.Lambdat,
 						&header.rLbox,&header.xscale,&header.vscale,&fileno);
 	//~ printf("Np=%d,ips=%d,Omegat=%g,Lambdat=%g,Lbox=%g\nztp=%g,xscale=%g,vscale=%g\n",
 		//~ header.Np,header.ips,header.Omegat,header.Lambdat,header.rLbox,header.ztp,header.xscale,header.vscale);
-	if(header.Np!=NP_DM){fprintf(logfile,"error:particle number do not match(vel) %d\n",NP_DM);fflush(logfile);exit(1);}
+	if(header.Np!=NP_DM){fprintf(logfile,"error:particle number do not match(vel) "HBTIFMT"\n",header.Np);fflush(logfile);exit(1);}
 	}
 	
-	Pdat.Vel=mymalloc(sizeof(float)*3*NP_DM);
+	Pdat.Vel=mymalloc(sizeof(HBTReal)*3*NP_DM);
 	if(Nsnap<=SNAP_DIV_SCALE)//has scale
 	{
 		nread=header.Np;
 		if(sizeof(short)!=2)
 		{
-			fprintf(logfile,"error: sizeof(short)=%ld, !=2\n",sizeof(short));fflush(logfile);
+			fprintf(logfile,"error: sizeof(short)=%zd, !=2\n",sizeof(short));fflush(logfile);
 			exit(1);
 		}
 		tmp=malloc(sizeof(short)*nread);
@@ -146,13 +175,14 @@ static int read_part_vel_JING(int Nsnap,char *snapdir)
 	{
 		//~ nread=3*header.Np;
 		//~ read_fortran_record4_(&(Pdat.Vel[0][0]),&nread,&fileno);
-		read_part_arr_(Pdat.Vel,&header.Np,&fileno);
+	  nread=header.Np;
+		read_part_arr(Pdat.Vel,&nread,&fileno);
 	}
 	close_fortran_file_(&fileno);
 	return header.Np;
 }
 
-void load_particle_header(int Nsnap, char *SnapPath)
+void load_particle_header(HBTInt Nsnap, char *SnapPath)
 {	
 	float Hratio; //(Hz/H0)
 	float scale_reduced,scale0;//a,R0
@@ -162,7 +192,7 @@ void load_particle_header(int Nsnap, char *SnapPath)
 	int flag_endian,filestat,fileno=13;
 	
 	flag_endian=FLG_ENDIAN;		
-	sprintf(buf,"%s/pos%d.%04d",SnapPath,RUN_NUM,snaplist[Nsnap]);
+	sprintf(buf,"%s/pos%d.%04d",SnapPath,RUN_NUM,(int)snaplist[Nsnap]);
 	open_fortran_file_(buf,&fileno,&flag_endian,&filestat);
 	if(filestat)
 	{
@@ -172,11 +202,11 @@ void load_particle_header(int Nsnap, char *SnapPath)
 
 //	#pragma omp critical (fill_header)
 	{
-	read_part_header_(&header.Np,&header.ips,&header.ztp,&header.Omegat,&header.Lambdat,
+	read_part_header(&header.Np,&header.ips,&header.ztp,&header.Omegat,&header.Lambdat,
 						&header.rLbox,&header.xscale,&header.vscale,&fileno);
 	//~ printf("Np=%d,ips=%d,Omegat=%g,Lambdat=%g,Lbox=%g\nztp=%g,xscale=%g,vscale=%g\n",
 		//~ header.Np,header.ips,header.Omegat,header.Lambdat,header.rLbox,header.ztp,header.xscale,header.vscale);
-	if(header.Np!=NP_DM){fprintf(logfile,"error:particle number do not match(pos) %d\n",NP_DM);fflush(logfile);exit(1);}
+	if(header.Np!=NP_DM){fprintf(logfile,"error:particle number do not match(pos) "HBTIFMT"\n",header.Np);fflush(logfile);exit(1);}
 	}
 	close_fortran_file_(&fileno);
 
@@ -190,9 +220,10 @@ void load_particle_header(int Nsnap, char *SnapPath)
 	header.Omega0=OMEGA0;
 	header.OmegaLambda=OMEGAL0;	
 	scale0=1+Redshift_INI;//scale_INI=1,scale_reduced_INI=1./(1.+z_ini),so scale0=scale_INI/scale_reduce_INI;
-	header.vunit=100.*header.rLbox*Hratio*scale_reduced*scale_reduced*scale0;   /*vunit=100*L*R*(H*R)/(H0*R0)
-																				*      =100*L*(H/H0)*a*a*R0
-																				* where a=R/R0;         */
+	header.vunit=100.*header.rLbox*Hratio*scale_reduced*scale_reduced*scale0;   /*vunit=100*rLbox*R*(H*R)/(H0*R0)
+											  =L*H0*Hratio*R*R/R0 (H0=100 when length(L) in Mpc/h)
+										  *      =100*L*(H/H0)*a*a*R0
+										  * where a=R/R0;         */
 	header.Nsnap=Nsnap;
 }
 
@@ -205,7 +236,7 @@ void load_particle_header(int Nsnap, char *SnapPath)
  */
 void load_particle_data_bypart(HBTInt Nsnap, char *SnapPath, unsigned char loadflags)
 {
-	int i,j;
+	HBTInt i,j;
 	float Hratio; //(Hz/H0)
 	float scale_reduced,scale0;//a,R0
 	unsigned char flag_id,flag_pos,flag_vel;
@@ -267,9 +298,9 @@ void load_particle_data_bypart(HBTInt Nsnap, char *SnapPath, unsigned char loadf
 				Pdat.Vel[i][j]*=header.vunit;			//physical peculiar velocity in units of km/s
 
 }
-void load_particle_data(int Nsnap,char *SnapPath)
+void load_particle_data(HBTInt Nsnap,char *SnapPath)
 {
-	int i,j;
+	HBTInt i,j;
 	float Hratio; //(Hz/H0)
 	float scale_reduced,scale0;//a,R0
 //	#pragma omp parallel sections
@@ -317,41 +348,39 @@ void free_particle_data()
 	Pdat.Nsnap=-100;
 }
 #ifdef GRP_HBTFORMAT
-void load_group_catalogue(int Nsnap,CATALOGUE *Cat,char *GrpPath)
+void load_group_catalogue(HBTInt Nsnap,CATALOGUE *Cat,char *GrpPath)
 {
 	load_group_catalogue_HBT(Nsnap,Cat,GrpPath);	
 }
 #else
-void load_group_catalogue(int Nsnap,CATALOGUE *Cat,char *GrpPath)
+void load_group_catalogue(HBTInt Nsnap,CATALOGUE *Cat,char *GrpPath)
 {
   char buf[1024];
-  float b,header_arr[2];
-  int i,j,flag_endian,filestat,fileno=13;
+  float b;
+  HBTInt i,j;
+  int flag_endian,filestat,fileno=13;
   long int nread;
 	
 	flag_endian=FLG_ENDIAN;
-    sprintf(buf, "%s/fof.b20.%d.%04d",GrpPath,RUN_NUM,snaplist[Nsnap]);
+    sprintf(buf, "%s/fof.b20.%d.%04d",GrpPath,RUN_NUM,(int)snaplist[Nsnap]);
 	open_fortran_file_(buf,&fileno,&flag_endian,&filestat);
 	if(filestat)
 	{
 		fprintf(logfile,"Error opening file %s,error no. %d\n",buf,filestat);fflush(logfile);
 		exit(1);
 	}
-	nread=2;
-	read_fortran_record4_(header_arr,&nread,&fileno);	
-	b=header_arr[0];
-	Cat->Ngroups=*((int *)(header_arr+1));
+	read_group_header(&b,&Cat->Ngroups,&fileno);	
 
   Cat->Nids=0;
   
-  Cat->Len= mymalloc(sizeof(int)*Cat->Ngroups);
-  Cat->Offset=mymalloc(sizeof(int)*Cat->Ngroups);
+  Cat->Len= mymalloc(sizeof(HBTInt)*Cat->Ngroups);
+  Cat->Offset=mymalloc(sizeof(HBTInt)*Cat->Ngroups);
   Cat->HaloCen[0]=mymalloc(sizeof(float)*Cat->Ngroups);
   Cat->HaloCen[1]=mymalloc(sizeof(float)*Cat->Ngroups);
   Cat->HaloCen[2]=mymalloc(sizeof(float)*Cat->Ngroups);
   //~ Cat->HaloMask=mymalloc(sizeof(short)*NP_DM);
-  Cat->ID2Halo=mymalloc(sizeof(int)*NP_DM);
-  Cat->PIDorIndex=mymalloc(sizeof(int)*NP_DM);
+  Cat->ID2Halo=mymalloc(sizeof(HBTInt)*NP_DM);
+  Cat->PIDorIndex=mymalloc(sizeof(HBTInt)*NP_DM);
   
   nread=Cat->Ngroups;
   for(i=0;i<3;i++)
@@ -360,7 +389,7 @@ void load_group_catalogue(int Nsnap,CATALOGUE *Cat,char *GrpPath)
 for(i=0;i<Cat->Ngroups;i++)
   {  
     nread=1;
-	read_fortran_record4_(&Cat->Len[i],&nread,&fileno); 
+	read_fortran_record_HBTInt(&Cat->Len[i],&nread,&fileno); 
     Cat->HaloCen[0][i]*=BOXSIZE;
     Cat->HaloCen[1][i]*=BOXSIZE;
     Cat->HaloCen[2][i]*=BOXSIZE;
@@ -371,24 +400,24 @@ for(i=0;i<Cat->Ngroups;i++)
     {
     	if(Cat->Len[i]>Cat->Len[i-1])
     	{
-    	  fprintf(logfile,"wrong! in read_fof, %d, %d, %d\n",i,Cat->Len[i],Cat->Len[i-1]);fflush(logfile);
+    	  fprintf(logfile,"wrong! in read_fof, "HBTIFMT", "HBTIFMT", "HBTIFMT"\n",i,Cat->Len[i],Cat->Len[i-1]);fflush(logfile);
     	  exit(1);
     	}
     }
 	
     nread=Cat->Len[i];
-	read_fortran_record4_(Cat->PIDorIndex+Cat->Offset[i],&nread,&fileno); 
+	read_fortran_record_HBTInt(Cat->PIDorIndex+Cat->Offset[i],&nread,&fileno); 
   }
  
  close_fortran_file_(&fileno);
  
-  Cat->PIDorIndex=realloc(Cat->PIDorIndex,sizeof(int)*Cat->Nids);
-  fprintf(logfile,"Snap=%d SnapNum=%d  Ngroups=%d  Nids=%d b=%f\n",Nsnap,snaplist[Nsnap],Cat->Ngroups,Cat->Nids,b);
+  Cat->PIDorIndex=realloc(Cat->PIDorIndex,sizeof(HBTInt)*Cat->Nids);
+  fprintf(logfile,"Snap="HBTIFMT" SnapNum="HBTIFMT"  Ngroups="HBTIFMT"  Nids="HBTIFMT" b=%f\n",Nsnap,snaplist[Nsnap],Cat->Ngroups,Cat->Nids,b);
 
 	for(i=0;i<Cat->Nids;i++)
 	{
  	  if(Cat->PIDorIndex[i] == 0)
-		fprintf(logfile,"i=%d groupPID=%d\n", i, (int)Cat->PIDorIndex[i]);//check if PID begin with ID=1;
+		fprintf(logfile,"i="HBTIFMT" groupPID="HBTIFMT"\n", i, Cat->PIDorIndex[i]);//check if PID begin with ID=1;
 	#ifdef GRPINPUT_INDEX	
 	Cat->PIDorIndex[i]--;//change from [1,NP] to [0,NP-1] for index in C
 	#endif

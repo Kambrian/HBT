@@ -1,9 +1,11 @@
 #ifndef PARAM_FILE_INCLUDED	//to avoid multiple inclusion
 	
 	#define PERIODIC_BDR
+#ifndef DISABLE_HALO_PARA
 	#define HALO_PARA
+#endif
 	/*=========program IO params==========*/
-	#define ROOT_DIR    "/home/jvbq85/data/HBT/data/BJLF5"
+	#define ROOT_DIR    "/gpfs/data/jvbq85/HBT/data/BJLF5"
 	#define GASCAT_DIR  ROOT_DIR"/gascat"			//the output directory for gashalocat,gassubcat and gassrccat, this must be an existing directory
 	#define SUBCAT_DIR  ROOT_DIR"/subcat"			//the output directory for subcatalogues and srccatalogues, this must be an existing directory
 	//necessary sub-dirs: splitters,pro2dest,history

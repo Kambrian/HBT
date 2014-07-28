@@ -6,14 +6,15 @@ markers=['o--';'s--';'d--';'^--';'<--';'x--'];
 % markers=['.-';'.-';'.-';'.-';'.-';'.-'];
 colors=['r';'g';'b';'c';'m';'k'];
 
-Nsnap=61;RunNum='BJLGR';name='msfun';skip='';
+Nsnap=59;RunNum='HY3002Nd20012';name='msfun';skip='';
 virtype=0;
-% xref=logspace(10,14,5);
-xref=logspace(9.5,14,5);
+xref=logspace(11,14.5,5);
+% xref=logspace(7,11,5);
 
-outputdir=['/home/kam/Projects/HBT/code/data/show/massfun/'];
+outputdir=['/work/Projects/HBT/code/data/show/massfun/'];
 % datadir=['/mnt/A4700/data/',RunNum,'/subcat',skip,'/anal/massfun/'];
-datadir=['/mnt/charon/HBT/data/',RunNum,'/subcat',skip,'/anal/massfun/3Rvir/'];
+datadir=['/mnt/uv/HBT/data/',RunNum,'/subcat',skip,'/anal/massfun/'];
+% datadir=['/mnt/charon/HBT/data/',RunNum,'/subcat',skip,'/anal/massfun/1Rvir/'];
 [data,redshift]=read_massfun([datadir,'massfun_',num2str(Nsnap,'%03d'),'.',num2str(virtype,'%d')]);
 nfun=numel(data);
 
@@ -34,6 +35,7 @@ set(gcf,'DefaultLineMarkerSize',6);
 % yref=10^-3.2*(xref).^-1.9*10^20;plot(log10(xref),yref,'-k','linewidth',2,'displayname','Gao04');hold on;
 yref2=10^-3.03*(xref).^-1.9*10^20;plot(log10(xref),yref2,'-k','linewidth',2,'displayname','G10,z=0');hold on;
 % yref3=10^-4.15*(xref).^-1.8*10^20;plot(log10(xref),yref3,'-k','linewidth',2,'displayname','fit'); 
+% yref3=10^-6.7*(xref).^-1.62*10^20;plot(log10(xref),yref3,'--k','linewidth',2,'displayname','-1.62'); 
 
 for i=1:nfun
     mfun=data(i).mfunspec/Mhost(i);
@@ -52,11 +54,12 @@ set(gca,'yscale','log','yminortick','on');
 xlabel('$log(M_{sub}/(M_{\odot}/h)$)','interpreter','latex');
 ylabel('$dN/dM_{sub}/M_{host}\times(10^{10}M_{\odot}/h)^2$','interpreter','latex');
 hl=legend('show','location','southwest');set(hl,'interpreter','latex');
-title(['z=',num2str(redshift,'%2.1f')]);
-xlim([10,14.5]);
+% title(['z=',num2str(redshift,'%2.1f')]);
+title(RunNum);
+% xlim([10,14.5]);
 
 fname=[name,'_',RunNum,'S',num2str(Nsnap),'V',num2str(virtype)];
-% print('-depsc',[outputdir,fname,'.eps']);
+print('-depsc',[outputdir,fname,'.eps']);
 % hgsave([outputdir,fname,'.fig']);
 %% plot logspaced specific mass function
 figure;
@@ -107,8 +110,7 @@ set(gcf,'DefaultLineMarkerSize',6);
 
 % yref=1/0.9*10^-3.2*(xref).^-0.9*10^10;plot(log10(xref),yref,'-k','linewidth',2,'displayname','Gao04');hold on;
 yref2=1/0.9*10^-3.03*(xref).^-0.9*10^10;plot(log10(xref),yref2,'-k','linewidth',2,'displayname','G10,z=0');hold on;
-% yref3=1/0.9*10^-4.15*(xref).^-0.8*10^10;plot(log10(xref),yref3,'-g','line
-% width',2,'displayname','fit');hold on;
+yref3=1/0.9*10^-6.5*(xref).^-0.62*10^10;plot(log10(xref),yref3,'--k','linewidth',2,'displayname','-0.62');hold on;
 
 for i=1:nfun
     mfun=data(i).mfuncum/Mhost(i);

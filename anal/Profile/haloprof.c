@@ -1,6 +1,7 @@
 //use logarithmic radial bin
 //the result is no better than linear bin since inner bins have large fluctuation
 //perhaps better performance for req?
+//28-11-2013: extended to run without subcat.
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -28,15 +29,15 @@ LINKLIST ll;
 #define FIXGRID(x) linklist_round_gridid(x,NDIV)
 #endif
 CATALOGUE Cat;
+#ifndef WITHOUT_SUBCAT //to run without subcat
 SUBCATALOGUE SubCat;
-
 //~ #define SUBFIND_DIR "/home/kambrain/data/6402U100/subcatS"
-
 #ifdef SUBFIND_DIR
 extern void load_subfind_catalogue(int Nsnap,SUBCATALOGUE *SubCat,char *inputdir);	
 #define load_sub_catalogue load_subfind_catalogue
 #undef SUBCAT_DIR
 #define SUBCAT_DIR SUBFIND_DIR
+#endif
 #endif
 
 typedef struct 
@@ -102,7 +103,9 @@ HALOPROFILE *haloprof;
 
 	load_particle_data(Nsnap,SNAPSHOT_DIR);	
 	load_group_catalogue(Nsnap,&Cat,GRPCAT_DIR);
+#ifndef WITHOUT_SUBCAT
 	load_sub_catalogue(Nsnap,&SubCat,SUBCAT_DIR);
+#endif
 	fill_PIDHash();
 	fresh_ID2Index(&Cat,-1); 	//fofcat of JING's data are originally PIndex rather than PID
 	free_PIDHash();
@@ -128,9 +131,11 @@ HALOPROFILE *haloprof;
 	free(haloprof);
 
 	free_catalogue(&Cat);
+#ifndef WITHOUT_SUBCAT
 	#ifndef SUBFIND_DIR
 	erase_sub_catalogue(&SubCat);
 	#endif
+#endif
 return 0;
 }
 void halo_radius_eq_global(HALOPROFILE *haloprof)//consider improving accuracy by interpolation or fitting
@@ -229,8 +234,10 @@ void halo_bin(int grpid,HALOPROFILE *haloprof,float virialF[3])
 	np_this=np_other=np_back=0;
 	np_this_max=np_other_max=np_back_max=Cat.Len[grpid];
 	//cen=Pdat.Pos[SubCat.PSubArr[subid][0]];
-	center_of_mass(haloprof->CoM,Cat.PIDorIndex+Cat.Offset[grpid],Cat.Len[grpid],Pdat.Pos);
+	center_of_mass(cen,Cat.PIDorIndex+Cat.Offset[grpid],Cat.Len[grpid],Pdat.Pos);
+	for(i=0;i<3;i++) haloprof->CoM[i]=cen[i];
 	//~ cen=haloprof->CoM;
+#ifndef WITHOUT_SUBCAT
 	for(i=0;i<3;i++)
 	haloprof->Cen[i]=SubCat.Property[SubCat.GrpOffset_Sub[grpid]].CoM[i];
 	if(SubCat.SubLen[SubCat.GrpOffset_Sub[grpid]])
@@ -245,6 +252,12 @@ void halo_bin(int grpid,HALOPROFILE *haloprof,float virialF[3])
 		cen[i]=haloprof->CoM[i];
 		haloprof->flag_fakehalo=1;
 	}
+#else
+	moving_center(Cat.PIDorIndex+Cat.Offset[grpid],Cat.Len[grpid],cen);
+	for(i=0;i<3;i++)
+	  haloprof->Cen[i]=cen[i];
+	haloprof->flag_fakehalo=1;//not test, always set to 1
+#endif
 	haloprof->rvir=comoving_virial_radius(Cat.Len[grpid]);
 	rmax=haloprof->rvir*Factor_relax;	
 	for(i=0;i<3;i++)
@@ -568,7 +581,6 @@ void save_halos_prof(HALOPROFILE *haloprof,int Nsubs,int Nsnap,char *outputdir)
 	}
 	fclose(fp);
 }
-
 
 /*========to be improved======
  * interpolation or fitting to improve accuracy on radius

@@ -26,14 +26,14 @@ int main(int argc, char** argv)
 	Nsnap=atoi(argv[1]);
 	
 	load_group_catalogue(Nsnap,&Cat,GRPCAT_DIR);
-	//~ load_sub_catalogue(Nsnap,&SubCat,SUBCAT_DIR);
+ load_sub_catalogue(Nsnap,&SubCat,SUBCAT_DIR);
 	//~ load_src_catalogue(Nsnap,&SrcCat,SUBCAT_DIR);
-	//~ if(Nsnap<MaxSnap-1)
-	//~ load_pro2dest(Nsnap,&pro2dest,&Nsubs,SUBCAT_DIR);
-	//~ load_sp2pro(Nsnap,&Npro,&Nsplitter,&sp2pro, SUBCAT_DIR);
+	if(Nsnap<MaxSnap-1)
+ load_pro2dest(Nsnap,&pro2dest,&Nsubs,SUBCAT_DIR);
+ load_sp2pro(Nsnap,&Npro,&Nsplitter,&sp2pro, SUBCAT_DIR);
 	load_particle_data(Nsnap,SNAPSHOT_DIR);
 	fill_PIDHash();
-	fresh_ID2Index(&Cat,-1); 	fresh_ID2Index(&SubCat,-2);	fresh_ID2Index(&SrcCat,-3);
+	fresh_ID2Index(&Cat,-1); 	fresh_ID2Index(&SubCat,-2);	//fresh_ID2Index(&SrcCat,-3);
 	free_PIDHash();
 	HBTInt i,j=0,k=0;
 	for(i=0;i<SubCat.Ngroups;i++)

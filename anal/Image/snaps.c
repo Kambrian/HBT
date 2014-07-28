@@ -9,8 +9,9 @@
 #include "iovars.h"
 #include "proto.h"
 
-#define SUBFIND_DIR "/home/jvbq85/data/HBT/data/AqE5W/subfind"
-#define OUTDIR "/home/jvbq85/data/HBT/data/AqE5W/subcat/anal/subfind"
+#define NO_SUBCAT
+// #define SUBFIND_DIR "/home/jvbq85/data/HBT/data/AqE5W/subfind"
+// #define OUTDIR "/home/jvbq85/data/HBT/data/AqE5W/subcat/anal/subfind"
 
 #ifdef SUBFIND_DIR
 extern void load_subfind_catalogue(int Nsnap,SUBCATALOGUE *SubCat,char *inputdir);	
@@ -20,13 +21,15 @@ extern void load_subfind_catalogue(int Nsnap,SUBCATALOGUE *SubCat,char *inputdir
 #define SUBCAT_DIR SUBFIND_DIR
 #endif
 
-#define NGRID 800
+#define NGRID 500
 	int mapxy[NGRID][NGRID]={0},mapxz[NGRID][NGRID]={0},mapyz[NGRID][NGRID]={0};
 
 int main(int argc,char **argv)
 {
 	CATALOGUE Cat;
+#ifndef NO_SUBCAT
 	SUBCATALOGUE SubCat;
+#endif
 	int SnapLoad,SnapPlot,i,j,pid,subid,grpid;
 	FILE *fp,*fpr,*fpv;
 	char buf[1024];
@@ -56,10 +59,15 @@ int main(int argc,char **argv)
 	}
 
 	load_group_catalogue(SnapLoad,&Cat,GRPCAT_DIR);
+#ifndef NO_SUBCAT
 	load_sub_catalogue(SnapLoad,&SubCat,SUBCAT_DIR);
+#endif
 	load_particle_data(SnapPlot,SNAPSHOT_DIR);
 	fill_PIDHash();
-	fresh_ID2Index(&Cat,-1); 	fresh_ID2Index(&SubCat,-2);	
+	fresh_ID2Index(&Cat,-1); 	
+#ifndef NO_SUBCAT
+	fresh_ID2Index(&SubCat,-2);	
+#endif
 	free_PIDHash();
 	
 	PIndex=Cat.PIDorIndex+Cat.Offset[grpid];
@@ -129,6 +137,7 @@ int main(int argc,char **argv)
 	}
 	fclose(fp);
 	
+#ifndef NO_SUBCAT	
 	//===========most bound===============//
 	sprintf(buf,"%s/subcenmap_%03d_%d.%03d",outputdir,SnapLoad,grpid,SnapPlot);
 	myfopen(fp,buf,"w");
@@ -219,6 +228,7 @@ int main(int argc,char **argv)
 	}
 	fclose(fp);
 	fclose(fpr);
+#endif
 				
 return 0;
 }

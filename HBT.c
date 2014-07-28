@@ -91,15 +91,16 @@ omp_set_nested(0);
 	sprintf(buf,"%s/VER%s",outputdir,getenv("HBT_VERSION"));
 	if((VERFILE=fopen(buf,"a"))==NULL)	{fprintf(stderr,"Error opening file %s\n",buf);exit(1);}
 	fclose(VERFILE);
-		
+#ifndef UNBIND_FOF		
 	if(SnapRange[0]>IniSnap)//pick up a previous subcat to continue,assign snapnum first
 	{		
-			fprintf(logfile,"\nrestarting program %s at %s from Snapshot %d\n",argv[0],ctime(&time_start),SnapRange[0]);
+			fprintf(logfile,"\nrestarting program %s at %s from Snapshot "HBTIFMT"\n",argv[0],ctime(&time_start),SnapRange[0]);
 			SnapshotNum=SnapRange[0]-1;
 			load_sub_catalogue(SnapshotNum,&SubCatB,outputdir);
 			load_src_catalogue(SnapshotNum,&SrcCatB,outputdir);
 	}
 	else//forge SnapshotNum=-1
+#endif	  
 	{	
 			SubCatB.Ngroups=0;SubCatB.GrpOffset_Sub=NULL;SubCatB.GrpLen_Sub=NULL;
 			SubCatB.Nsubs=0;	create_sub_cat(&SubCatB);
@@ -138,7 +139,7 @@ for(SnapshotNum=SnapRange[0];SnapshotNum<=SnapRange[1];SnapshotNum++)
 	#ifdef HALO_PARA
 	#pragma omp single
 	#endif
-	fprintf(logfile,"DeathSrc=%d\n",SrcCatB.NDeathSp);fflush(logfile);
+	fprintf(logfile,"DeathSrc="HBTIFMT"\n",SrcCatB.NDeathSp);fflush(logfile);
 	
 	PARAmake_srcsub(&SubCatA,&SubCatB,&SrcCatA,&SrcCatB);
 	/*=update sub_hierarchy to mark cross-out and kick out dead sub , 
@@ -258,7 +259,7 @@ for(SnapshotNum=SnapRange[0];SnapshotNum<=SnapRange[1];SnapshotNum++)
 				#ifdef HALO_PARA
 				#pragma omp critical (log_write)
 				#endif
-				fprintf(logfile,"%d\t",desID);
+				fprintf(logfile,""HBTIFMT"\t",desID);
 				restore_mainsub(&SubCatA,&SubCatB,GrpChain[0].ProSubID,subhaloid);
 				migrate_src(&SrcCatA,&SrcCatB,GrpChain[0].ProSubID,subhaloid);
 				Nfm++;				
@@ -287,7 +288,7 @@ for(SnapshotNum=SnapRange[0];SnapshotNum<=SnapRange[1];SnapshotNum++)
 	free(CatB.HaloMask);
 	free(CatB.HaloMaskSrc);
 	if(0==CatB.Ngroups){ Nff=0;Nfm=0;} //in case the unexecuted parallel loop make Nff and Nfm uninitialized
-	fprintf(logfile,"\nNff=%d\tNfm=%d\n",Nff,Nfm);fflush(logfile);
+	fprintf(logfile,"\nNff="HBTIFMT"\tNfm="HBTIFMT"\n",Nff,Nfm);fflush(logfile);
 	/*=================sort and copy quasi-halos=======================*/
 	if((GrpLen_Sub=SubCatB.NQuasi))//ok, we have quasi-halos
 	{
@@ -337,8 +338,10 @@ fprintf(logfile,"Program %s Finished in %ld minutes (or %ld hours) (or %ld secon
 fclose(logfile);
 
 //remove write permissions from all to protect the files
+#ifndef UNBIND_FOF
 sprintf(buf,"chmod a-w %s/* -R",SUBCAT_DIR);
 system(buf);
+#endif
 //create additional directories for future use
 sprintf(buf,"%s/profile",SUBCAT_DIR); //density profile dir, not used by HBT, to be used by post-processing
 mkdir(buf,0755);

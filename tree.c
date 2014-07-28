@@ -181,7 +181,7 @@ Nodes_base->sons[i] = -1;
 			if(NumNids >= MaxNids)
 			{
 			  fprintf(logfile,"maximum number %zd of tree-nodes reached.\n", MaxNodes);
-			  fprintf(logfile,"for particle %d\n", i);fflush(logfile);
+			  fprintf(logfile,"for particle "HBTIFMT"\n", i);fflush(logfile);
 			  exit(1);
 			}
 			for(sub=0;sub<8;sub++)//initialize new node

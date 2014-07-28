@@ -1,8 +1,8 @@
 #ifndef PARAM_FILE_INCLUDED	//to avoid multiple inclusion
 	
 	/*=========program IO params==========*/
-	#define GASCAT_DIR  "/home/jvbq85/data/HBT/data/AqA4/gascat"			//the output directory for gashalocat,gassubcat and gassrccat, this must be an existing directory
-	#define SUBCAT_DIR  "/home/jvbq85/data/HBT/data/AqA4/subcat"			//the output directory for subcatalogues and srccatalogues, this must be an existing directory
+	#define GASCAT_DIR  "/gpfs/data/jvbq85/HBT/data/AqA4/gascat"			//the output directory for gashalocat,gassubcat and gassrccat, this must be an existing directory
+	#define SUBCAT_DIR  "/gpfs/data/jvbq85/HBT/data/AqA4/subcat"			//the output directory for subcatalogues and srccatalogues, this must be an existing directory
 	//necessary sub-dirs: splitters,pro2dest,history
 	#define GRPCAT_DIR  "/gpfs/data/aquarius/halo_data/Aq-A/4"				//the input directory for GrpCatalogues
 	#define  SNAPSHOT_DIR  "/home/sgnworkshop/DATA/aquarius/data/A-4"					//the input directory for simulation snapshots

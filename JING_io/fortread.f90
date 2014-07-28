@@ -47,16 +47,40 @@ integer*4 fileno
 close(fileno)
 end subroutine 
 
-subroutine read_part_header(np,ips,ztp,omgt,lbdt,boxsize,xscale,vscale,fileno)
+subroutine read_group_header_int4(b,ngrp,fileno)
+implicit none
+real*4 b
+integer*4 ngrp,fileno
+read(fileno) b,ngrp
+end subroutine
+
+subroutine read_group_header_int8(b,ngrp,fileno)
+implicit none
+real*4 b
+integer*8 ngrp
+integer*4 fileno
+read(fileno) b,ngrp
+end subroutine
+
+subroutine read_part_header_int4(np,ips,ztp,omgt,lbdt,boxsize,xscale,vscale,fileno)
 implicit none
 INTEGER*4 ::np,ips,fileno
 real*4::ztp,omgt,lbdt,boxsize,xscale,vscale
 read(fileno) np,ips,ztp,omgt,lbdt,boxsize,xscale,vscale
-end subroutine read_part_header
+end subroutine read_part_header_int4
 
-subroutine read_part_arr(part_arr,np,fileno)
+subroutine read_part_header_int8(np,ips,ztp,omgt,lbdt,boxsize,xscale,vscale,fileno)
 implicit none
-integer*4 np,i,j
+INTEGER*8 ::np,ips
+integer*4 fileno
+real*4::ztp,omgt,lbdt,boxsize,xscale,vscale
+read(fileno) np,ips,ztp,omgt,lbdt,boxsize,xscale,vscale
+end subroutine read_part_header_int8
+
+subroutine read_part_arr_imajor(part_arr,np,fileno)
+!arr stored as arr(n,3) on disk, i.e., ID varies first, then dimension
+implicit none
+integer*8 np
 integer*4 fileno
 real*4,intent(inout):: part_arr(3,np)
 real*4,allocatable:: parr(:,:)
@@ -68,6 +92,15 @@ part_arr=transpose(parr)
 deallocate(parr)
 !read(fileno) ((part_arr(i,j),j=1,np),i=1,3)
 end subroutine 
+
+subroutine read_part_arr_xmajor(part_arr,np,fileno)
+!arr stored as arr(3,n) on disk, i.e., dimension varies first, then particle 
+implicit none
+integer*8 np
+integer*4 fileno
+real*4,intent(inout):: part_arr(3,np)
+read(fileno) part_arr
+end subroutine
 
 subroutine read_pos_file(filename,bigendian_flag,error_stat,header,posarr,np)
 implicit none

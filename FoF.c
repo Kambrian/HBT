@@ -26,12 +26,24 @@ HBTReal b,r;
 mkdir(GRPCAT_DIR,0755);
 logfile=stdout;//redirect BT routines' log info to standard output
 
+if(argc<2) 
+{
+  printf("Usage: %s [SnapshotNum]\nNow exiting.", argv[0]);
+  exit(1);
+}
 Nsnap=atoi(argv[1]);
 //b=atof(argv[2]);
 b=0.2; //linking length
 
 load_particle_data_bypart(Nsnap,SNAPSHOT_DIR,FLAG_LOAD_POS);//only load position
-r=b*pow(MP_DM/(3*HUBBLE0*HUBBLE0/8./M_PI/G*header.Omega0),1.0/3.0);
+#ifdef PERIODIC_BDR
+#pragma message "periodic"
+r=b*BOXSIZE/cbrt(NP_DM);
+#elif NP_DM==NP_GAS||NP_GAS==0
+r=b*pow((MP_DM+MP_GAS)/(3*HUBBLE0*HUBBLE0/8./M_PI/G*header.Omega0),1.0/3.0);
+#else
+#error	 "cannot automatically determine linking length"
+#endif
 build_group_catalogue(&Cat,r);
 free_particle_data();
 

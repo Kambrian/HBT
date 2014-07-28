@@ -11,7 +11,7 @@ typedef float IDatReal;
 
 /*datatype for input particle IDs*/
 #ifdef INPUT_INT8
-typedef long long IDatInt;
+typedef long IDatInt;
 #else
 #ifdef INPUT_UINT4
 typedef unsigned IDatInt;
@@ -29,7 +29,7 @@ typedef float HBTReal;
 
 // the user should ganrantee that HBTInt can at least hold NP_DM (when HBTPID_RANKSTYLE is defined)
 #ifdef HBT_INT8
-typedef long long HBTInt;  
+typedef long HBTInt;  
 #define HBTIFMT "%lld"
 #else 
 typedef int HBTInt;

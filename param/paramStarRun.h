@@ -1,7 +1,9 @@
 #ifndef PARAM_FILE_INCLUDED	//to avoid multiple inclusion
 	
 	#define PERIODIC_BDR
+#ifndef DISABLE_HALO_PARA
 	#define HALO_PARA
+#endif
 	/*=========program IO params==========*/
 	#define ROOTDIR "/home/jxhan/data/starrun"
 	#define SUBCAT_DIR  ROOTDIR "/subcat"			//the output directory for subcatalogues and srccatalogues, this must be an existing directory

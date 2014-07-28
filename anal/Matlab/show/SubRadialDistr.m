@@ -5,15 +5,15 @@ outputdir='/home/kam/Projects/HBT/code/data/show/massfun/resim';
 % outputdir='/home/kam/Documents/research/Galaxy/code/BoundTracing/data/show/massfun/resim';
 addpath(genpath('../post'));
 
-virtype=0;
+virtype=1;
 rmin=0;rmax=5;
-% Nsnap=162;grpid=0;
-% RunName='AqA2';softeninghalo=4.8e-5;mp=1.000007e-06;
+Nsnap=162;grpid=0;
+RunName='AqA2';softeninghalo=4.8e-5;mp=1.000007e-06;
 % softeninghalo=1.5;
-Nsnap=1023;grpid=0;
-RunName='AqA4';softeninghalo=0.25;mp=2.8679e-5;
+% Nsnap=1023;grpid=0;
+% RunName='AqA4';softeninghalo=0.25;mp=2.8679e-5;
 
-scaleF_file=['/mnt/charon/HBT/data/',RunName,'/subcat/Redshift.dat'];
+scaleF_file=['/mnt/charon/HBT/data/',RunName,'/subcatmore/Redshift.dat'];
 % scaleF_file=['/mnt/A4700/data/',RunName,'/subcat/Redshift.dat'];
 a=load_scaleF(scaleF_file);
 z=1/a(Nsnap+1)-1;
@@ -21,23 +21,24 @@ z=1/a(Nsnap+1)-1;
 % mp=2.8679e-5;%AqA4
 
 % datadir=['/mnt/A4700/data/',RunName,'/subcat/anal/massfun/'];
-datadir=['/mnt/charon/HBT/data/',RunName,'/subcat/anal/massfun/'];
+datadir=['/mnt/charon/HBT/data/',RunName,'/subcatmore/anal/massfun/'];
 [Mlist1,M1,R1,Rlist1]=Msublist_in_radii(datadir,virtype,Nsnap,grpid,rmin,rmax,'bindata','');
 % datadir=['/mnt/A4700/data/',RunName,'/subcatS/anal/massfun/'];
-% % datadir=['/mnt/charon/HBT/data/',RunName,'/subcatmore/anal/subfind/massfun/'];
-% [Mlist2,M2,R2,Rlist2]=Msublist_in_radii(datadir,virtype,Nsnap,grpid,rmin,rmax,'bindata','');
+datadir=['/mnt/charon/HBT/data/',RunName,'/subcatmore/anal/subfind/massfun/'];
+[Mlist2,M2,R2,Rlist2]=Msublist_in_radii(datadir,virtype,Nsnap,grpid,rmin,rmax,'bindata','');
 %%
-% datadir=['/mnt/charon/HBT/data/',RunName,'/subcat/profile/logbin/'];
-datadir=['/mnt/A4700/data/',RunName,'/subcat/profile/logbin/'];
+datadir=['/mnt/charon/HBT/data/',RunName,'/subcatmore/profile/logbin/'];
+% datadir=['/mnt/A4700/data/',RunName,'/subcat/profile/logbin/'];
 halo=readhalo_size(datadir,Nsnap,'halo');
 haloprof=readhalo_prof_single(datadir,Nsnap,'halo',halo,grpid+1);
 vs=diff(logspace(log10(max(softeninghalo,halo.rmax(grpid+1)*1e-2)),log10(halo.rmax(grpid+1)),halo.nbin(grpid+1)+1).^3)';
 rho=(haloprof.ns+haloprof.no+haloprof.nb)./vs;
 r=haloprof.rs;
+erho=sqrt(rho)./sqrt(vs);
 %%
 % Mass Profile
-myfigure;
-% h1=loglog(r/R1,rho/(M1/mp/R1^3),'k-','displayname','Halo'); hold on;
+% myfigure;
+h1=loglog(r/R1,rho/(M1/mp/R1^3),'k-','displayname','Halo'); hold on;
 
 nbin=15;
 nmin=30;

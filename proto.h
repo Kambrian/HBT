@@ -56,6 +56,7 @@ extern void load_group_catalogue(HBTInt Nsnap,CATALOGUE *Cat,char *GrpPath);//th
 extern void load_group_catalogue_millimill(HBTInt Nsnap,CATALOGUE *Cat,char *GrpPath);//even older format, used by MilliMillennium
 extern void load_group_catalogue_v2(HBTInt Nsnap,CATALOGUE *Cat,char *GrpPath);//old format
 extern void load_group_catalogue_v3(HBTInt Nsnap,CATALOGUE *Cat,char *GrpPath);//gadget-3 format
+extern void load_group_catalogue_v4(HBTInt Nsnap,CATALOGUE *Cat,char *GrpPath);//gadget-4 format
 extern void free_catalogue(CATALOGUE *A);
 //sub_IO.c
 extern void complete_N_save(SUBCATALOGUE *SubCatB,SRCCATALOGUE *SrcCatB,HBTInt SnapshotNum,char *outputdir);
@@ -118,7 +119,7 @@ extern void mask_mainsrc(CATALOGUE *CatB,SRCCATALOGUE *SrcCatB,HBTInt desID,HBTI
 extern void restore_mainsub(SUBCATALOGUE *SubCatA,SUBCATALOGUE *SubCatB,HBTInt proSubID,HBTInt desSubID);
 extern void narrow_srccat(SRCCATALOGUE *SrcCat,SUBCATALOGUE *SubCat, HBTInt subid);
 extern void PARAinit_mask(CATALOGUE *Cat,HBTInt mtype);
-extern void mask_src_recursive(HBTInt subid,SUBCATALOGUE *SubCat, SRCCATALOGUE *SrcCat,short *HaloMaskSrc);
+extern void mask_src_recursive(HBTInt subid,SUBCATALOGUE *SubCat, SRCCATALOGUE *SrcCat,char *HaloMaskSrc);
 //tree.c
 extern void update_internal_nodes(HBTInt no,HBTInt sib,double len,HBTInt * PIndex,HBTReal PPos[][3]);
 extern HBTInt maketree(HBTInt halolen,HBTInt * PIndex,HBTReal PPos[][3]);

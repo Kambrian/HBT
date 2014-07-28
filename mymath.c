@@ -213,7 +213,7 @@ void *mymalloc(size_t n)
 	if(n)
 	{
 		if(!(mem=malloc(n)))
-		{fprintf(logfile,"failed to allocate memory for %u bytes.\n",(unsigned) n);fflush(logfile);
+		{fprintf(logfile,"failed to allocate memory for %zd bytes.\n", n);fflush(logfile);
 		exit(1);
 		}
 	}
@@ -542,20 +542,17 @@ HBTInt * linklist_search_sphere(LINKLIST *ll, HBTReal radius, HBTReal searchcent
 	{
 	subbox_grid[i][0]=floor((searchcenter[i]-radius-ll->range[i][0])/ll->step[i]);
 	subbox_grid[i][1]=floor((searchcenter[i]+radius-ll->range[i][0])/ll->step[i]);
-	#ifndef PERIODIC_BDR
+#ifndef PERIODIC_BDR //do not fix if periodic, since the search sphere is allowed to overflow the box in periodic case.
 	subbox_grid[i][0]=linklist_fix_gridid(subbox_grid[i][0],ll);
-	subbox_grid[i][0]=linklist_fix_gridid(subbox_grid[i][0],ll);
-	#endif
+	subbox_grid[i][1]=linklist_fix_gridid(subbox_grid[i][1],ll);
+#endif	
 	}
 	for(i=subbox_grid[0][0];i<subbox_grid[0][1]+1;i++)
 		for(j=subbox_grid[1][0];j<subbox_grid[1][1]+1;j++)
 			for(k=subbox_grid[2][0];k<subbox_grid[2][1]+1;k++)
 			{
-				#ifdef PERIODIC_BDR
-				pid=linklist_get_hoc_safe(ll,i,j,k);
-				#else
-				pid=linklist_get_hoc(ll,i,j,k);
-				#endif
+				pid=linklist_get_hoc_safe(ll,i,j,k); //in case the grid-id is out of box, in the periodic case
+// 				pid=linklist_get_hoc(ll,i,j,k);
 				while(pid>=0)
 				{
 					dr=distance(ll->GetPos(pid,ll->PosData),searchcenter);
@@ -574,4 +571,90 @@ HBTInt * linklist_search_sphere(LINKLIST *ll, HBTReal radius, HBTReal searchcent
 			}
 	*N_max_and_found=nfound;		
 	return PIDfound;		
+}
+
+
+
+void av_center(int *Arr, int Np, HBTReal CoM[3])
+{
+	int i,j;
+	double com[3]={0.};
+	for(i=0;i<Np;i++)
+	{
+		for(j=0;j<3;j++)
+			com[j]+=Pdat.Pos[Arr[i]][j];
+	}
+	for(j=0;j<3;j++)
+			CoM[j]=com[j]/(double)Np;
+}
+
+#define RCONTRACT 0.8
+#define RTOLERATE 4
+#define NCoMMin 10
+
+void moving_center(int *Arr, int Np, HBTReal CoM[3])
+{
+	int i,j,Ncore,*ArrNew,*ArrOld;
+	HBTReal *r, rmax, Cen[3];
+	
+	ArrOld=mymalloc(sizeof(int)*Np);
+	ArrNew=mymalloc(sizeof(int)*Np);
+	r=mymalloc(sizeof(HBTReal)*Np);
+	rmax=0;
+	
+	/*clean the data for low-resolution particles, meant for AHF*/
+	Ncore=0;
+	for(i=0;i<Np;i++)
+	{
+		if(Arr[i]>=0&&Arr[i]<NP_DM)
+		{
+			ArrOld[Ncore]=Arr[i];
+			Ncore++;
+		}
+	}
+	
+	av_center(ArrOld,Ncore,Cen); //init Cen
+
+	for(i=0;i<Ncore;i++)//init rmax
+	{
+		r[i]=distance(Pdat.Pos[ArrOld[i]], Cen);
+		if(r[i]>rmax) rmax=r[i];
+	}
+	rmax*=RCONTRACT; //contract
+	for(i=0,j=0;i<Ncore;i++) 
+	{
+		if(r[i]<rmax)
+		{
+			ArrNew[j]=ArrOld[i];
+			j++;
+		}
+	}
+	free(r);
+	Ncore=j; //contracted
+	av_center(ArrNew,Ncore,CoM); //new CoM
+	while(distance(CoM,Cen)>RTOLERATE*SofteningHalo)
+	{
+		for(i=0;i<Ncore;i++)
+			ArrOld[i]=ArrNew[i];
+		for(i=0;i<3;i++)
+			Cen[i]=CoM[i];
+		rmax*=RCONTRACT;
+		for(i=0,j=0;i<Ncore;i++)
+		{
+			if(distance(Pdat.Pos[ArrOld[i]], Cen)<rmax)
+			{
+				ArrNew[j]=ArrOld[i];
+				j++;
+			}
+		}
+		Ncore=j;
+		if(Ncore<NCoMMin)
+		{
+			printf("warning: CoM has not converged for mass=%d\n", Np);
+			break;
+		}
+		av_center(ArrNew,Ncore,CoM);
+	}	
+	free(ArrNew);
+	free(ArrOld);
 }

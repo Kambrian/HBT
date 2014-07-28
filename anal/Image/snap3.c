@@ -10,8 +10,8 @@
 #include "iovars.h"
 #include "proto.h"
 
-#define SUBFIND_DIR "/home/jvbq85/data/HBT/data/AqE3W/subfind"
-#define OUTDIR "/home/jvbq85/data/HBT/data/AqE3W/subcat/anal/subfind"
+// #define SUBFIND_DIR "/home/jvbq85/data/HBT/data/AqE3W/subfind"
+// #define OUTDIR "/home/jvbq85/data/HBT/data/AqE3W/subcat/anal/subfind"
 
 #ifdef SUBFIND_DIR
 extern void load_subfind_catalogue(int Nsnap,SUBCATALOGUE *SubCat,char *inputdir);	
@@ -66,7 +66,9 @@ int main(int argc,char **argv)
 	load_group_catalogue(SnapLoad,&Cat,GRPCAT_DIR);
 	load_sub_catalogue(SnapLoad,&SubCat,SUBCAT_DIR);
 	load_particle_data(SnapPlot,SNAPSHOT_DIR);
+	fill_PIDHash();
 	fresh_ID2Index(&Cat,-1); 	fresh_ID2Index(&SubCat,-2);	
+	free_PIDHash();
 	
 	PIndex=Cat.PIDorIndex+Cat.Offset[grpid];
 	mapxyz=mymalloc(sizeof(float)*NGRID*NGRID*NGRID);

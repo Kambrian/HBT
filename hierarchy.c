@@ -308,7 +308,7 @@ void PARAsplit_srccat(CATALOGUE* Cat,SRCCATALOGUE *SrcCat, HBTInt SnapshotNum)
 					Ncands++;
 					if(Ncands==maxcands)
 					{
-						fprintf(logfile,"maxcands>%d,proID=%d,proLen=%d\n",maxcands,proID,SrcCat->SubLen[proID]);fflush(logfile);
+						fprintf(logfile,"maxcands>"HBTIFMT",proID="HBTIFMT",proLen="HBTIFMT"\n",maxcands,proID,SrcCat->SubLen[proID]);fflush(logfile);
 						maxcands*=2;
 						CatSplArr[proID].SubSplArr=realloc(CatSplArr[proID].SubSplArr,sizeof(struct cand_data)*maxcands);
 					}
@@ -367,7 +367,7 @@ void PARAsplit_srccat(CATALOGUE* Cat,SRCCATALOGUE *SrcCat, HBTInt SnapshotNum)
 		#pragma omp single
 		#endif
 		{
-		//~ printf("splitters: %d\n",Nsplitter);
+		//~ printf("splitters: "HBTIFMT"\n",Nsplitter);
 		//fill up splitters into subcattmp and halochains
 		if(0==SrcCat->Nsubs)
 		{
@@ -375,7 +375,7 @@ void PARAsplit_srccat(CATALOGUE* Cat,SRCCATALOGUE *SrcCat, HBTInt SnapshotNum)
 			Nsplitter=0;
 		}//in case the un-executed reduction clause make Ndeathsp and Nsplitter uninitialized 
 		SrcCat->NDeathSp=Ndeathsp;
-		sprintf(buf, "%s/splitters/sp2pro_%03d",SUBCAT_DIR,SnapshotNum);
+		sprintf(buf, "%s/splitters/sp2pro_%03d",SUBCAT_DIR,(int)SnapshotNum);
 		myfopen(fpsp,buf,"w");
 		fwrite(&Nsplitter,sizeof(HBTInt),1,fpsp);
 		fwrite(&SrcCat->Nsubs,sizeof(HBTInt),1,fpsp);
@@ -408,7 +408,7 @@ void PARAsplit_srccat(CATALOGUE* Cat,SRCCATALOGUE *SrcCat, HBTInt SnapshotNum)
 				}
 			}
 		}
-		if(splid!=SrcCat->Nsubs){ fprintf(logfile,"error:splid and Nsubs mismatch:%d,%d\n",splid,SrcCat->Nsubs);exit(1);}
+		if(splid!=SrcCat->Nsubs){ fprintf(logfile,"error:splid and Nsubs mismatch:"HBTIFMT","HBTIFMT"\n",splid,SrcCat->Nsubs);exit(1);}
 		}
 		fclose(fpsp);
 		for(proID=0;proID<Nsubs_old;proID++)
@@ -550,7 +550,7 @@ void mask_mainsub(CATALOGUE *CatB,SUBCATALOGUE *SubCatB,HBTInt proSubID,HBTInt d
 		}
 		else if(j<SubCatB->SubLen[desSubID])//particles masked-out by other halos? strictly not expected since split_srccat has restricted all subs's partilces to be inside their host halo
 		{
-			fprintf(logfile,"error: Mask Fof len mismatch! \n for desID=%d\n,remained=%d,expected=%d",desID,j,SubCatB->SubLen[desSubID]);fflush(logfile);
+			fprintf(logfile,"error: Mask Fof len mismatch! \n for desID="HBTIFMT"\n,remained="HBTIFMT",expected="HBTIFMT"",desID,j,SubCatB->SubLen[desSubID]);fflush(logfile);
 			exit(1);	
 		}	
 	}
@@ -619,7 +619,7 @@ void narrow_srccat(SRCCATALOGUE *SrcCat,SUBCATALOGUE *SubCat, HBTInt subid)
 	else if(SubCat->SubLen[subid]>SrcCat->SubLen[subid])//over-growth or merger, update Src and reset Src2
 	{
 		if(SubCat->SubLen[subid]>1.5*SrcCat->SubLen[subid]&&SubCat->SubLen[subid]>400)//record major merger (m/M>1/2)
-		fprintf(logfile,"%d:(%d, %d),%d\n",subid,SrcCat->SubLen[subid],SrcCat->SubLen2[subid],SubCat->SubLen[subid]);
+		fprintf(logfile,""HBTIFMT":("HBTIFMT", "HBTIFMT"),"HBTIFMT"\n",subid,SrcCat->SubLen[subid],SrcCat->SubLen2[subid],SubCat->SubLen[subid]);
 		SrcCat->SubLen[subid]=SubCat->SubLen[subid];
 		free(SrcCat->PSubArr[subid]);
 		SrcCat->PSubArr[subid]=mymalloc(sizeof(HBTInt)*SubCat->SubLen[subid]);
@@ -673,8 +673,8 @@ void PARAinit_mask(CATALOGUE *Cat,HBTInt mtype)
 	{
 		#pragma omp single
 		{
-		Cat->HaloMask=mymalloc(sizeof(short)*NP_DM);
-		Cat->HaloMaskSrc=mymalloc(sizeof(short)*NP_DM);
+		Cat->HaloMask=mymalloc(sizeof(char)*NP_DM);
+		Cat->HaloMaskSrc=mymalloc(sizeof(char)*NP_DM);
 		}
 		#pragma omp for 
 		for(i=0;i<NP_DM;i++)
@@ -686,7 +686,7 @@ void PARAinit_mask(CATALOGUE *Cat,HBTInt mtype)
 	else if(mtype==1)			//init sub
 	{
 		#pragma omp single
-		Cat->HaloMask=mymalloc(sizeof(short)*NP_DM);
+		Cat->HaloMask=mymalloc(sizeof(char)*NP_DM);
 		#pragma omp for
 		for(i=0;i<NP_DM;i++)
 			Cat->HaloMask[i]=1;
@@ -694,7 +694,7 @@ void PARAinit_mask(CATALOGUE *Cat,HBTInt mtype)
 	else if(mtype==2)		//init src
 	{
 		#pragma omp single
-		Cat->HaloMaskSrc=mymalloc(sizeof(short)*NP_DM);
+		Cat->HaloMaskSrc=mymalloc(sizeof(char)*NP_DM);
 		#pragma omp for
 		for(i=0;i<NP_DM;i++)
 			Cat->HaloMaskSrc[i]=1;
@@ -707,7 +707,7 @@ void PARAinit_mask(CATALOGUE *Cat,HBTInt mtype)
 	}
 }
 
-void mask_src_recursive(HBTInt subid,SUBCATALOGUE *SubCat, SRCCATALOGUE *SrcCat,short *HaloMaskSrc)
+void mask_src_recursive(HBTInt subid,SUBCATALOGUE *SubCat, SRCCATALOGUE *SrcCat,char *HaloMaskSrc)
 {
 	HBTInt i,pid,son,sib;
 	HBTInt *SubArr, Len;
@@ -822,7 +822,7 @@ void PARAinit_dessub(SUBCATALOGUE *SubCatA,SUBCATALOGUE *SubCatB, struct LinkInf
 	SubCatB->Nbirth=BirthCount;    SubCatB->Ndeath=DeathCount;       SubCatB->NQuasi=linkinfo->ProCount[-1]; SubCatB->Nsplitter=SubCatA->Nsplitter;
 	SubCatB->Nsubs=SubCatA->Nsubs-DeathCount+BirthCount;
 	create_sub_cat(SubCatB);
-	fprintf(logfile,"Nsublast=%d\tNsub=%d\tBirth=%d\tDeath=%d\tQuasi=%d\tSplitter=%d\n",SubCatA->Nsubs,SubCatB->Nsubs,BirthCount,DeathCount,SubCatB->NQuasi,SubCatB->Nsplitter);//here Nsublast includes Nsplitters
+	fprintf(logfile,"Nsublast="HBTIFMT"\tNsub="HBTIFMT"\tBirth="HBTIFMT"\tDeath="HBTIFMT"\tQuasi="HBTIFMT"\tSplitter="HBTIFMT"\n",SubCatA->Nsubs,SubCatB->Nsubs,BirthCount,DeathCount,SubCatB->NQuasi,SubCatB->Nsplitter);//here Nsublast includes Nsplitters
 	fflush(logfile);
 
 	/*construct pro2dest table for updates of sub_hierarchy; also find mainsub and update SubCatTmp.sub_hierarchy with old subid
@@ -887,7 +887,7 @@ void PARAinit_dessub(SUBCATALOGUE *SubCatA,SUBCATALOGUE *SubCatB, struct LinkInf
 /*===========below are debugging functions============*/
 static void errorfun(HBTInt type,HBTInt desID,HBTInt i,HBTInt pid)
 {
-	printf("type%d, grp%d,p%d,pid%d\n",type,desID,i,pid);
+	printf("type"HBTIFMT", grp"HBTIFMT",p"HBTIFMT",pid"HBTIFMT"\n",type,desID,i,pid);
 }
 void mask_mainsub_check(CATALOGUE *CatB,SUBCATALOGUE *SubCatB,HBTInt proSubID,HBTInt desID,HBTInt son)
 {/* CatB.HaloMask must have been initialized with all ones before calling
@@ -917,7 +917,7 @@ void mask_mainsub_check(CATALOGUE *CatB,SUBCATALOGUE *SubCatB,HBTInt proSubID,HB
 			else 
 			CatB->HaloMask[SubCatB->PSubArr[subid][pid]]=0;
 			if(catmask[SubCatB->PSubArr[subid][pid]]==0)//outlier
-			printf("subid%d,i%d,ind%d,pid%d\n",subid,i,pid,SubCatB->PSubArr[subid][pid]);
+			printf("subid"HBTIFMT",i"HBTIFMT",ind"HBTIFMT",pid"HBTIFMT"\n",subid,i,pid,SubCatB->PSubArr[subid][pid]);
 		}
 	}
 	SubCatB->SubLen[desSubID]=CatB->Len[desID]-j;
@@ -938,7 +938,7 @@ void mask_mainsub_check(CATALOGUE *CatB,SUBCATALOGUE *SubCatB,HBTInt proSubID,HB
 		}
 		if(j!=SubCatB->SubLen[desSubID])//what about if there're duplicate particles???
 		{
-			fprintf(logfile,"error: Mask Fof len mismatch! \n for desID=%d\n,remained=%d,expected=%d",desID,j,SubCatB->SubLen[desSubID]);fflush(logfile);
+			fprintf(logfile,"error: Mask Fof len mismatch! \n for desID="HBTIFMT"\n,remained="HBTIFMT",expected="HBTIFMT"",desID,j,SubCatB->SubLen[desSubID]);fflush(logfile);
 			exit(1);
 		}
 	}

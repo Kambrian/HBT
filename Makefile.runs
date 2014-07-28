@@ -1,14 +1,15 @@
 #~~~~~~~~ modify this to be the simulation name   ~~~~~~~#
-RUN_NUM=StarRun#this is simulation name corresponding to some parameter file, see below
+RUN_NUM=AqB4#this is simulation name corresponding to some parameter file, see below
 #IODIR=JING_io#uncomment this for JING's data
-#IODIR=gadget_io#uncomment this for gadget data
-IODIR=star_io
+IODIR=gadget_io#uncomment this for gadget data
+#IODIR=merger_io
+#IODIR=star_io
 
 PARAM =param/param$(RUN_NUM).h
 
-NEED_FORTRAN=yes
-ifeq ($(IODIR),gadget_io)
 NEED_FORTRAN=no
+ifeq ($(IODIR),JING_io)
+NEED_FORTRAN=yes
 endif
 
 ifeq ($(NEED_FORTRAN),yes)
@@ -23,4 +24,10 @@ FC		=   ifort
 # CC		=   gcc
 # FC		=   gfortran 
 
+# GSLINC=-I/home/qypeng/bin/gsl-1.15/include
+# GSLLIB=-L/home/qypeng/bin/gsl-1.15/lib -lgsl -lgslcblas
+# GSLINC=-I/home/qypeng/softwares/gsl-1.15/include
+# GSLLIB=-L/home/qypeng/softwares/gsl-1.15/lib -lgsl -lgslcblas
+GSLINC=-I/gpfs/COSMA/gsl/intel_11.1/1.14/include
+GSLLIB=-L/gpfs/COSMA/gsl/intel_11.1/1.14/lib -lgsl -lgslcblas
 

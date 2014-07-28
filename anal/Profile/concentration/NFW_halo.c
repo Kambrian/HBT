@@ -11,8 +11,8 @@
 #define TOL_FIT 1e-6
 #define MAX_ITER 500
 
-//#define FIT_FOF  //fit fof halo or spherical halo
-#define FIT_VIR  //fit only density inside virial radius
+#define FIT_FOF  //fit fof halo or spherical halo
+//#define FIT_VIR  //fit only density inside virial radius
 
 //#define PSEUDO_LOGFIT  //using sigma=rho as weight to mimic fiting in logspace
 #define LOGFIT //fit in logspace, no effect if PSEUDO_LOGFIT is defined
@@ -340,8 +340,8 @@ gsl_multifit_covar (s->J, 0.0, covar);
  par[0]=FIT(0);err[0]=c*ERR(0);
 #endif
  par[1]=FIT(1);err[1]=c*ERR(1);
- printf ("rhos = %.5f +/- %.5f\n", par[0], err[0]);
- printf ("rs   = %.5f +/- %.5f\n", par[1], err[1]);
+ printf ("rhos = %.3e +/- %.2e\n", par[0]*MP_DM, err[0]*MP_DM);
+ printf ("rs   = %.3e +/- %2e\n", par[1], err[1]);
 }
 #define CONCEN(i) (haloprof->Rvir[i]/par[1])
 #define MFIT(i) (4*M_PI*par[1]*par[1]*par[1]*par[0]*(log(1+CONCEN(i))-CONCEN(i)/(1+CONCEN(i))))
@@ -354,7 +354,7 @@ for(i=0;i<3;i++)
 }
 printf("Precision of Fitted Virial Mass:%.2g, %.2g, %.2g\n",err_M[0],err_M[1],err_M[2]);
 printf("concentration= %g, %g, %g\n",CONCEN(0),CONCEN(1),CONCEN(2));
-printf("Mvir: %g, %g, %g\n",(float)haloprof->Mvir[0],(float)haloprof->Mvir[1],(float)haloprof->Mvir[2]);
+printf("Mvir(TH,C200,B200): %g, %g, %g\n",(float)haloprof->Mvir[0]*MP_DM,(float)haloprof->Mvir[1]*MP_DM,(float)haloprof->Mvir[2]*MP_DM);
 printf ("iter=%u, status = %s\n", iter, gsl_strerror (status));
 
 free_solver_data(&f);

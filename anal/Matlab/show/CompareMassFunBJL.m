@@ -1,0 +1,97 @@
+data=importdata('/mnt/charon/HBT/data/BJLGRnew/subcat/anal/halos.62');
+dataold=importdata('/mnt/charon/HBT/data/BJLGR/subcat/anal/halos.61');
+fit=importdata('~/Downloads/mass_functions.dat');%200crit
+fitmean=importdata('~/Downloads/mass_functions200mean.dat'); %200mean
+mp=1.52e-2; %particle mass
+mpold=1.078297e-01; 
+%%
+figure;
+[xm,ym,dyx]=loghist(data.data(:,7),50,'');
+dyx=dyx/64^3;
+loglog(xm*1e10,dyx,'o');
+hold on;
+loglog(fit.data(:,1),fit.data(:,4),'r');
+loglog(fit.data(:,1),fit.data(:,5),'g');
+loglog(mp*1e10*[100,100],[1e-6,1e1],'k--');
+legend('data','ST','Tinker','Np=100');
+%%
+figure;
+[xm,ym,dyx]=loghist(data.data(:,8),50,'');
+dyx=dyx/64^3;
+loglog(xm*1e10,dyx,'o');
+hold on;
+loglog(fitmean.data(:,1),fitmean.data(:,4),'r');
+loglog(fitmean.data(:,1),fitmean.data(:,5),'g');
+loglog(mp*1e10*[100,100],[1e-6,1e1],'k--');
+legend('data','ST','Tinker','Np=100');
+%%
+myfigure;
+mass=data.data(data.data(:,13)==0,7);
+[xm,ym,dyx]=loghist(mass,40,'');
+dyx=dyx/64^3;
+loglog(xm*1e10,dyx,'o','linewidth',1);
+hold on;
+% loglog(fit.data(:,1),fit.data(:,4),'r');
+loglog(fit.data(:,1),fit.data(:,5),'g');
+mass=data.data(data.data(:,14)==0,8);
+[xm,ym,dyx]=loghist(mass,40,'');
+dyx=dyx/64^3;
+loglog(xm*1e10,dyx,'x','linewidth',1);
+hold on;
+loglog(fitmean.data(:,1),fitmean.data(:,5),'g--');
+loglog(fitmean.data(:,1),fitmean.data(:,4),'r-');
+loglog(mp*1e10*[100,100],[1e-6,1e1],'k--');
+legend('200c','Tinker 200c','200m','Tinker 200m','ST','Np=100');
+xlabel('M[Msun/h]');
+ylabel('$dn/d\ln M$');
+ylim([6e-6,5e-1]);
+xlim([5e8,1e15]);
+print('-depsc','/work/Projects/HBT/code/data/show/massfun/BJLGRnewHaloMassFun.eps');
+%%
+myfigure;
+[xm,ym,dyx]=loghist(dataold.data(:,7),50,'');
+dyx=dyx/250^3;
+loglog(xm*1e10,dyx,'o','linewidth',1);
+hold on;
+% loglog(fit.data(:,1),fit.data(:,4),'r');
+loglog(fit.data(:,1),fit.data(:,5),'g');
+[xm,ym,dyx]=loghist(dataold.data(:,8),50,'');
+dyx=dyx/250^3;
+loglog(xm*1e10,dyx,'x','linewidth',1);
+hold on;
+loglog(fitmean.data(:,1),fitmean.data(:,5),'g--');
+loglog(fitmean.data(:,1),fitmean.data(:,4),'r-');
+loglog(mpold*1e10*[100,100],[1e-6,1e1],'k--');
+legend('200c','Tinker 200c','200m','Tinker 200m','ST','Np=100');
+xlabel('M[Msun/h]');
+ylabel('$dn/d\ln M$');
+ylim([3e-7,5e-2]);
+xlim([5e9,2e15]);
+print('-depsc','/work/Projects/HBT/code/data/show/massfun/BJLGRoldHaloMassFun.eps');
+%%
+myfigure;
+% loglog(fit.data(:,1),fit.data(:,4),'r');
+h1=loglog(fit.data(:,1),fit.data(:,11),'g');hold on;
+h2=loglog(fitmean.data(:,1),fitmean.data(:,11),'g--');
+h3=loglog(fitmean.data(:,1),fitmean.data(:,10),'r-');
+mass=data.data(data.data(:,13)==0,7);
+[xm,ym,dyx,x]=loghist(mass,50,'');
+ysum=cumsum(ym(end:-1:1));
+ysum=ysum(end:-1:1)/64^3;
+x=x(1:end-1);
+h4=loglog(x*1e10,ysum,'o','linewidth',1);
+hold on;
+mass=data.data(data.data(:,14)==0,8);
+[xm,ym,dyx,x]=loghist(mass,50,'');
+ysum=cumsum(ym(end:-1:1));
+ysum=ysum(end:-1:1)/64^3;
+x=x(1:end-1);
+h5=loglog(x*1e10,ysum,'x','linewidth',1);
+hold on;
+h6=loglog(mp*1e10*[100,100],[1e-6,1e1],'k--');
+legend([h4,h1,h5,h2,h3,h6],'200c','Tinker 200c','200m','Tinker 200m','ST','Np=100');
+xlabel('M[Msun/h]');
+ylabel('$n(>M)$');
+ylim([6e-6,5e-1]);
+xlim([5e8,1e15]);
+print('-depsc','/work/Projects/HBT/code/data/show/massfun/BJLGRnewHaloMassFunCum.eps');

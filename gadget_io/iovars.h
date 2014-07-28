@@ -28,8 +28,8 @@ HBTInt *Offset;
 HBTReal *HaloCen[3];//HaloCen[3][Ngroups], center of halos
 #endif
 HBTInt *PIDorIndex; //stores PID when loading FOF then changes to PIndex after loading particles
-short *HaloMask; //HaloMask[NP_DM],HaloMask==1 means the particle does not belong to any sub,i.e, it's free.
-short *HaloMaskSrc;
+char *HaloMask; //HaloMask[NP_DM],HaloMask==1 means the particle does not belong to any sub,i.e, it's free.
+char *HaloMaskSrc;
 HBTInt *ID2Halo;//for index2halo, this is ID2halo[NP_DM];
 }CATALOGUE;
 

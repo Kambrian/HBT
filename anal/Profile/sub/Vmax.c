@@ -5,7 +5,9 @@
  * output: RmaxVmax_%d.CoM or RmaxVmax_%d.MBD, using CoM or MostBound as center *
  *         CenVCen_%d.***, Center (comoving) and VCenters (physical), 
  * 	   can also output Mvir and Rvir using only particles within the subhalo
- * units: standard units */
+ * units: standard units 
+ * Note: the Vmax from this file is "comoving", i.e., \sqrt(GM/Rcomoving). 
+ * 	 Divide by \sqrt(a) to get physical Vmax!*/
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -16,6 +18,11 @@
 #define CEN_MPT 2  //when using this, need to define HALO_PARA in the parameter file to make the tree-code thread-safe
 
 #define CEN_TYPE CEN_COM
+#if CEN_TYPE == CEN_MPT
+#ifndef HALO_PARA
+#error "define HALO_PARA in parameter file for parallel tree"
+#endif
+#endif
 #define OUTPUT_SUBVIR
 
 #include "datatypes.h"
@@ -53,7 +60,7 @@ HBTxyz *centers, *vcenters;
 char buf[1024];
 FILE *fp;
 logfile=stdout;
-sprintf(outputdir,"%s/profile/",SUBCAT_DIR);	
+sprintf(outputdir,"/data/A4700r2d1/kambrain/6113/post/profile/");	
 mkdir(outputdir,0755);
 
 load_particle_header(0,SNAPSHOT_DIR);

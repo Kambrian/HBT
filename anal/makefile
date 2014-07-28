@@ -6,12 +6,14 @@ HISTDIR=../history
 
 USRINCL=-I /home/kambrain/opt/include
 USRLIB=-L /home/kambrain/opt/lib
-CFLAGS=-I$(BTDIR) -I$(BTDIR)/$(IODIR) -I$(GASDIR) -I$(HISTDIR) -I. -include $(PARAM) $(USRINCL) -openmp -g 
+CFLAGS=-I$(BTDIR) -I$(BTDIR)/$(IODIR) -I$(GASDIR) -I$(HISTDIR) -I. -include $(PARAM) $(USRINCL) -openmp -g -I/usr/include/mpi
 LDFLAGS= -L$(BTDIR)/$(IODIR) -l$(RUN_NUM)io $(FTNLIB) $(USRLIB) -limf -openmp -g
 GASLIB= -L$(GASDIR) -lgasio
 HISTLIB= -L$(HISTDIR) -lhistio
-GSLINC=-I/home/qypeng/bin/gsl-1.15/include
-GSLLIB=-L/home/qypeng/bin/gsl-1.15/lib -lgsl -lgslcblas
+# GSLINC=-I/home/qypeng/bin/gsl-1.15/include
+# GSLLIB=-L/home/qypeng/bin/gsl-1.15/lib -lgsl -lgslcblas
+GSLINC=-I/home/qypeng/softwares/gsl-1.15/include
+GSLLIB=-L/home/qypeng/softwares/gsl-1.15/lib -lgsl -lgslcblas
 #GSLINC=-I/gpfs/COSMA/gsl/intel_11.1/1.14/include
 #GSLLIB=-L/gpfs/COSMA/gsl/intel_11.1/1.14/lib -lgsl -lgslcblas
 
@@ -58,7 +60,7 @@ massfun_plotN massfun_pickN abundanceN: %N: %.c
 #NEED_SUBFIND+=subparticles subcen snaps snap2 snap3 snaps_phase snaps_phase_diff
 NEED_TREE+=snap2 snaps_phase snaps_reacc snaps_energy snaps_energy2
 NEED_TREESEARCH+=snap2
-NEED_GSL+=subparticles	
+NEED_GSL+=subparticles NFW_fit NFW_halo
 		
 snap_lowres:CFLAGS=-I$(BTDIR) -include $(PARAM_LOW)		
 
@@ -67,11 +69,16 @@ snap_lowres:CFLAGS=-I$(BTDIR) -include $(PARAM_LOW)
 gashaloprof dynamprof dynamprof_sph:LDFLAGS+=$(GASLIB)	
 veldistr: tree.o 
 halocenter: treesearch.o tree.o 
+haloprof_nosub: CFLAGS+=-DWITHOUT_SUBCAT
+haloprof_nosub: haloprof
+	mv haloprof haloprof_nosub
+haloprof.$(RUN_NUM): haloprof
+	mv haloprof haloprof.$(RUN_NUM)
 
 #Profile/concentration/
 NFW_fit.o NFW_halo.o: NFW_fun.c lnNFW_fun.c
-NFW_fit NFW_halo: LDFLAGS+=-lgsl -lgslcblas
-					
+#NFW_fit NFW_halo: CFLAGS+=$(GSLINC) LDFLAGS+=$(GSLLIB)
+
 #Profile/geometrical							
 tidalradius tidalradius_log tidalradius_aqua: subfindread.o
 fofpot:  tree.o  
@@ -83,7 +90,8 @@ notts_shape: CFLAGS+=$(GSLINC) LDFLAGS+=$(GSLLIB)
 subprofile: CFLAGS+=-USUBFIND_DIR
 subprofileF: subprofile.c subfindread.o
 	$(CC) -o $@ $< subfindread.o $(CFLAGS) $(LDFLAGS) 				
-Vmax:tree.o CFLAGS+=-USUBFIND_DIR		
+Vmax:tree.o 
+Vmax:CFLAGS+=-USUBFIND_DIR		
 
 plotSubInSub:CFLAGS+=-UDYNAMICAL
 plotSubInSub.dyn:plotSubInSub.c
@@ -106,7 +114,8 @@ subfindread: subfindread.c Makefile
 
 $(NEED_GAS): LDFLAGS+=$(GASLIB) 
 $(NEED_HIST):LDFLAGS+=$(HISTLIB)
-$(NEED_GSL): CFLAGS+=$(GSLINC) LDFLAGS+=$(GSLLIB)
+$(NEED_GSL): CFLAGS+=$(GSLINC) 
+$(NEED_GSL): LDFLAGS+=$(GSLLIB)
    
 $(NEED_SUBFIND): subfindread.o
 #$(NEED_SUBFIND): LDFLAGS+=subfindread.o
@@ -116,6 +125,14 @@ $(NEED_TREE): tree.o
 
 $(NEED_TREESEARCH): treesearch.o 
 #$(NEED_TREESEARCH): LDFLAGS+=tree.o
-								
+
+hdf_util.o: 
+
+StarPot: hdf_util.o tree.o
+StarPot : LDFLAGS+=-lhdf5_hl -lhdf5
+
+saveHDFhalo: hdf_util.o
+saveHDFhalo: LDFLAGS+=-lhdf5_hl -lhdf5
+
 clean:
 	rm -f *.o $(EXEC)

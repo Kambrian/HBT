@@ -1,7 +1,7 @@
 #ifndef PARAM_FILE_INCLUDED	//to avoid multiple inclusion
 	
 	/*=========program IO params==========*/
-	#define ROOT_DIR "/home/jvbq85/data/HBT/data/AqE4"			//the output directory for gashalocat,gassubcat and gassrccat, this must be an existing directory
+	#define ROOT_DIR "/gpfs/data/jvbq85/HBT/data/AqE4"			//the output directory for gashalocat,gassubcat and gassrccat, this must be an existing directory
 	#define SUBCAT_DIR  ROOT_DIR "/subcat"			//the output directory for subcatalogues and srccatalogues, this must be an existing directory
 	//necessary sub-dirs: splitters,pro2dest,history
 	#define GRPCAT_DIR  "/gpfs/data/aquarius/halo_data/Aq-E/4"				//the input directory for GrpCatalogues

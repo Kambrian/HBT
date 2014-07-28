@@ -19,6 +19,23 @@
 #define SKIP myfread(&dummy,sizeof(dummy),1,fp)
 #define SKIP2 myfread(&dummy2,sizeof(dummy2),1,fp)
 #define CHECK if(dummy!=dummy2){fprintf(logfile,"error!record brackets not match for Snap%d!\t%d,%d\n",(int)Nsnap,dummy,dummy2);fflush(logfile);exit(1);} 
+struct groupV4_header
+{
+  int Ngroups;
+  int Nsubgroups;
+  int Nids;
+  int TotNgroups;
+  int TotNsubgroups;
+  int TotNids;
+  int num_files;
+  double time;
+  double redshift;
+  double HubbleParam;
+  double BoxSize;
+  double Omega0;
+  double OmegaLambda;
+  int flag_doubleprecision;
+};
 
 int check_snapshot_byteorder(char *filename)
 {
@@ -48,16 +65,24 @@ int check_grpcat_byteorder(char *filename)
 	long offset;
 	FILE *fp;
 
+#ifdef GRP_V4FORMAT
+	n=sizeof(struct groupV4_header);
+#else
 	n=NFILES_GRP;
+#endif
 	ns=n;
-	swap_Nbyte(&ns,1,sizeof(ns));
+	swap_Nbyte(&ns,1,sizeof(ns));	
 	
 	myfopen(fp,filename,"r");
+#ifdef GRP_V4FORMAT
+	offset=0;
+#else
 	#ifdef GRP_V3FORMAT
 	offset=5*4;  //3*int+1*longlong
 	#else
 	offset=3*4;  //3*int
 	#endif
+#endif
 	fseek(fp,offset,SEEK_SET);
 	fread(&Nfiles,sizeof(int),1,fp);
 	fclose(fp);
@@ -190,6 +215,7 @@ void load_particle_header(HBTInt Nsnap, char *SnapPath)
     if(1==NFILES)
 	 if(!try_readfile(buf))	sprintf(buf,"%s/%s_%03d",SnapPath,SNAPFILE_BASE,(int)Nsnap); //try the other convention
 	
+	if(!try_readfile(buf))	sprintf(buf,"%s/%s_%03d.%d",SnapPath,SNAPFILE_BASE,(int)Nsnap,0); //try the other convention
 	if(!try_readfile(buf))	sprintf(buf,"%s/%d/%s.%d",SnapPath,(int)Nsnap,SNAPFILE_BASE,0);//for BJL's RAMSES output
 
 	myfopen(fp,buf,"r");
@@ -272,6 +298,7 @@ void load_particle_data_bypart(HBTInt Nsnap, char *SnapPath, unsigned char loadf
     if(1==NFILES)
 	 if(!try_readfile(buf))	sprintf(buf,"%s/%s_%03d",SnapPath,SNAPFILE_BASE,(int)Nsnap); //try the other convention
 	
+	if(!try_readfile(buf))	sprintf(buf,"%s/%s_%03d.%d",SnapPath,SNAPFILE_BASE,(int)Nsnap,(int)i); //try the other convention
 	if(!try_readfile(buf))	sprintf(buf,"%s/%d/%s.%d",SnapPath,(int)Nsnap,SNAPFILE_BASE,(int)i);//for BJL's RAMSES output
     
 	  myfopen(fp,buf,"r");
@@ -302,6 +329,7 @@ void load_particle_data_bypart(HBTInt Nsnap, char *SnapPath, unsigned char loadf
       SKIP2;
 	  CHECK;
       
+#ifndef NO_ID_RECORD //for Huiyuan's data.
 	  pre_len=header.npart[0]*sizeof(IDatInt);
 	  for(j=2,tail_len=0;j<6;j++)tail_len+=header.npart[j];
 	  tail_len*=sizeof(IDatInt);
@@ -314,6 +342,7 @@ void load_particle_data_bypart(HBTInt Nsnap, char *SnapPath, unsigned char loadf
 	  fseek(fp,tail_len,SEEK_CUR);
       SKIP2;
 	  CHECK;
+#endif	  
 	  
 	  if(feof(fp))
 	  {
@@ -445,7 +474,7 @@ IDatInt *load_PIDs_Sorted()
   sprintf(buf,"%s/DM_PIDs_Sorted.dat",SUBCAT_DIR);
   if(!try_readfile(buf))//create the file if it does not exist
   {
-	 load_particle_data(0,SNAPSHOT_DIR);
+	 load_particle_data(IniSnap,SNAPSHOT_DIR);
 	 free_particle_data();
   }
   myfopen(fd,buf,"r");
@@ -482,12 +511,15 @@ void load_group_catalogue(HBTInt Nsnap,CATALOGUE *Cat, char *GrpPath)
 	memcpy(Cat->PIDorIndex,Pdat.PID,sizeof(HBTInt)*NP_DM);
 }
 #else
-extern void load_group_catalogue_JING(int Nsnap,CATALOGUE *Cat,char *GrpPath)
+extern void load_group_catalogue_JING(int Nsnap,CATALOGUE *Cat,char *GrpPath);
 void load_group_catalogue(HBTInt Nsnap,CATALOGUE *Cat,char *GrpPath)
 {//wrapper for v2 or v3
 #ifdef GRP_JINGFORMAT
 load_group_catalogue_JING(Nsnap,Cat,GrpPath);
 #else
+    #ifdef GRP_V4FORMAT
+load_group_catalogue_v4(Nsnap,Cat,GrpPath);
+    #else
 	#ifdef GRP_V3FORMAT
 load_group_catalogue_v3(Nsnap,Cat,GrpPath);
 	#else
@@ -501,10 +533,11 @@ load_group_catalogue_v2(Nsnap,Cat,GrpPath);
 			#endif
 		#endif
 	#endif
+    #endif
 #endif
 }
 #endif
-
+#ifdef GRP_JINGFORMAT
 void load_group_catalogue_JING(int Nsnap,CATALOGUE *Cat,char *GrpPath)
 {
   char buf[1024];
@@ -591,6 +624,7 @@ for(i=0;i<Cat->Ngroups;i++)
 	#endif
   	}
 }
+#endif
 	
 void load_group_catalogue_v3(HBTInt Nsnap,CATALOGUE *Cat,char *GrpPath)
 {//PGADGET-3's subfind format
@@ -822,6 +856,7 @@ IDatInt *PID;
 Nsnap=snaplist[Nsnap];
 #endif
   sprintf(buf, "%s/group_tab_%03d",GrpPath,(int)Nsnap);
+  if(!try_readfile(buf))  sprintf(buf, "%s/groups_catalogue/fof_special_catalogue_%03d",GrpPath,(int)Nsnap);
   ByteOrder=check_grpcat_byteorder(buf);
   myfopen(fd,buf,"r");
 
@@ -845,6 +880,7 @@ Nsnap=snaplist[Nsnap];
 
 
   sprintf(buf, "%s/group_ids_%03d", GrpPath, (int)Nsnap);
+  if(!try_readfile(buf))  sprintf(buf, "%s/groups_indexlist/fof_special_indexlist_%03d",GrpPath,(int)Nsnap);
   ByteOrder=check_grpcat_byteorder(buf);
   myfopen(fd,buf,"r");
 
@@ -869,8 +905,8 @@ Nsnap=snaplist[Nsnap];
 	  myfree(ICat.Len);
 	  myfree(ICat.Offset);
 #endif
-  
-  #ifdef HBTPID_RANKSTYLE
+
+  #if defined(HBTPID_RANKSTYLE)&&!defined(GRPINPUT_INDEX)
   IDatInt *PIDs,*p;  
   PIDs=load_PIDs_Sorted();  
   Cat->PIDorIndex=mymalloc(sizeof(HBTInt)*Cat->Nids);
@@ -1126,4 +1162,142 @@ void free_catalogue(CATALOGUE *A)
 	//~ free(A->HaloMask);
 	//~ free(A->HaloMaskSrc);
 	myfree(A->ID2Halo);
+}
+
+void load_group_catalogue_v4(HBTInt Nsnap,CATALOGUE *Cat,char *GrpPath)
+{//PGADGET-4's subfind format, loaded as GRPINPUT_INDEX
+  FILE *fp;
+  char buf[1024];
+//   int Ngroups,TotNgroups,Nids,NFiles;
+  HBTInt i,Nload;
+  int ByteOrder,grpfile_type, dummy, dummy2;
+
+struct groupV4_header grp_header;
+  
+struct 
+{
+int *Len;
+int *Offset;
+IDatInt *PID; 
+}ICat;
+  
+  	#ifdef SNAPLIST
+	Nsnap=snaplist[Nsnap];
+	#endif
+
+  Nload=0;
+  for(i=0;i<NFILES_GRP;i++)
+  {
+  grpfile_type=1;	
+  sprintf(buf, "%s/groups_%03d/fof_subhalo_tab_%03d.%d",GrpPath,(int)Nsnap,(int)Nsnap,(int)i);
+  if(!try_readfile(buf))
+  {
+	  sprintf(buf, "%s/groups_%03d/group_tab_%03d.%d",GrpPath,(int)Nsnap,(int)Nsnap,(int)i);
+	  grpfile_type=2;
+  }
+  if(1==NFILES_GRP)
+  {
+	if(!try_readfile(buf))
+	{
+		sprintf(buf, "%s/fof_subhalo_tab_%03d",GrpPath,(int)Nsnap);
+		grpfile_type=3;
+	}
+	if(!try_readfile(buf))
+	{
+	sprintf(buf, "%s/group_tab_%03d",GrpPath,(int)Nsnap);
+	grpfile_type=4;
+	}
+  }
+	
+  ByteOrder=check_grpcat_byteorder(buf);
+  	
+  myfopen(fp,buf,"r");
+
+  SKIP;
+  myfread(&grp_header,sizeof(grp_header),1,fp);
+  SKIP2;
+  CHECK;
+  Cat->Ngroups=grp_header.TotNgroups;
+  #ifndef HBT_INT8
+  if(grp_header.TotNids>INT_MAX)
+  {
+	  printf("error: TotNids larger than HBTInt can hold! %d\n",grp_header.TotNids);
+	  exit(1);
+  }
+  #endif
+  Cat->Nids=grp_header.TotNids;
+   
+  if(NFILES_GRP!=grp_header.num_files)
+	  {
+		  fprintf(logfile,"error: number of grpfiles specified not the same as stored: %d,%d\n for file %s\n",
+		  NFILES_GRP,(int)grp_header.num_files,buf);
+		  fflush(logfile);
+		  exit(1);
+	  }
+ 
+  if(0==i)
+  fprintf(logfile,"Snap="HBTIFMT"  Ngroups=%d  Nids=%d  TotNgroups=%d  NFiles=%d\n", Nsnap, grp_header.Ngroups, grp_header.Nids, (int)(Cat->Ngroups), grp_header.num_files);
+  
+  if(0==i)
+  {
+  ICat.Len= mymalloc(sizeof(int)*Cat->Ngroups);
+  ICat.Offset=mymalloc(sizeof(int)*Cat->Ngroups);
+  }
+  
+  SKIP;
+  myfread(ICat.Len+Nload, sizeof(int), grp_header.Ngroups, fp);
+  SKIP2;
+  CHECK;
+  if(feof(fp))
+  {
+	fprintf(logfile,"error:End-of-File in %s\n",buf);
+	fflush(logfile);exit(1);  
+  }
+  Nload+=grp_header.Ngroups;
+  fclose(fp);
+  }
+  if(Nload!=Cat->Ngroups)
+  {
+	  fprintf(logfile,"error:Num groups loaded not match: "HBTIFMT","HBTIFMT"\n",Nload,Cat->Ngroups);
+	  fflush(logfile);exit(1);
+  }
+  HBTInt offset=0;
+  for(i=0;i<Cat->Ngroups;i++)
+  {
+    ICat.Offset[i]=offset;
+    offset+=ICat.Len[i];
+  }
+  if(offset!=Cat->Nids)
+  {
+	  fprintf(logfile,"error:Num grpparticles loaded not match: "HBTIFMT","HBTIFMT"\n",offset,Cat->Nids);
+	  fflush(logfile);
+	  exit(1);
+  }
+  
+  Cat->ID2Halo=mymalloc(sizeof(HBTInt)*NP_DM);//consider move this out.............
+  Cat->PIDorIndex=mymalloc(sizeof(HBTInt)*Cat->Nids);
+  for(i=0;i<Cat->Nids;i++) Cat->PIDorIndex[i]=i; //fill with particle indices
+  
+#ifndef HBT_INT8
+	  Cat->Len=ICat.Len;
+	  Cat->Offset=ICat.Offset;
+#else
+	  Cat->Len=mymalloc(sizeof(HBTInt)*Cat->Ngroups);
+	  Cat->Offset=mymalloc(sizeof(HBTInt)*Cat->Ngroups);
+	  for(i=0;i<Cat->Ngroups;i++)
+	  {
+		  Cat->Len[i]=ICat.Len[i];
+		  Cat->Offset[i]=ICat.Offset[i];
+	  }
+	  myfree(ICat.Len);
+	  myfree(ICat.Offset);
+#endif
+    
+	for(i=1;i<Cat->Ngroups;i++)
+	{
+		if(Cat->Len[i]>Cat->Len[i-1])
+		{
+		printf("warning: groups not sorted with mass\n");
+		}
+	}
 }

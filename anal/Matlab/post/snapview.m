@@ -1,13 +1,14 @@
-RunNum='BJLGR';SnapLoad=47;grpid=0;
+RunNum='CoCo';SnapLoad=0;grpid=0;
 SnapPlot=SnapLoad;
+% datadir=['/mnt/uv/HBT/data/',RunNum,'/subcat/anal/image/'];
 % datadir=['/mnt/A4700/data/',RunNum,'/subcat/anal/image/'];
-datadir=['/mnt/charon/HBT/data/',RunNum,'/subcat/anal/image/'];
+datadir=['/mnt/charon/HBT/data/',RunNum,'/test/anal/image/'];
 % datadir=['/mnt/A4700/data/',RunNum,'/subcatS/anal/image/'];
 % fofmap=load([datadir,'fofmapxy_',num2str(SnapLoad,'%03d'),'_',num2str(grpid,'%d')]);
 % subpos=load([datadir,'subcen_',num2str(SnapLoad,'%03d'),'_',num2str(grpid,'%d')]);  %position of most bound particle better marks subhalo than CoM
 % subcom=load([datadir,'subcom_',num2str(SnapLoad,'%03d'),'_',num2str(grpid,'%d')]);
 % fofsize=load([datadir,'fofsize_',num2str(SnapLoad,'%03d'),'_',num2str(grpid,'%d')]);
-fofmap=load([datadir,'fofmapxy_',num2str(SnapLoad,'%03d'),'_',num2str(grpid,'%d'),'.',num2str(SnapPlot,'%03d')]);
+fofmap=load([datadir,'fofmap2xy_',num2str(SnapLoad,'%03d'),'_',num2str(grpid,'%d'),'.',num2str(SnapPlot,'%03d')]);
 subpos=load([datadir,'subcen_',num2str(SnapLoad,'%03d'),'_',num2str(grpid,'%d'),'.',num2str(SnapPlot,'%03d')]);  %position of most bound particle better marks subhalo than CoM
 subcom=load([datadir,'subcom_',num2str(SnapLoad,'%03d'),'_',num2str(grpid,'%d')]);
 % subpos=subcom(:,2:4);
@@ -17,6 +18,7 @@ addpath('../post');
 % halo=readhalo_size(['/mnt/A4700/data/',RunNum,'/subcatS/profile/logbin'],SnapLoad,'halo');
 % halo=readhalo_size(['/mnt/A4700/data/',RunNum,'/subcat/profile/logbin'],SnapLoad,'halo');
 % halo=readhalo_size(['/mnt/charon/HBT/data/',RunNum,'/subcat/profile/logbin'],SnapLoad,'halo');
+% halo=readhalo_size([datadir,'../../profile/logbin'],SnapLoad,'halo');
 % rvir=halo.Rvir(grpid+1,1);
 % rvir=245.5625;
 % rvir=233;
@@ -25,7 +27,7 @@ addpath('../post');
 % rvir=1609.3;
 % rvir=1517.0;
 % rivr=1452;
-rvir=nan;
+% rvir=nan;
 
 dim=[1,2];
 massmin=10;
@@ -54,8 +56,8 @@ sfmsize=load_subsize(sizefile);
 % rtidal=[sfmsize.rtidal(grpid+1);sfsize.rtidal(sfsize.id>sfmsize.id(grpid+1)&sfsize.id<sfmsize.id(grpid+2))];
 %%
 % outputdir='/home/kam/Projects/HBT/presentation/baposter/images';
-outputdir='/home/kam/Projects/HBT/code/data/show/images';
-figure;%('visible','off');
+outputdir='/work/Projects/HBT/code/data/show/images';
+myfigure;%('visible','off');
 cmap=contrast(log(fofmap));imagesc(fofsize(dim(1),:),fofsize(dim(2),:),(log(fofmap)'));colormap(cmap);colormap('bone');
 % imagesc(fofsize(1,:),fofsize(2,:),(log(fofmap+1)'));colormap('gray');
 hold on;
@@ -84,8 +86,8 @@ axis equal
 % xlim(fofsize(dim(1),:));
 % ylim([subpos(1,dim(2))-diff(fofsize(dim(1),:))/2,subpos(1,dim(2))+diff(fofsize(dim(1),:))/2])
 axis tight
-set(gca,'xtick',[],'ytick',[]);%title('subfind')
-% title(RunNum);
+% set(gca,'xtick',[],'ytick',[]);title(RunNum)
+title(RunNum);
 % set(gca,'ydir','reverse');
 % f=[f;getframe];
 % print('-dpng',[outputdir,'/halo_image',RunNum,'S',num2str(SnapLoad),'G',num2str(grpid),'.','dim',num2str(dim(1)),num2str(dim(2)),'.png']);

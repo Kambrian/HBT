@@ -1,11 +1,11 @@
 #ifndef PARAM_FILE_INCLUDED	//to avoid multiple inclusion
 		//once named W200
 	/*=========program IO params==========*/
-	#define GASCAT_DIR  "/home/jvbq85/data/HBT/data/AqE5W/gascat"			//the output directory for gashalocat,gassubcat and gassrccat, this must be an existing directory
-	#define SUBCAT_DIR  "/home/jvbq85/data/HBT/data/AqE5W/subcat"			//the output directory for subcatalogues and srccatalogues, this must be an existing directory
+	#define GASCAT_DIR  "/gpfs/data/jvbq85/HBT/data/AqE5W/gascat"			//the output directory for gashalocat,gassubcat and gassrccat, this must be an existing directory
+	#define SUBCAT_DIR  "/gpfs/data/jvbq85/HBT/data/AqE5W/subcat"			//the output directory for subcatalogues and srccatalogues, this must be an existing directory
 	//necessary sub-dirs: splitters,pro2dest,history
-	#define GRPCAT_DIR  "/home/jvbq85/data/HBT/data/AqE5W/fof"				//the input directory for GrpCatalogues
-	#define SNAPSHOT_DIR  "/home/jvbq85/data/HBT/data/AqE5W/simu"					//the input directory for simulation snapshots
+	#define GRPCAT_DIR  "/gpfs/data/jvbq85/HBT/data/AqE5W/fof"				//the input directory for GrpCatalogues
+	#define SNAPSHOT_DIR  "/gpfs/data/jvbq85/HBT/data/AqE5W/simu"					//the input directory for simulation snapshots
 	#define LOGFILE_NAME  "logfile"																			//the name of program logfile, set to "stdout" to use stdout
 
 	/*======simulation params===========*/

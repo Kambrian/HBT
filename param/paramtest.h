@@ -1,6 +1,8 @@
 #ifndef PARAM_FILE_INCLUDED	//to avoid multiple inclusion
 
+#ifndef DISABLE_HALO_PARA
 	#define HALO_PARA
+#endif
 	/*=========program IO params==========*/
 	#define SUBCAT_DIR  "/SANdisk5/kambrain/Sim6702/SubCat6/test2"			//the output directory for subcatalogues and srccatalogues, this must be an existing directory
 	#define GRPCAT_DIR  "/SANdisk5/kambrain/Sim6702/FoFCat"				//the input directory for GrpCatalogues

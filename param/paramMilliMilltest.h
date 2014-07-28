@@ -2,12 +2,14 @@
 	
 	#define PERIODIC_BDR
 	#define GRP_HBTFORMAT	
+#ifndef DISABLE_HALO_PARA
 	#define HALO_PARA
+#endif
 	/*=========program IO params==========*/
-	#define GASCAT_DIR  "/home/jvbq85/data/HBT/data/MilliMill/gascat"			//the output directory for gashalocat,gassubcat and gassrccat, this must be an existing directory
-	#define SUBCAT_DIR  "/home/jvbq85/data/HBT/data/MilliMill/subcat"			//the output directory for subcatalogues and srccatalogues, this must be an existing directory
+	#define GASCAT_DIR  "/gpfs/data/jvbq85/HBT/data/MilliMill/gascat"			//the output directory for gashalocat,gassubcat and gassrccat, this must be an existing directory
+	#define SUBCAT_DIR  "/gpfs/data/jvbq85/HBT/data/MilliMill/subcat"			//the output directory for subcatalogues and srccatalogues, this must be an existing directory
 	//necessary sub-dirs: splitters,pro2dest,history
-	#define GRPCAT_DIR  "/home/jvbq85/data/HBT/data/MilliMill/foftest"				//the input directory for GrpCatalogues
+	#define GRPCAT_DIR  "/gpfs/data/jvbq85/HBT/data/MilliMill/foftest"				//the input directory for GrpCatalogues
 	#define  SNAPSHOT_DIR  "/gpfs/data/jch/MilliMillennium/Snapshots"					//the input directory for simulation snapshots
 	#define LOGFILE_NAME  "logfile"																			//the name of program logfile, set to "stdout" to use stdout
 

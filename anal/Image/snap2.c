@@ -1,4 +1,5 @@
 //projection by squared density: j~int{rho^2*dl}~sum(rho_i)
+//IMPORTANT: do not define HALO_PARA, to enable a shared_tree for this!!!
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -21,7 +22,7 @@ extern void load_subfind_catalogue(int Nsnap,SUBCATALOGUE *SubCat,char *inputdir
 #define SUBCAT_DIR SUBFIND_DIR
 #endif
 
-#define NGRID 800
+#define NGRID 500
 	float mapxy[NGRID][NGRID]={0.},mapxz[NGRID][NGRID]={0.},mapyz[NGRID][NGRID]={0.};
 
 int main(int argc,char **argv)
@@ -60,7 +61,9 @@ int main(int argc,char **argv)
 	load_group_catalogue(SnapLoad,&Cat,GRPCAT_DIR);
 	load_sub_catalogue(SnapLoad,&SubCat,SUBCAT_DIR);
 	load_particle_data(SnapPlot,SNAPSHOT_DIR);
+	fill_PIDHash();
 	fresh_ID2Index(&Cat,-1); 	fresh_ID2Index(&SubCat,-2);	
+	free_PIDHash();
 	
 	PIndex=Cat.PIDorIndex+Cat.Offset[grpid];
 	fprintf(logfile,"calculating densities ...\n");fflush(logfile);

@@ -1,0 +1,17 @@
+#!/bin/bash
+# this file is intended to be used with bsub, for job submition
+##BSUB -L /bin/bash       # script shell language (/bin/tcsh, /bin/ksh etc.) NOTE: this cause problem on SHAO cluster of missing libimf.so
+#BSUB -n 1               # number of cores required
+#BSUB -J FoF[1-51]               # name of job
+#BSUB -o logs/Log.%J.%I    # log file for standard output
+#BSUB -e logs/Log.%J.%I     # log file for standard error
+#BSUB -q cosma
+#BSUB -P durham             #project to charge time; durham or dp004
+##BSUB -a intelmpi
+##BSUB -x                     # give node exclusive access to job
+##BSUB -R "span[ptile=12]"     # number of processors to use per node
+
+ulimit -s unlimited
+
+run=Yang256
+./FoF.$run $(($LSB_JOBINDEX-1))

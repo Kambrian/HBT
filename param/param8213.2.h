@@ -1,7 +1,9 @@
 #ifndef PARAM_FILE_INCLUDED	//to avoid multiple inclusion
 #define SNAP_SKIP 2	
 	#define PERIODIC_BDR
+#ifndef DISABLE_HALO_PARA
 	#define HALO_PARA
+#endif
 	/*=========program IO params==========*/
 	#define SUBCAT_DIR  "/home/kambrain/data/8213/subcat2"			//the output directory for subcatalogues and srccatalogues, this must be an existing directory
 	#define GRPCAT_DIR  "/home/kambrain/data/8213/fof"				     //the input directory for GrpCatalogues

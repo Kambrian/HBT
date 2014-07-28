@@ -1,10 +1,12 @@
 #ifndef PARAM_FILE_INCLUDED	//to avoid multiple inclusion
 	
 	#define PERIODIC_BDR
+#ifndef DISABLE_HALO_PARA
 	#define HALO_PARA
+#endif
 	/*=========program IO params==========*/
-	#define GASCAT_DIR  "/home/jvbq85/data/HBT/data/MilliMill/gascat"			//the output directory for gashalocat,gassubcat and gassrccat, this must be an existing directory
-	#define SUBCAT_DIR  "/home/jvbq85/data/HBT/data/MilliMill/subcatnew"			//the output directory for subcatalogues and srccatalogues, this must be an existing directory
+	#define GASCAT_DIR  "/gpfs/data/jvbq85/HBT/data/MilliMill/gascat"			//the output directory for gashalocat,gassubcat and gassrccat, this must be an existing directory
+	#define SUBCAT_DIR  "/gpfs/data/jvbq85/HBT/data/MilliMill/subcatnew"			//the output directory for subcatalogues and srccatalogues, this must be an existing directory
 	//necessary sub-dirs: splitters,pro2dest,history
 	#define GRPCAT_DIR  "/gpfs/data/jch/MilliMillennium/Snapshots"				//the input directory for GrpCatalogues
 	#define  SNAPSHOT_DIR  "/gpfs/data/jch/MilliMillennium/Snapshots"					//the input directory for simulation snapshots

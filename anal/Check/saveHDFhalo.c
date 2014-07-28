@@ -9,8 +9,9 @@
 #include "proto.h"
 #include "hdf_util.h"
 
-// #define LUNIT ((1/0.73)) //kpc, for A4
-#define LUNIT ((1/0.73)*1000) //kpc, for B4
+#define h0 0.73
+// #define LUNIT ((1/h0)) //kpc, for A4
+#define LUNIT ((1/h0)*1000) //kpc, for B4
 struct PList
 {
   HBTInt np;
@@ -72,7 +73,7 @@ void collect_particles(struct PList * p)
   make_linklist(&ll, NP_DM, 50, Pdat.Pos, GetArrPos, 0);
   p->np=Cat.Len[0];
   p->PIndex=linklist_search_sphere(&ll, 500/LUNIT, SubCat.Property[0].CoM, &p->np);
-  printf("Mv=%g\n", p->np*header.mass[1]/0.73);
+  printf("Mv=%g\n", p->np*header.mass[1]/h0);
   free_linklist(&ll);
 }
 
@@ -99,6 +100,9 @@ void dump_particles_hdf(char *outfile, HBTInt *PIndex, HBTInt np, HBTInt subid)
 	vel[i][j]=Pdat.Vel[PIndex[i]][j]-SubCat.Property[subid].VCoM[j];
       }
     }
+    dims[0]=1;
+	float pmass=header.mass[1]/h0;
+    status = H5LTmake_dataset(file_id,"/PartMass", 1, dims, H5T_NATIVE_FLOAT, &pmass); 
     dims[0]=np;
     dims[1]=3;
     status = H5LTmake_dataset(file_id,"/x",2,dims,H5T_NATIVE_FLOAT,pos);

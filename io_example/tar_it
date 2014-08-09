@@ -1,0 +1,6 @@
+#!/bin/bash
+ver=$@
+#dir=`basename $PWD`
+file=HBTio$ver.tar.bz2
+tar -cjhf $file * --exclude HBTio*.tar.bz2  
+

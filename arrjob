@@ -1,0 +1,15 @@
+#!/bin/bash
+#
+#PBS -S /bin/bash
+#PBS -N FoF.$run
+##PBS -t 0-61
+##PBS -q cordelia
+#PBS -l nodes=1:ppn=12,mem=45gb
+#PBS -j oe
+
+cd $PBS_O_WORKDIR
+
+ulimit -s unlimited
+
+#echo $PBS_ARRAYID
+./FoF.$run $PBS_ARRAYID

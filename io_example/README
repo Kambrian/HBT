@@ -1,0 +1,111 @@
+=========================================================================================
+I. Identifying halos and subhalos: 
+
+    1) at each snapshot, label each halo with a unique id ranging from 0 to Nhalos-1;
+    2) for subhalos label them from 0 to Nsubs-1
+    3) special label: 
+    	  * haloid=-1 represents the background, e.g, a subhalo with host haloid=-1 means it's a quasi-subhalo,i.e, it's host halo is the background
+    	  * descendent haloid=-2 means death of subhalo
+  	      * subhaloid=-1 means a NULL subhalo, i.e., no subhalo at that place. This usually appears in progenitor subhaloid or descendent subhaloid
+      	  * subhaloid>Nsubs-1 means splitters (see below). This usually occurs when identifying progenitor subhalos, when progenitor subid> Number of progenitor subhalos since splitter is not saved in the progenitor catalogue
+      	  
+==========================================================================================
+
+II. Types of Subhalos:
+
+	1) Normal subhalo: 
+	  	a substructure within a host fof-halo, as a remnant of the main part of a subhalo at  last snapshot
+	2) Quasi subhalo: 
+		a substructure which has no host fof-halo, so its host halo is the background (haloid=-1), while still can be identified as a remnant of the main part of a subhalo at  last snapshot
+	3) Splitted-out subhalo (splinter):
+		a substructure (can be either normal or quasi considering its host halo) which is a remnant of a minor part of a subhalo at  last snapshot. i.e, its progenitor subhalo breaks up into several self-bound parts; the biggest part as the main descendent, is a normal subhalo, while other self-bound parts come out as splitters. By break-up we mean different parts travel into different host halo.
+		When a subhalo breaks up, we assign this subhalo's id only as the progenitor id for the main descendent; the other smaller descendents are assigned extended progenitor subids with Progenitor_SubID>Nsub_Pro-1. See above (special label).
+	4) fake subhalos
+		these subhalos have zero self-bound particles,i.e,they are non-existant. They are contained in the subhalo catalogue just as a place-holder for those fake fof halos.
+
+==========================================================================================
+
+III. Storing Subhalo Catalogue:
+
+	The halos are sorted descendingly according to their masses, then given haloids from 0 to Ngroups-1.This should have been done when storing the halo catalogue.
+	Subhalos are sorted first using their host haloid ascendingly (biggest halos first), then sorted within each group using their own subhalo masses descendingly. This way each subhalo gets its subid, also its subrank giving the mass rank of this sub within its host halo. Note that quasi-subhalos which do not have a host halo are added to the end of the list with their host haloid=-1 and ranked as if the background is also one halo, but in ascending order of subhalo mass.
+	Subhalos are then stored according to their SubIDs.
+	Information stored includes :
+		* the number of subhalos within each group, 
+		* the mass and particle ids of each subhalo. The particles have been sorted according to their binding energy, most-bound coming first.
+		* the rank, hostid, progenitor subid of each subhalo, 
+		* the sub-in-sub hierarchy of subhalos,
+		* the position and velocity of the center of subhalos
+		* specific self-gravity potential energy, kinetic energy, spin
+	
+	For splinters, they have ProSubID>Npro-1. The information to convert this ProSubID to a valid subhalo (the subhalo which breaks-up) at the progenitor snapshot is recorded in splitters/sp2pro_*** files. 
+	
+	The subhalo catalogue just records the progenitor information, which gives a way to climb the merger tree up from late time to early time. For convenience we also provide the descendent information in pro2dest_*** files, which convert SubIDs to their descendent SubIDs, supplying the way to climb the tree down.
+
+	IO functions for loading and freeing the subhalo catalogue, pro2dest table and sp2pro table are all provided, in both Fortran and C language. For Fortran users it is provided as a module. C users can also choose to link against the io-library of the BT code.
+
+=============================================================================================
+IV. When Segmentation Fault Occurs
+Places you may want to check:
+1. have you opened the logfile or set logfile=stdout? (only for C users)
+2. for fake (sub)halos, they have SubLen=0 and PSubArr=NULL, attempt to access member particles would yield segfault in C, and false result in Fortran. A possible situation is that you are trying to access the most bound particle for this fake subhalo.
+3. when dealing with ProSubID, make sure to check and transform them to a valid subid using sp2pro[] table, in case of splinters.
+4. are you trying to access subhalo properties for non-existant subhalos, whose subid<0, e.g, prosubid=-1 for new-born subhalos and destID=-1 for death subhalos ?
+5. be sure to load_particle_data before accessing particle properties.
+6. be sure to use free_sp2pro() and free_pro2dest() to release memory for sp2pro and pro2dest rather than free() them directly, because these two arrays are shifted for easy access, with their starting position not at the starting address of the allocated memory.
+
+Another common cause of segfualt:
+7. check if you have a local variable which is too large. try allocating it manually or declare it as a static or global variable. 
+ 
+To help check for segmentation faults, 
+1. use print clause to look for anomalies
+2. compile your program with -g option and use a debugger. 
+
+In case of misterious behaviour
+3. disable any optimization by setting the -O0 option for compilation with intel compilers. 
+4. try other compilers since intel can be buggy.
+
+====================================
+=================convention:==============
+each sub has an unique id, even those splitted out, but may have same rank+host
+the splitted part are not subs in the last snap, so not saved;use splitters.log to find their progenitors.
+backgound has the haloid -1; desthaloid=-2 means death of sub;
+subhaloid=-1 means no sub in that position;
+quasi-fof sub is ranked as if the background is their shared host,so they do not necessarily have rank 0;
+but quasi-halos are sorted in ascending mass order,i.e, the smallest quasi-halo have rank 0  #####consider change this
+
+all saved catalogue contain particle IDs rather than indices.so be careful before saving!!
+
+
+splitters:
+the splitted subs are self bound subs, (diff from previous version BT).
+if a previous (src-)sub split into several parts in the current epoch, it is processed in the following steps:
+1.find those splitted parts with N>NSRCMIn as independent srcsubs. (*Note)
+2.the biggest part is the main splitter which is set as the descendent of the sub
+3. unbind the srcsubs  to get descendent subs
+	*Note:
+	1). the splitted parts with N<NSRCMIn are all discarded from srccat
+	2).if no part greater than NboundMin,the srcsub is splitted to death, so does the corresponding sub
+*:to deal with splitters, always remember to check prosubid>=Npro when getting progenitors and fix by load_sp2pro() and free_sp2pro()
+
+====================IO interface=============
+To create your own IO interface, you have to read-in the following data:
+  # particle positions and velocities in gadget units into struct ParticleData; 
+  # a header with at least the three quantities:
+         * header.Hz (current hubble param in gadget units),
+         * header.mass[2] (gas and dm particle masses in gadget units),
+         * header.time (current reduced scale factor a=1/(1+z))
+	 * header.Omega0, header.OmegaLambda : OmegaM and OmegaL at z=0.
+  # the fof catalogue (each fof's particle ids) into CATALOGUE. 
+	or PIndex in the range [0,Np-1] if you define GRPINPUT_INDEX in parameter file
+
+Particle ID available options:
+
+PID_ORDERED assumes PID=[1~N], and assumes Pdat ordered according to PID=1...N; Pdat.PID is not present.
+GRPINPUT_INDEX assumes the PIDs after load_group_catalogue() are already PIndex, i.e., the address of particles in Pdat, [0~N-1]
+HBTPID_RANKSTYLE converts PIDs to particle ranks, [0~N-1] when loading, for gadget_io, and use this rank-style PID in HBT calc and HBT output;
+		this option exists for long discontinuous gadget PIDs, in order to save memory and disk space
+		note that any subcat or groupcat output from HBT will use the converted HBT PID, rather than the orginal PID
+PID_NEED_HASH tells HBT to create a hash table in order to convert PID to PIndex. This is necessary when PID is discontinuous and PID_max is too large,
+              so that a simple PIndex array is either in-efficient or impossible in memory allocation.
+   

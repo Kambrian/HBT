@@ -1,0 +1,26 @@
+#~~~~~~~~ modify this to be the simulation name   ~~~~~~~#
+RUN_NUM=FullBox#this is simulation name corresponding to some parameter file, see below
+#IODIR=JING_io#uncomment this for JING's data
+IODIR=gadget_io#uncomment this for gadget data
+#IODIR=star_io
+
+PARAM =param/param$(RUN_NUM).h
+
+NEED_FORTRAN=yes
+ifeq ($(IODIR),gadget_io)
+NEED_FORTRAN=no
+endif
+
+ifeq ($(NEED_FORTRAN),yes)
+#IFORTLIB=/home/kambrain/opt/intel/Compiler/11.1/059/lib/ia64 #a4700
+#IFORTLIB=/home/kambrain/intel/Compiler/11.1/059/lib/ia64  #altix
+FTNLIB=-L$(IFORTLIB) -lifport -lifcore
+OBJS_FTN= $(IODIR)/fortread.o
+endif
+
+CC		=   icc
+FC		=   ifort 
+# CC		=   gcc
+# FC		=   gfortran 
+
+

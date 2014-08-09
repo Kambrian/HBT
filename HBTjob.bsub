@@ -1,0 +1,39 @@
+#!/bin/bash
+# this file is intended to be used with bsub, for job submition
+##BSUB -L /bin/bash       # script shell language (/bin/tcsh, /bin/ksh etc.) NOTE: this cause problem on SHAO cluster of missing libimf.so
+#BSUB -n 12               # number of cores required
+##BSUB -M 3000000        #max 3gb
+##BSUB -R "rusage[mem=3000]"  #reserve 3gb
+#BSUB -J HBT               # name of job
+#BSUB -o HBT.Log.%J    # log file for standard output
+#BSUB -e HBT.Log.%J     # log file for standard error
+##BSUB -q normal              # target queue for job execution
+#BSUB -q cosma
+#BSUB -P durham             #project to charge time; durham or dp004
+##BSUB -u hanjiaxin@gmail.com
+##BSUB -N
+##BSUB -a intelmpi
+#BSUB -x                     # give node exclusive access to job
+#BSUB -R "span[ptile=12]"     # number of processors to use per node
+
+ulimit -s unlimited
+
+#~ source /etc/profile.d/modules.csh
+
+export HBT_VERSION=8.7c
+export OMP_SCHEDULE=dynamic
+export OMP_DYNAMIC=FALSE # this works for icc v11.1.072, 
+# but seems not always use the maximum available number of cpus allowed by NUM_THREADS
+# so better not allow it to adjust. shit.
+export KMP_BLOCKTIME=0  # this seems to help a lot, to reuse thread immediately after its job is finished
+export OMP_NUM_THREADS=24
+export OMP_NESTED=0
+export RUN_NUM=AqA4_Select
+
+
+date 
+echo "BT.$RUN_NUM started using schedule $OMP_SCHEDULE and omp_dynamic state is $OMP_DYNAMIC" 
+echo "with $OMP_NUM_THREADS threads" 
+
+./HBT.$RUN_NUM $snapstart $snapend
+

@@ -5,6 +5,7 @@
 #include <gsl/gsl_vector.h>
 #include <gsl/gsl_blas.h>
 #include <gsl/gsl_multifit_nlin.h>
+#include "datatypes.h"
 
 #define NUM_PARAM 2
 
@@ -70,7 +71,7 @@ typedef struct
 
 void load_halos_prof(HALOPROFILE *haloprof,int Ngrps,int Nsnap);
 void free_haloprof(HALOPROFILE *haloprof);
-int read_ngroups(int Nsnap);
+HBTInt read_ngroups(int Nsnap);
 int fit_halo_prof(HALOPROFILE *haloprof,double par[2],double err[2],double err_M[3]);
 
 int main (int argc,char **argv)
@@ -109,7 +110,7 @@ void load_halos_prof(HALOPROFILE *haloprof,int Ngrps,int Nsnap)
 		fread(&haloprof[i].rmax,sizeof(float),1,fp);
 		fread(&haloprof[i].rvir,sizeof(float),1,fp);
 		haloprof[i].rmin=Factor_RMIN*haloprof[i].rmax;
-		if(haloprof[i].rmin<1.5) haloprof[i].rmin=1.5;
+		if(haloprof[i].rmin<SofteningHalo) haloprof[i].rmin=SofteningHalo;
 		fseek(fp,10*4L,SEEK_CUR);
 		fread(&haloprof[i].mass,sizeof(int),1,fp);
 		fread(haloprof[i].Mvir,sizeof(int),3,fp);
@@ -150,15 +151,15 @@ void free_haloprof(HALOPROFILE *haloprof)
 		free(haloprof->r_back);
 	}
 }
-int read_ngroups(int Nsnap)
+HBTInt read_ngroups(int Nsnap)
 {
-	int ngroups;
+	HBTInt ngroups;
 	char buf[1024];
 	FILE *fp;
 	
 	 sprintf(buf, "%s/subcat_%03d", SUBCAT_DIR, Nsnap);
  	 myfopen(fp,buf,"r");
-   fread(&ngroups, sizeof(int), 1, fp);
+   fread(&ngroups, sizeof(HBTInt), 1, fp);
    fclose(fp);
    return ngroups;
 }

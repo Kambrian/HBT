@@ -162,16 +162,17 @@ size_t load_brfcat(HBTInt Nsnap,BRFCAT *Cat)
 		pro2dest++;
 		for(i=0;i<SubCat.Nsubs;i++)
 			pro2dest[i]=-2;//unknown descendent
-		pro2dest[-1]=-1;	
+		pro2dest[-1]=-1;
+		Npro=SubCat.Nsubs;
 	}
 	if(Npro<Cat->Nsubs)	{printf("pro2dest erro!\n");exit(1);}
 	for(i=0;i<Cat->Nsubs;i++)
 	{
-	Cat->SubHalo[i].Mdm=SubCat.SubLen[i];
-	Cat->SubHalo[i].HostID=SubCat.HaloChains[i].HostID;
-	Cat->SubHalo[i].ProID=SubCat.HaloChains[i].ProSubID;
-	Cat->SubHalo[i].DesID=pro2dest[i];
-	Cat->SubHalo[i].SubRank=SubCat.SubRank[i];
+	  Cat->SubHalo[i].Mdm=SubCat.SubLen[i];
+	  Cat->SubHalo[i].HostID=SubCat.HaloChains[i].HostID;
+	  Cat->SubHalo[i].ProID=SubCat.HaloChains[i].ProSubID;
+	  Cat->SubHalo[i].DesID=pro2dest[i];
+	  Cat->SubHalo[i].SubRank=SubCat.SubRank[i];
 	}
 	free_pro2dest(pro2dest);
 	free_sub_table(&SubCat);

@@ -131,8 +131,9 @@ hdf_util.o:
 StarPot: hdf_util.o tree.o
 StarPot : LDFLAGS+=-lhdf5_hl -lhdf5
 
-saveHDFhalo: hdf_util.o
-saveHDFhalo: LDFLAGS+=-lhdf5_hl -lhdf5
+saveHDFhalo saveHDFhalo_addstrm saveHDFhalo_debug: hdf_util.o
+saveHDFhalo saveHDFhalo_addstrm saveHDFhalo_debug: LDFLAGS+=-lhdf5_hl -lhdf5
+saveHDFhalo saveHDFhalo_debug: subfindread.o
 
 clean:
 	rm -f *.o $(EXEC)

@@ -21,7 +21,10 @@ switch datatype
         Rsub=Rsub(Rsub>rmin*Rvir&Rsub<rmax*Rvir);
     case 'bindata'
 %         datadir=['/mnt/A4700/data/',RunName,'/subcat/anal/massfun/'];
-        submass=read_submass([datadir,'submass_',num2str(Nsnap,'%03d')]);
+          submass=read_submass([datadir,'submass_',num2str(Nsnap,'%03d')]);
+%         tmp=importdata('/mnt/charon/HBT/data/AqA2/subcatmore/anal/steller/SnapInfall_162',',',1);%replace with infall mass
+%         submass=tmp.data(:,1);%./tmp.data(:,1);
+%         clear tmp
         subcom=read_subcom([datadir,'subcom_',num2str(Nsnap,'%03d')]);
         massdata=[submass,subcom];
         clear submass subcom
@@ -41,12 +44,12 @@ switch datatype
         Rsub=sqrt(sum((massdata(:,2:4)-repmat(massdata(center_id,2:4),size(massdata,1),1)).^2,2));
         massdata(center_id,:)=[];Rsub(center_id,:)=[];%exclude central sub
         Msubs=massdata(Rsub>rmin*Rvir&Rsub<rmax*Rvir,1);
-        Rsub=Rsub(Rsub>rmin*Rvir&Rsub<rmax*Rvir);
         if nargout>4
-            IDsub=0:size(massdata,1)-1;
+            IDsub=0:size(massdata,1);
             IDsub(center_id)=[];
             IDsub=IDsub(Rsub>rmin*Rvir&Rsub<rmax*Rvir);
         end
+        Rsub=Rsub(Rsub>rmin*Rvir&Rsub<rmax*Rvir);
 %         Msubs(Msubs<5*min(Msubs))=[];%exclude subs with less than 100 particles
     otherwise
         error('wrong datafile type');

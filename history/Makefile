@@ -19,7 +19,7 @@ LDFLAGS= -openmp -L$(BTDIR)/$(IODIR) -l$(RUN_NUM)io $(FTNLIB) $(GASLIB) -limf
 % : %.c   #cancel this implicit rule first; otherwise it will override the following rule
 
 % : %.c $(OBJS)      #this rule does not override the above implicit rule because of extra pre-requisites
-	$(CC) -o $@ $^ $(CFLAGS) $(OBJS) $(LDFLAGS) 
+	$(CC) -o $@ $^ $(CFLAGS) $(LDFLAGS) 
 
 all: $(EXEC)
 	

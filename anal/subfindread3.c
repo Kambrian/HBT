@@ -244,97 +244,117 @@ for(i=0;i<TotNgroups;i++)
   printf("average sub particle mass: %g - %g, %g\n", SubMass[0]/SubLen[0],MP_DM,MP_GAS);
   }
 
+static int comp_IDatInt(const void *a, const void *b)//used to sort PID in ascending order; 
+{
+  if((*(IDatInt *)a) > (*(IDatInt *)b))
+    return +1;
+
+  if((*(IDatInt *)a) < (*(IDatInt *)b))
+    return -1;
+
+  return 0;
+}
 
 #ifdef PARAM_FILE_INCLUDED
 void subfindcat2BT(SUBCATALOGUE *SubCat)
 {
-	int subid,grpid,i,j;
-	
-	SubCat->Ngroups=TotNgroups;
-	SubCat->Nsubs=TotNsubhalos;
-	SubCat->Nids=TotNids;
-	#ifndef HBT_INT8
-	SubCat->GrpLen_Sub=NsubPerHalo;
-	SubCat->GrpOffset_Sub=FirstSubOfHalo;
-	#else
-	SubCat->GrpLen_Sub=mymalloc(sizeof(HBTInt)*SubCat->Ngroups);
-	SubCat->GrpOffset_Sub=mymalloc(sizeof(HBTInt)*SubCat->Ngroups);
-	for(i=0;i<SubCat->Ngroups;i++)
-	{
-		SubCat->GrpLen_Sub[i]=NsubPerHalo[i];
-		SubCat->GrpOffset_Sub[i]=FirstSubOfHalo[i];
-	}
-	#endif
-	if(FirstSubOfHalo[0]!=0)
-	{
+  HBTInt subid,grpid,i,j;
+  
+  SubCat->Ngroups=TotNgroups;
+  SubCat->Nsubs=TotNsubhalos;
+  SubCat->Nids=TotNids;
+  #ifndef HBT_INT8
+  SubCat->GrpLen_Sub=NsubPerHalo;
+  SubCat->GrpOffset_Sub=FirstSubOfHalo;
+  #else
+  SubCat->GrpLen_Sub=mymalloc(sizeof(HBTInt)*SubCat->Ngroups);
+  SubCat->GrpOffset_Sub=mymalloc(sizeof(HBTInt)*SubCat->Ngroups);
+  for(i=0;i<SubCat->Ngroups;i++)
+  {
+	SubCat->GrpLen_Sub[i]=NsubPerHalo[i];
+	SubCat->GrpOffset_Sub[i]=FirstSubOfHalo[i];
+  }
+  #endif
+  if(FirstSubOfHalo[0]!=0)
+  {
 	printf("error,subhaloid not start from 0\n");
 	exit(1);
-	}
-	if(SubHostHalo[0]!=0)
-	{
+  }
+  if(SubHostHalo[0]!=0)
+  {
 	printf("error,Host haloid not start from 0\n");
 	exit(1);
-	}
-	#ifndef HBT_INT8
-	SubCat->SubLen=SubLen;
-	SubCat->SubOffset=SubOffset;
-	#else
-	SubCat->SubLen=mymalloc(sizeof(HBTInt)*SubCat->Nsubs);
-	SubCat->SubOffset=mymalloc(sizeof(HBTInt)*SubCat->Nsubs);
-	for(i=0;i<SubCat->Nsubs;i++)
+  }
+  #ifndef HBT_INT8
+  SubCat->SubLen=SubLen;
+  SubCat->SubOffset=SubOffset;
+  #else
+  SubCat->SubLen=mymalloc(sizeof(HBTInt)*SubCat->Nsubs);
+  SubCat->SubOffset=mymalloc(sizeof(HBTInt)*SubCat->Nsubs);
+  for(i=0;i<SubCat->Nsubs;i++)
+  {
+	SubCat->SubLen[i]=SubLen[i];
+	SubCat->SubOffset[i]=SubOffset[i];
+  }	
+  #endif
+  
+  SubCat->HaloChains=mymalloc(sizeof(struct Chain_data)*TotNsubhalos);
+  SubCat->SubRank=mymalloc(sizeof(HBTInt)*TotNsubhalos);
+  SubCat->Property=mymalloc(sizeof(struct SubProperty)*TotNsubhalos);
+  SubCat->PSubArr=mymalloc(sizeof(HBTInt *)*TotNsubhalos);
+  #ifdef HBTPID_RANKSTYLE
+  IDatInt *PIDs,*p;  
+  PIDs=load_PIDs_Sorted();
+  #endif
+  for(grpid=0;grpid<TotNgroups;grpid++)
+  {
+	for(i=0,subid=FirstSubOfHalo[grpid];subid<FirstSubOfHalo[grpid]+NsubPerHalo[grpid];subid++,i++)
 	{
-		SubCat->SubLen[i]=SubLen[i];
-		SubCat->SubOffset[i]=SubOffset[i];
-	}	
-	#endif
-	
-	SubCat->HaloChains=mymalloc(sizeof(struct Chain_data)*TotNsubhalos);
-	SubCat->SubRank=mymalloc(sizeof(int)*TotNsubhalos);
-	SubCat->Property=mymalloc(sizeof(struct SubProperty)*TotNsubhalos);
-	SubCat->PSubArr=mymalloc(sizeof(int *)*TotNsubhalos);
-	for(grpid=0;grpid<TotNgroups;grpid++)
-	{
-		for(i=0,subid=FirstSubOfHalo[grpid];subid<FirstSubOfHalo[grpid]+NsubPerHalo[grpid];subid++,i++)
-		{
-			SubCat->SubRank[subid]=i;
-			#ifdef SAME_INTTYPE
-			SubCat->PSubArr[subid]=groupIDs+SubOffset[subid];
-			#else
-			
-			#endif
-			SubCat->HaloChains[subid].HostID=SubHostHalo[subid];
-			for(j=0;j<3;j++)
-			{
-			SubCat->Property[subid].CoM[j]=SubPos[subid*3+j];//center of minimum potential
-			SubCat->Property[subid].VCoM[j]=SubVel[subid*3+j];//average vel?
-			}
-		}
+	  SubCat->SubRank[subid]=i;
+	  SubCat->PSubArr[subid]=mymalloc(sizeof(HBTInt)*SubCat->SubLen[subid]);
+	  for(j=0;j<SubCat->SubLen[subid];j++)
+	  {
+		#ifdef HBTPID_RANKSTYLE
+		p=bsearch(groupIDs+SubOffset[subid]+j,PIDs,NP_DM,sizeof(IDatInt),comp_IDatInt);
+		SubCat->PSubArr[subid][j]=p-PIDs;
+		#else
+		SubCat->PSubArr[subid][j]=groupIDs[SubOffset[subid]+j];
+		#endif
+	  }
+	  
+	  SubCat->HaloChains[subid].HostID=SubHostHalo[subid];
+	  for(j=0;j<3;j++)
+	  {
+		SubCat->Property[subid].CoM[j]=SubPos[subid*3+j];//center of minimum potential
+		SubCat->Property[subid].VCoM[j]=SubVel[subid*3+j];//average vel?
+	  }
 	}
-	#ifndef SAME_INTTYPE
-	printf("WARNING: sub particle IDs not loaded\n");
-	#endif
-	//~ for(subid=0;subid<TotNsubhalos-1;subid++)
-	//~ {
-		//~ if(SubLen[subid]+SubOffset[subid]!=SubOffset[subid+1])
-		//~ {
-		//~ printf("error,lastsubid=%d,suboffset=%d,sub.offset=%d,lastsublen=%d,lastsuboffset=%d\n",subid,SubOffset[subid+1],SubLen[subid]+SubOffset[subid],SubLen[subid],SubOffset[subid]);
-		//~ exit(1);
-		//~ }
-	//~ }
-	SubCat->sub_hierarchy=NULL;
-	SubCat->Nbirth=0;
-	SubCat->Ndeath=0;
-	SubCat->NQuasi=0;
-	SubCat->Nsplitter=0;
+  }
+  #ifdef HBTPID_RANKSTYLE
+  myfree(PIDs);
+  #endif
+  //~ for(subid=0;subid<TotNsubhalos-1;subid++)
+  //~ {
+  //~ if(SubLen[subid]+SubOffset[subid]!=SubOffset[subid+1])
+  //~ {
+  //~ printf("error,lastsubid=%d,suboffset=%d,sub.offset=%d,lastsublen=%d,lastsuboffset=%d\n",subid,SubOffset[subid+1],SubLen[subid]+SubOffset[subid],SubLen[subid],SubOffset[subid]);
+  //~ exit(1);
+  //~ }
+  //~ }
+  SubCat->sub_hierarchy=NULL;
+  SubCat->Nbirth=0;
+  SubCat->Ndeath=0;
+  SubCat->NQuasi=0;
+  SubCat->Nsplitter=0;
 }
 void load_subfind_catalogue(int Nsnap,SUBCATALOGUE *SubCat,char *inputdir)
 {
 	subread(Nsnap,inputdir);
 	subfindcat2BT(SubCat);
 }
-void load_subfind_halo_size(float Mvir[][3],float Rvir[][3],float partmass, int Ngroups, int Nsnap)
+void load_subfind_halo_size(float Mvir[][3],float Rvir[][3],float partmass, HBTInt Ngroups, int Nsnap)
 {
-	int i;
+	HBTInt i;
 	if(Ngroups!=TotNgroups)
 	{
 		fprintf(stderr,"error: number of groups mismatch when loading subfind halosize: %d,%d\n",Ngroups,TotNgroups);

@@ -183,7 +183,7 @@ void center_of_mass(HBTReal CoM[3], HBTInt *PInd, HBTInt np, HBTReal PPos[][3])
 	#ifdef PERIODIC_BDR
 		sx[j]+=NEAREST(PPos[PInd[i]][j]-origin[j]);
 	#else
-		sx[j]+=Pdat.Pos[PInd[i]][j];
+		sx[j]+=PPos[PInd[i]][j];
 	#endif
 	for(j=0;j<3;j++)
 	{
@@ -528,13 +528,13 @@ void free_linklist(LINKLIST *ll)
 	ll->GetPos=NULL;
 }
 
-HBTInt * linklist_search_sphere(LINKLIST *ll, HBTReal radius, HBTReal searchcenter[3], HBTInt *N_max_and_found)
+HBTInt * linklist_search_sphere(LINKLIST *ll, HBTReal radius, HBTReal searchcenter[3], HBTInt *N_guess_and_found)
 {
 	HBTReal dr;
 	HBTInt i,j,k,pid,*PIDfound,nfound,nmax;
 	int subbox_grid[3][2];
 	
-	nmax=*N_max_and_found;
+	nmax=*N_guess_and_found;
 	PIDfound=mymalloc(sizeof(HBTInt)*nmax);
 	nfound=0;
 		
@@ -569,7 +569,7 @@ HBTInt * linklist_search_sphere(LINKLIST *ll, HBTReal radius, HBTReal searchcent
 					pid=ll->list[pid];
 				}
 			}
-	*N_max_and_found=nfound;		
+	*N_guess_and_found=nfound;		
 	return PIDfound;		
 }
 

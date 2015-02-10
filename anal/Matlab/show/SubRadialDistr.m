@@ -6,7 +6,7 @@ outputdir='/home/kam/Projects/HBT/code/data/show/massfun/resim';
 addpath(genpath('../post'));
 
 virtype=1;
-rmin=0;rmax=5;
+rmin=0.01;rmax=1;
 Nsnap=162;grpid=0;
 RunName='AqA2';softeninghalo=4.8e-5;mp=1.000007e-06;
 % softeninghalo=1.5;
@@ -22,10 +22,10 @@ z=1/a(Nsnap+1)-1;
 
 % datadir=['/mnt/A4700/data/',RunName,'/subcat/anal/massfun/'];
 datadir=['/mnt/charon/HBT/data/',RunName,'/subcatmore/anal/massfun/'];
-[Mlist1,M1,R1,Rlist1]=Msublist_in_radii(datadir,virtype,Nsnap,grpid,rmin,rmax,'bindata','');
+[Mlist1,M1,R1,Rlist1,Sublist1]=Msublist_in_radii(datadir,virtype,Nsnap,grpid,rmin,rmax,'bindata','');
 % datadir=['/mnt/A4700/data/',RunName,'/subcatS/anal/massfun/'];
-datadir=['/mnt/charon/HBT/data/',RunName,'/subcatmore/anal/subfind/massfun/'];
-[Mlist2,M2,R2,Rlist2]=Msublist_in_radii(datadir,virtype,Nsnap,grpid,rmin,rmax,'bindata','');
+% datadir=['/mnt/charon/HBT/data/',RunName,'/subcat/anal/subfind/massfun/'];
+% [Mlist2,M2,R2,Rlist2]=Msublist_in_radii(datadir,virtype,Nsnap,grpid,rmin,rmax,'bindata','');
 %%
 datadir=['/mnt/charon/HBT/data/',RunName,'/subcatmore/profile/logbin/'];
 % datadir=['/mnt/A4700/data/',RunName,'/subcat/profile/logbin/'];
@@ -37,30 +37,45 @@ r=haloprof.rs;
 erho=sqrt(rho)./sqrt(vs);
 %%
 % Mass Profile
-% myfigure;
+myfigure;
 h1=loglog(r/R1,rho/(M1/mp/R1^3),'k-','displayname','Halo'); hold on;
-
+loglog(r/R1, rho/(M1/mp/R1^3).*(r/R1).^(1.5), 'g-', 'displayname', 'sat Model');
 nbin=15;
-nmin=30;
+nmin=2000;
 rbin=logspace(-2,0.7,nbin)*R1;
-f=Mlist1>nmin*mp;
+% f=Mlist1>nmin*mp;
+f=Mlist1>10000;%&Mlist1<10000000;
 [xr1,n1,rhon1]=loghist(Rlist1(f),rbin,[],[],1,3);
 erhon1=sqrt(n1)./diff(rbin.^3);
+rhomean=sum(n1)/R1^3;
+h4=errorbar(xr1/R1,rhon1/rhomean,erhon1/rhomean,'-','linewidth',3,'color',[0.8,0.8,1], 'displayname','sat Infall');
 % f=Mlist2>nmin*mp;
 % [xr2,n2,rhon2]=loghist(Rlist2(f),rbin,[],[],1,3);
-rhomean=sum(n1)/R1^3;
-h4=errorbar(xr1/R1,rhon1/rhomean,erhon1/rhomean,'-','linewidth',3,'color',[0.8,0.8,1]);
 % hold on;
-% h5=plot(xr2/R1,rhon2/rhomean,'r-','linewidth',3,'color',[1,0.8,0.8]);
+% h5=plot(xr2/R1,rhon2/rhomean,'r-','linewidth',3,'color',[1,0.8,0.8],'displayname','SUBFIND');
 xlabel('D/Rvir');ylabel('$n/<n>$');
 set(gca,'xscale','log','yscale','log');
+legend('show')
+% print('-depsc','/work/Projects/SubProf/plots/A2subprof_infall.eps')
 %%
 hold on;
-reinasto=199;
+reinasto=199e-3;
 alpha=0.678;
 neinasto=einasto(xr1/reinasto,alpha);
 nnorm=quad(@(r) einasto(r/reinasto,alpha).*r.^2*4*pi,0,R1)/(R1^3);
 plot(xr1/R1,neinasto/nnorm,'r');
+%%
+figure();
+loglog(r/R1, einasto(r/reinasto,alpha)./rho);
+%%
+tmp=importdata('/mnt/charon/HBT/data/AqA2/subcatmore/anal/steller/SnapInfall_162',',',1);
+submass=tmp.data(:,5);%current mass
+directinfall=tmp.data(:,end);
+submass=submass(Sublist1+1);
+directinfall=directinfall(Sublist1+1);
+f=Mlist1>1000;
+semilogx(Rlist1(f)/R1, submass(f)./Mlist1(f),'r.');
+
 %%
 
 nbin=10;

@@ -14,20 +14,27 @@ int main(int argc,char **argv)
 {
 	SUBCATALOGUE SubCat;
 	CATALOGUE Cat;
-	int Nsnap,subid,HostID;
+	int Nsnap,grpid,subid,HostID;
+	
+	grpid=10;//the target group
 	
 	logfile=stdout;
-	subid=0;
-	for(Nsnap=99;Nsnap>=0;Nsnap--)
+	Nsnap=MaxSnap-1;//final snapshot
+	load_sub_table(Nsnap, &SubCat, SUBCAT_DIR);
+	subid=SubCat.GrpOffset_Sub[grpid];//the main-sub of the target group
+	free_sub_table(&SubCat);
+	
+	for(Nsnap=MaxSnap-1;Nsnap>=0;Nsnap--)
 	{
-	load_group_catalogue(Nsnap,&Cat,GRPCAT_DIR);
-	load_sub_catalogue(Nsnap,&SubCat,SUBCAT_DIR);
-	HostID=SubCat.HaloChains[subid].HostID;
+	load_group_catalogue(Nsnap,&Cat,GRPCAT_DIR); //load fof catalogue
+	load_sub_table(Nsnap,&SubCat,SUBCAT_DIR); //load subhalo catalogue (only bulk properties loaded; particle lists not loaded. 
+	//use load_sub_catalogue() if you need the particles
+	HostID=SubCat.HaloChains[subid].HostID; //the host id of current subhalo
 	printf("%d:Host %d, HostLen %d,M0 %d\n",Nsnap,HostID,Cat.Len[HostID],Cat.Len[0]);
-	subid=SubCat.HaloChains[subid].ProSubID;
-	erase_sub_catalogue(&SubCat);
-	free_catalogue(&Cat);
-	if(subid<0) break;
+	subid=SubCat.HaloChains[subid].ProSubID; //the subid of the progenitor of this subhalo
+	free_sub_table(&SubCat);//use erase_sub_catalogue() if you used load_sub_catalogue() above.
+	free_catalogue(&Cat);//free fof catalogue
+	if(subid<0) break;//stop if no progenitor.
 	}
 	
 	return 0;

@@ -9,31 +9,14 @@
 #include "proto.h"
 #include "hdf_util.h"
 
-#define CEN_DEFAULT 0
-#define CEN_MBD 1
-#define CEN_CORE 2
-#define CEN_TYPE CEN_MBD
-
-#if CEN_TYPE==CEN_DEFAULT
-#define CEN_STR "cen_default"
-#endif
-
-#if CEN_TYPE==CEN_MBD
-#define CEN_STR "cen_mstbnd"
-#endif
-
-#if CEN_TYPE==CEN_CORE
-#define CEN_STR "cen_core"
-#endif
-
 #define SUBFIND_DIR GRPCAT_DIR
 #ifdef SUBFIND_DIR
 extern void load_subfind_catalogue(int Nsnap,SUBCATALOGUE *SubCat,char *inputdir);	
 #define load_sub_catalogue load_subfind_catalogue
 #define INPUT_DIR SUBFIND_DIR
-#define EXTNAME ".subfind." CEN_STR
+#define EXTNAME ".subfind"
 #else
-#define EXTNAME "." CEN_STR
+#define EXTNAME ""
 #define INPUT_DIR SUBCAT_DIR
 #endif
 
@@ -58,6 +41,19 @@ extern void update_CoMVCoM(SUBCATALOGUE *SubCat);
 extern HBTInt *prepare_ind2sub(SUBCATALOGUE *A);
 extern void dump_particles_hdf(char *outfile, HBTInt *PIndex, HBTInt np, HBTInt *ID2Sub, HBTInt *ID2Halo,  HBTInt subid);
 extern void dump_subhalos_hdf(char *outfile, struct PList *p);
+static int comp_IDatInt(const void *a, const void *b)//used to sort PID in ascending order; 
+{
+  if((*(IDatInt *)a) > (*(IDatInt *)b))
+    return +1;
+
+  if((*(IDatInt *)a) < (*(IDatInt *)b))
+    return -1;
+
+  return 0;
+}
+#define PrintWatch(x) {printf(x":\n");	printf("%g,%g,%g\n", Pdat.Pos[indwatch][0],Pdat.Pos[indwatch][1],Pdat.Pos[indwatch][2]);printf("%g,%g,%g\n", Pdat.Vel[indwatch][0],Pdat.Vel[indwatch][1],Pdat.Vel[indwatch][2]);}	
+HBTInt indwatch;
+int PIDFound=-1;
 int main(int argc, char** argv)
 {
 	char outfile[1024];
@@ -72,7 +68,18 @@ int main(int argc, char** argv)
 	else
 	Nsnap=atoi(argv[1]);
 	
-/**/	
+/**/
+	long long idwatch=741164718857480175LL;
+  #ifdef HBTPID_RANKSTYLE
+  IDatInt *PIDs;  
+  PIDs=load_PIDs_Sorted();
+  indwatch=(IDatInt *)bsearch(&(idwatch),PIDs,NP_DM,sizeof(IDatInt),comp_IDatInt)-PIDs;
+  printf("%lld, %lld\n", idwatch, PIDs[indwatch]);
+  myfree(PIDs);
+  #else
+  indwatch=idwatch;
+  #endif
+  
 	load_group_catalogue(Nsnap,&Cat,GRPCAT_DIR);
 // 	load_src_catalogue(Nsnap, &SrcCat, SUBCAT_DIR);
 // 	load_sub_table(Nsnap, &SubCat, SUBCAT_DIR);
@@ -82,6 +89,8 @@ int main(int argc, char** argv)
 	fresh_ID2Index(&Cat,-1); 	
 	fresh_ID2Index(&SubCat,-2);	
 // 	fresh_ID2Index(&SrcCat,-3);
+	indwatch=lookup_ID2Ind(indwatch);
+	PrintWatch("Fresh")
 	free_PIDHash();
 	
 #ifdef SUBFIND_DIR
@@ -92,16 +101,31 @@ int main(int argc, char** argv)
 	printf("VCoM=%g,%g,%g\n", SubCat.Property[0].VCoM[0], SubCat.Property[0].VCoM[1], SubCat.Property[0].VCoM[2]);
 	printf("VCen=%g,%g,%g\n", Pdat.Vel[SubCat.PSubArr[0][0]][0], Pdat.Vel[SubCat.PSubArr[0][0]][1], Pdat.Vel[SubCat.PSubArr[0][0]][2]);
 #endif
+	PrintWatch("CoMVCoM")
 	subid=SubCat.GrpOffset_Sub[grpid];
 	
 // 	sprintf(outfile,"%s/anal/halo.hdf5",SUBCAT_DIR);
 // 	dump_particles_hdf(outfile,Cat.PIDorIndex+Cat.Offset[grpid],Cat.Len[grpid],subid);
 	
-	sprintf(outfile,"%s/anal/allpart"EXTNAME".hdf5",SUBCAT_DIR);
+	sprintf(outfile,"%s/anal/allpart"EXTNAME".hdf5.debug",SUBCAT_DIR);
 	collect_particles(&p);
+	PrintWatch("Collected")
+	int i;
+	for(i=0;i<p.np;i++)
+	{
+	  if(p.PIndex[i]==indwatch)
+	  {
+		PIDFound=i;
+		break;
+	  }
+	}
+	printf("PIDFound=%d\n", PIDFound);
 	prepare_ind2halo(&Cat);
+	PrintWatch("Ind2halo")
 	HBTInt *ID2Sub=prepare_ind2sub(&SubCat);
+	PrintWatch("Ind2sub")
 	dump_particles_hdf(outfile,p.PIndex, p.np, ID2Sub, Cat.ID2Halo, subid);
+	PrintWatch("Dumped")
 	myfree(ID2Sub);
 	myfree(p.PIndex);
 	
@@ -131,8 +155,10 @@ void collect_particles(struct PList * p)
 {
   LINKLIST ll;
   make_linklist(&ll, NP_DM, 50, Pdat.Pos, GetArrPos, 0);
+	PrintWatch("linklisted")  
   p->np=Cat.Len[0];
   p->PIndex=linklist_search_sphere(&ll, 500/LUNIT, SubCat.Property[0].CoM, &p->np);
+  	PrintWatch("Searched")
   printf("Mv=%g\n", p->np*header.mass[1]/h0);
   free_linklist(&ll);
 }
@@ -195,6 +221,12 @@ void dump_particles_hdf(char *outfile, HBTInt *PIndex, HBTInt np, HBTInt *ID2Sub
 	vel[i][j]=Pdat.Vel[PIndex[i]][j]*sqa-SubCat.Property[subid].VCoM[j];
       }
     }
+    PrintWatch("Dumping...")
+	if(PIDFound>=0)
+	{
+	printf("Pos=%g,%g,%g\n", pos[PIDFound][0], pos[PIDFound][1], pos[PIDFound][2]);
+	printf("Vel=%g,%g,%g\n", vel[PIDFound][0], vel[PIDFound][1], vel[PIDFound][2]);	
+	}
     dims[0]=1;
 	float pmass=header.mass[1]/h0;
     status = H5LTmake_dataset(file_id,"/PartMass", 1, dims, H5T_NATIVE_FLOAT, &pmass); 
@@ -326,38 +358,19 @@ void update_CoMVCoM(SUBCATALOGUE *SubCat)
   #endif
   for(subid=0;subid<SubCat->Nsubs;subid++)
   {
-	switch(CEN_TYPE)
+	np=(int)(SubCat->SubLen[subid]*CoreFracMbd);
+	if(np<CoreLenMinMbd) np=CoreLenMinMbd;
+	if(np>SubCat->SubLen[subid]) np=SubCat->SubLen[subid];
+	center_of_mass(SubCat->Property[subid].CoM, SubCat->PSubArr[subid], np, Pdat.Pos);
+	for(j=0;j<3;j++) SubCat->Property[subid].VCoM[j]=0;
+	for(i=0;i<np;i++)
 	{
-	  case CEN_CORE:
-		for(j=0;j<3;j++)
-		{
-		  SubCat->Property[subid].CoM[j]=Pdat.Pos[SubCat->PSubArr[subid][0]][j];
-		  SubCat->Property[subid].VCoM[j]=Pdat.Vel[SubCat->PSubArr[subid][0]][j]*sqa;
-		}
-		np=(int)(SubCat->SubLen[subid]*CoreFracMbd);
-		if(np<CoreLenMinMbd) np=CoreLenMinMbd;
-		if(np>SubCat->SubLen[subid]) np=SubCat->SubLen[subid];
-		center_of_mass(SubCat->Property[subid].CoM, SubCat->PSubArr[subid], np, Pdat.Pos);
-		for(j=0;j<3;j++) SubCat->Property[subid].VCoM[j]=0;
-		for(i=0;i<np;i++)
-		{
-		  HBTInt pid=SubCat->PSubArr[subid][i];
-		  for(j=0;j<3;j++)
-			SubCat->Property[subid].VCoM[j]+=Pdat.Vel[pid][j];
-		}
-		for(j=0;j<3;j++)
-		  SubCat->Property[subid].VCoM[j]*=sqa/np;
-		break;
-	  case CEN_MBD:
-		for(j=0;j<3;j++)
-		{
-		  SubCat->Property[subid].CoM[j]=Pdat.Pos[SubCat->PSubArr[subid][0]][j];
-		  SubCat->Property[subid].VCoM[j]=Pdat.Vel[SubCat->PSubArr[subid][0]][j]*sqa;
-		}
-		break;
-	  default:
-		break;
+	  HBTInt pid=SubCat->PSubArr[subid][i];
+	  for(j=0;j<3;j++)
+		SubCat->Property[subid].VCoM[j]+=Pdat.Vel[pid][j];
 	}
+	for(j=0;j<3;j++)
+	  SubCat->Property[subid].VCoM[j]*=sqa/np;
   }
   printf("CoM=%g,%g,%g\n", SubCat->Property[0].CoM[0], SubCat->Property[0].CoM[1], SubCat->Property[0].CoM[2]);
   printf("Cen=%g,%g,%g\n", Pdat.Pos[SubCat->PSubArr[0][0]][0], Pdat.Pos[SubCat->PSubArr[0][0]][1], Pdat.Pos[SubCat->PSubArr[0][0]][2]);

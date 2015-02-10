@@ -55,6 +55,7 @@ for i=1:numel(dn)
         'color',colors(i),'markerfacecolor',colors(i),...
         'displayname',[num2str(log10(data{i}(ifun).Mbin(1))+10,'%2.1f'),'$\sim$',num2str(log10(data{i}(ifun).Mbin(2))+10,'%2.1f')]);
     hold on;
+%     cftool(log10(xmass), log10(mfun(:,1)))
 end
 hold off;
 set(gca,'yscale','log','xminortick','on','yminortick','on');

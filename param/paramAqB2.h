@@ -1,18 +1,18 @@
 #ifndef PARAM_FILE_INCLUDED	//to avoid multiple inclusion
-//this is the default A2 subcat.	
+	
 	/*=========program IO params==========*/
-	#define SUBCAT_DIR  "/gpfs/data/jvbq85/HBT/data/AqA2/subcatmore"			//the output directory for subcatalogues and srccatalogues, this must be an existing directory
+	#define SUBCAT_DIR  "/gpfs/data/jvbq85/HBT/data/AqB2/subcat"			//the output directory for subcatalogues and srccatalogues, this must be an existing directory
 	//necessary sub-dirs: splitters,pro2dest,history
-	#define GRPCAT_DIR  "/gpfs/data/aquarius/halo_data/Aq-A/2"				//the input directory for GrpCatalogues
-	#define  SNAPSHOT_DIR  "/gpfs/data/aquarius/halo_data/Aq-A/2"					//the input directory for simulation snapshots
+	#define GRPCAT_DIR  "/gpfs/data/aquarius/halo_data/Aq-B/2"				//the input directory for GrpCatalogues
+	#define  SNAPSHOT_DIR  "/gpfs/data/aquarius/halo_data/Aq-B/2"					//the input directory for simulation snapshots
 	#define LOGFILE_NAME  "logfile"																			//the name of program logfile, set to "stdout" to use stdout
 
 	/*======simulation params===========*/
-	#define NP_SIM	606866170LL //total Number of all kinds of particles
+	#define NP_SIM	739302608LL //total Number of all kinds of particles
 	#define NP_GAS 	0
-	#define NP_DM 	531570000LL
-	#define BOXSIZE 	100.0  //Mpc/h
-	#define MP_DM    1.000007e-06
+	#define NP_DM 	658815010LL
+	#define BOXSIZE 100.0  //Mpc/h
+	#define MP_DM   4.706599e-07 
 	#define MP_GAS   0.
 	//#define partmass=2.8679e-05  Msun/h
 
@@ -47,9 +47,10 @@
 	                   //because this is usually the only difference between standard gadget unit and user unit
 	#define G 43.0071
 	#define HUBBLE0 100.0    //H_0 in internal units
-	#define MaxSnap 163//total number of snapshot outputs
-	#define SNAPFILE_BASE "snap_C021200"
-	#define SNAPLIST  11210     //snaplist identifier to enable the corresponding snaplist in iovars.c
+	#define MaxSnap 128//total number of snapshot outputs
+	#define IniSnap 1
+	#define SNAPFILE_BASE "snap_C06_1200"
+//	#define SNAPLIST  11210     //snaplist identifier to enable the corresponding snaplist in iovars.c
 	#define NFILES 128   //number of files per snapshot
 	#define NFILES_GRP 256 //number of group files per snapshot
 	#define INPUT_REAL8   //datatype for input in double precision

@@ -22,7 +22,7 @@ extern void load_subfind_catalogue(int Nsnap,SUBCATALOGUE *SubCat,char *inputdir
 #endif
 
 #define NGRID 500
-	int mapxy[NGRID][NGRID]={0},mapxz[NGRID][NGRID]={0},mapyz[NGRID][NGRID]={0};
+	HBTInt mapxy[NGRID][NGRID]={0},mapxz[NGRID][NGRID]={0},mapyz[NGRID][NGRID]={0};
 
 int main(int argc,char **argv)
 {
@@ -30,12 +30,12 @@ int main(int argc,char **argv)
 #ifndef NO_SUBCAT
 	SUBCATALOGUE SubCat;
 #endif
-	int SnapLoad,SnapPlot,i,j,pid,subid,grpid;
+	HBTInt SnapLoad,SnapPlot,i,j,pid,subid,grpid;
 	FILE *fp,*fpr,*fpv;
 	char buf[1024];
 	float step[3],range[3][2];
 
-	int *PIndex,grid[3],ipotmin=0;
+	HBTInt *PIndex,grid[3],ipotmin=0;
 	double *pot,potmin=0.,com[3];
 	char outputdir[1024];
 	#ifdef SUBFIND_DIR
@@ -48,8 +48,9 @@ int main(int argc,char **argv)
 
 	if(argc!=4)
 	{
-		printf("usage: %s [SnapLoad] [grpid] [SnapPlot], otherwise set Nsnap inside\n",argv[0]);
+		printf("usage: %s [SnapLoad] [grpid] [SnapPlot]\n",argv[0]);
 		fflush(stdout);
+		exit(1);
 	}
 	else
 	{
@@ -87,7 +88,7 @@ int main(int argc,char **argv)
 	}
 	for(i=0;i<3;i++)
 		step[i]=(range[i][1]-range[i][0])/NGRID;
-	sprintf(buf,"%s/fofsize_%03d_%d.%03d",outputdir,SnapLoad,grpid,SnapPlot);
+	sprintf(buf,"%s/fofsize_%03d_"HBTIFMT".%03d",outputdir,SnapLoad,grpid,SnapPlot);
 	myfopen(fp,buf,"w");
 	for(i=0;i<3;i++)	
 		fprintf(fp,"%f,%f\n",range[i][0],range[i][1]);
@@ -107,39 +108,39 @@ int main(int argc,char **argv)
 		mapyz[grid[1]][grid[2]]++;
 	}
 	
-	sprintf(buf,"%s/fofmapxy_%03d_%d.%03d",outputdir,SnapLoad,grpid,SnapPlot);
+	sprintf(buf,"%s/fofmapxy_%03d_"HBTIFMT".%03d",outputdir,SnapLoad,grpid,SnapPlot);
 	myfopen(fp,buf,"w");
 	for(i=0;i<NGRID;i++)
 	{
 		for(j=0;j<NGRID;j++)
-			fprintf(fp,"%d\t",mapxy[i][j]);
+			fprintf(fp,""HBTIFMT"\t",mapxy[i][j]);
 		fprintf(fp,"\n");
 	}
 	fclose(fp);
 	//~ 
-	sprintf(buf,"%s/fofmapxz_%03d_%d.%03d",outputdir,SnapLoad,grpid,SnapPlot);
+	sprintf(buf,"%s/fofmapxz_%03d_"HBTIFMT".%03d",outputdir,SnapLoad,grpid,SnapPlot);
 	myfopen(fp,buf,"w");
 	for(i=0;i<NGRID;i++)
 	{
 		for(j=0;j<NGRID;j++)
-			fprintf(fp,"%d\t",mapxz[i][j]);
+			fprintf(fp,""HBTIFMT"\t",mapxz[i][j]);
 		fprintf(fp,"\n");
 	}
 	fclose(fp);
 	//~ 
-	sprintf(buf,"%s/fofmapyz_%03d_%d.%03d",outputdir,SnapLoad,grpid,SnapPlot);
+	sprintf(buf,"%s/fofmapyz_%03d_"HBTIFMT".%03d",outputdir,SnapLoad,grpid,SnapPlot);
 	myfopen(fp,buf,"w");
 	for(i=0;i<NGRID;i++)
 	{
 		for(j=0;j<NGRID;j++)
-			fprintf(fp,"%d\t",mapyz[i][j]);
+			fprintf(fp,""HBTIFMT"\t",mapyz[i][j]);
 		fprintf(fp,"\n");
 	}
 	fclose(fp);
 	
 #ifndef NO_SUBCAT	
 	//===========most bound===============//
-	sprintf(buf,"%s/subcenmap_%03d_%d.%03d",outputdir,SnapLoad,grpid,SnapPlot);
+	sprintf(buf,"%s/subcenmap_%03d_"HBTIFMT".%03d",outputdir,SnapLoad,grpid,SnapPlot);
 	myfopen(fp,buf,"w");
 	for(i=0;i<SubCat.GrpLen_Sub[grpid];i++)
 	{
@@ -149,12 +150,12 @@ int main(int argc,char **argv)
 		{
 			grid[j]=floor((Pdat.Pos[pid][j]-range[j][0])/step[j]);
 			if(grid[j]>=NGRID) grid[j]=NGRID-1;
-			fprintf(fp,"%d\t",grid[j]);
+			fprintf(fp,""HBTIFMT"\t",grid[j]);
 		}
 		fprintf(fp,"\n");
 	}
 	fclose(fp);	
-	sprintf(buf,"%s/subcen_%03d_%d.%03d",outputdir,SnapLoad,grpid,SnapPlot);
+	sprintf(buf,"%s/subcen_%03d_"HBTIFMT".%03d",outputdir,SnapLoad,grpid,SnapPlot);
 	myfopen(fpr,buf,"w");
 		for(i=0;i<SubCat.GrpLen_Sub[grpid];i++)
 	{
@@ -165,13 +166,13 @@ int main(int argc,char **argv)
 	fclose(fpr);
 	
 	//=================min of pot==================//
-	//~ sprintf(buf,"%s/subminmap_%03d_%d",outputdir,Nsnap,grpid);
+	//~ sprintf(buf,"%s/subminmap_%03d_"HBTIFMT"",outputdir,Nsnap,grpid);
 	//~ if((fp=fopen(buf,"w"))==NULL)
 	//~ {
 		//~ fprintf(logfile,"error: file open failed for %s!\n",buf);
 		//~ exit(1);
 	//~ }
-	//~ sprintf(buf,"%s/submin_%03d_%d",outputdir,Nsnap,grpid);
+	//~ sprintf(buf,"%s/submin_%03d_"HBTIFMT"",outputdir,Nsnap,grpid);
 	//~ if((fpr=fopen(buf,"w"))==NULL)
 	//~ {
 		//~ fprintf(logfile,"error: file open failed for %s!\n",buf);
@@ -192,13 +193,13 @@ int main(int argc,char **argv)
 			//~ potmin=pot[i];
 			//~ }
 		//~ }
-		//~ printf("%d:\t%d\t%f\n",subid,ipotmin,potmin);
+		//~ printf(""HBTIFMT":\t"HBTIFMT"\t%f\n",subid,ipotmin,potmin);
 		//~ pid=SubCat.PSubArr[subid][ipotmin];
 		//~ for(j=0;j<3;j++)
 		//~ {
 			//~ grid[j]=floor((Pdat.Pos[pid][j]-range[j][0])/step[j]);
 			//~ if(grid[j]>=NGRID) grid[j]=NGRID-1;
-			//~ fprintf(fp,"%d\t",grid[j]);
+			//~ fprintf(fp,""HBTIFMT"\t",grid[j]);
 		//~ }
 		//~ fprintf(fp,"\n");
 		//~ fprintf(fpr,"%f\t%f\t%f\n",Pdat.Pos[pid][0],Pdat.Pos[pid][1],Pdat.Pos[pid][2]);
@@ -209,9 +210,9 @@ int main(int argc,char **argv)
 	//~ fclose(fpr);
 	
 	//========================com=================//
-	sprintf(buf,"%s/subcommap_%03d_%d",outputdir,SnapLoad,grpid);
+	sprintf(buf,"%s/subcommap_%03d_"HBTIFMT"",outputdir,SnapLoad,grpid);
 	myfopen(fp,buf,"w");
-	sprintf(buf,"%s/subcom_%03d_%d",outputdir,SnapLoad,grpid);
+	sprintf(buf,"%s/subcom_%03d_"HBTIFMT"",outputdir,SnapLoad,grpid);
 	myfopen(fpr,buf,"w");
 	for(i=0;i<SubCat.GrpLen_Sub[grpid];i++)//NOTE: if not first fof, some modification for subid
 	{
@@ -221,10 +222,10 @@ int main(int argc,char **argv)
 			com[j]=SubCat.Property[subid].CoM[j];
 			grid[j]=floor((com[j]-range[j][0])/step[j]);
 			if(grid[j]>=NGRID) grid[j]=NGRID-1;
-			fprintf(fp,"%d\t",grid[j]);
+			fprintf(fp,""HBTIFMT"\t",grid[j]);
 		}
 		fprintf(fp,"\n");
-		fprintf(fpr,"%d\t%f\t%f\t%f\n",SubCat.SubLen[subid],com[0],com[1],com[2]);
+		fprintf(fpr,""HBTIFMT"\t%f\t%f\t%f\n",SubCat.SubLen[subid],com[0],com[1],com[2]);
 	}
 	fclose(fp);
 	fclose(fpr);

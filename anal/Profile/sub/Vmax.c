@@ -60,7 +60,7 @@ HBTxyz *centers, *vcenters;
 char buf[1024];
 FILE *fp;
 logfile=stdout;
-sprintf(outputdir,"/data/A4700r2d1/kambrain/6113/post/profile/");	
+sprintf(outputdir,"%s/profile/",SUBCAT_DIR);	
 mkdir(outputdir,0755);
 
 load_particle_header(0,SNAPSHOT_DIR);
@@ -351,7 +351,7 @@ void halo_virial_radius(HBTReal Mvir[3], HBTReal Rvir[3], HBTReal r_sorted[], HB
   {
     ndiv=np;//guess mass
     r=r_sorted;
-    rdiv=r[ndiv];
+    rdiv=r[ndiv-1];
     rvir=pow(2.0*G*ndiv*header.mass[1]/virialF[virtype]/header.Hz/header.Hz,1.0/3)/header.time;//guess radius
     while(1)
     {

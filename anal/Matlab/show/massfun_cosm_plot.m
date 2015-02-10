@@ -6,14 +6,14 @@ markers=['o--';'s--';'d--';'^--';'<--';'x--'];
 % markers=['.-';'.-';'.-';'.-';'.-';'.-'];
 colors=['r';'g';'b';'c';'m';'k'];
 
-Nsnap=59;RunNum='HY3002Nd20012';name='msfun';skip='';
+Nsnap=59;RunNum='8213';name='msfun';skip='';
 virtype=0;
-xref=logspace(11,14.5,5);
-% xref=logspace(7,11,5);
+% xref=logspace(11,14.5,5);
+xref=logspace(9,14,5);
 
 outputdir=['/work/Projects/HBT/code/data/show/massfun/'];
-% datadir=['/mnt/A4700/data/',RunNum,'/subcat',skip,'/anal/massfun/'];
-datadir=['/mnt/uv/HBT/data/',RunNum,'/subcat',skip,'/anal/massfun/'];
+datadir=['/mnt/A4700/data/',RunNum,'/subcat',skip,'/anal/massfun/'];
+% datadir=['/mnt/uv/HBT/data/',RunNum,'/subcat',skip,'/anal/massfun/'];
 % datadir=['/mnt/charon/HBT/data/',RunNum,'/subcat',skip,'/anal/massfun/1Rvir/'];
 [data,redshift]=read_massfun([datadir,'massfun_',num2str(Nsnap,'%03d'),'.',num2str(virtype,'%d')]);
 nfun=numel(data);
@@ -59,7 +59,7 @@ title(RunNum);
 % xlim([10,14.5]);
 
 fname=[name,'_',RunNum,'S',num2str(Nsnap),'V',num2str(virtype)];
-print('-depsc',[outputdir,fname,'.eps']);
+% print('-depsc',[outputdir,fname,'.eps']);
 % hgsave([outputdir,fname,'.fig']);
 %% plot logspaced specific mass function
 figure;

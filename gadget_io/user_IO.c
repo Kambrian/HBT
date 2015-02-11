@@ -202,7 +202,7 @@ static int read_gadget_header(FILE *fp,IO_HEADER * h)
 	return ByteOrder;
 	
 }
-void load_particle_header(HBTInt Nsnap, char *SnapPath)
+void load_particle_header_into(HBTInt Nsnap, char *SnapPath, IO_HEADER *h)
 {
 	FILE *fp;
 	char buf[1024];
@@ -219,9 +219,13 @@ void load_particle_header(HBTInt Nsnap, char *SnapPath)
 	if(!try_readfile(buf))	sprintf(buf,"%s/%d/%s.%d",SnapPath,(int)Nsnap,SNAPFILE_BASE,0);//for BJL's RAMSES output
 
 	myfopen(fp,buf,"r");
-	read_gadget_header(fp,&header);
+	read_gadget_header(fp,h);
 	fclose(fp);
-	header.Nsnap=Nsnap;
+	h->Nsnap=Nsnap;
+}
+void load_particle_header(HBTInt Nsnap, char *SnapPath)
+{
+  load_particle_header_into(Nsnap, SnapPath, &header);
 }
 
 struct io_ID2Ind

@@ -214,8 +214,11 @@ static HBTInt read_part_vel_JING(int Nsnap,char *snapdir)
 #endif
 	return header.Np;
 }
-
 void load_particle_header(HBTInt Nsnap, char *SnapPath)
+{	
+  load_particle_header_into(Nsnap, SnapPath, &header);
+}
+void load_particle_header_into(HBTInt Nsnap, char *SnapPath, IO_HEADER *h)
 {	
 	float Hratio; //(Hz/H0)
 	float scale_reduced,scale0;//a,R0
@@ -239,29 +242,29 @@ void load_particle_header(HBTInt Nsnap, char *SnapPath)
 
 //	#pragma omp critical (fill_header)
 	{
-	read_part_header(&header.Np,&header.ips,&header.ztp,&header.Omegat,&header.Lambdat,
-						&header.rLbox,&header.xscale,&header.vscale,&fileno);
+	read_part_header(&h->Np,&h->ips,&h->ztp,&h->Omegat,&h->Lambdat,
+						&h->rLbox,&h->xscale,&h->vscale,&fileno);
 	//~ printf("Np=%d,ips=%d,Omegat=%g,Lambdat=%g,Lbox=%g\nztp=%g,xscale=%g,vscale=%g\n",
-		//~ header.Np,header.ips,header.Omegat,header.Lambdat,header.rLbox,header.ztp,header.xscale,header.vscale);
-	if(header.Np!=NP_DM){fprintf(logfile,"error:particle number do not match(pos) "HBTIFMT"\n",header.Np);fflush(logfile);exit(1);}
+		//~ h->Np,h->ips,h->Omegat,h->Lambdat,h->rLbox,h->ztp,h->xscale,h->vscale);
+	if(h->Np!=NP_DM){fprintf(logfile,"error:particle number do not match(pos) "HBTIFMT"\n",h->Np);fflush(logfile);exit(1);}
 	}
 	close_fortran_file_(&fileno);
 
-	fprintf(logfile,"z=%g\n",header.ztp);fflush(logfile);
-	Hratio=sqrt(OMEGAL0/header.Lambdat);
-	header.Hz=HUBBLE0*Hratio;
-	scale_reduced=1./(1.+header.ztp);
-	header.time=scale_reduced;
-	header.mass[0]=0.;
-	header.mass[1]=PMass;
-	header.Omega0=OMEGA0;
-	header.OmegaLambda=OMEGAL0;	
+	fprintf(logfile,"z=%g\n",h->ztp);fflush(logfile);
+	Hratio=sqrt(OMEGAL0/h->Lambdat);
+	h->Hz=HUBBLE0*Hratio;
+	scale_reduced=1./(1.+h->ztp);
+	h->time=scale_reduced;
+	h->mass[0]=0.;
+	h->mass[1]=PMass;
+	h->Omega0=OMEGA0;
+	h->OmegaLambda=OMEGAL0;	
 	scale0=1+Redshift_INI;//scale_INI=1,scale_reduced_INI=1./(1.+z_ini),so scale0=scale_INI/scale_reduce_INI;
-	header.vunit=100.*header.rLbox*Hratio*scale_reduced*scale_reduced*scale0;   /*vunit=100*rLbox*R*(H*R)/(H0*R0)
+	h->vunit=100.*h->rLbox*Hratio*scale_reduced*scale_reduced*scale0;   /*vunit=100*rLbox*R*(H*R)/(H0*R0)
 											  =L*H0*Hratio*R*R/R0 (H0=100 when length(L) in Mpc/h)
 										  *      =100*L*(H/H0)*a*a*R0
 										  * where a=R/R0;         */
-	header.Nsnap=Nsnap;
+	h->Nsnap=Nsnap;
 }
 
 

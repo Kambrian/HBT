@@ -35,6 +35,7 @@ if(0==SnapBegin)
 {
 MbdCat.NSubs=0;
 MbdCat.NOrphans=0;
+MbdCat.NQuasi=0;
 MbdCat.Nodes=NULL;
 MbdCat.GrpLen_Sub=NULL;
 MbdCat.GrpOffset_Sub=NULL;
@@ -83,6 +84,7 @@ for(Nsnap=SnapBegin;Nsnap<MaxSnap;Nsnap++)
 	MbdCat.Nodes[subid].HostID=SubCat.HaloChains[subid].HostID;
 	}
 	MbdCat.NSubs=SubCat.Nsubs;
+	MbdCat.NQuasi=SubCat.NQuasi;
 	myfree(Sub2Hist);
 	
 	//fill Len and Offset
@@ -169,6 +171,8 @@ for(Nsnap=SnapBegin;Nsnap<MaxSnap;Nsnap++)
 	}
 	
 	save_mbd_catalogue(Nsnap, &MbdCat);		
+	free_particle_data();
+
 }
 
 free_mbd_catalogue(&MbdCat);
@@ -240,7 +244,7 @@ HBTInt CollectOrphans(HBTInt Nsnap, SUBCATALOGUE *SubCat, MBDCATALOGUE *MbdCat)
 	qsort(Orphans,NOrphans,sizeof(MBDNode),comp_NodeHost);
 	for(subid=NOrphans-1;subid>=0;subid--)
 	{
-		if(Orphans[subid].HostID>0) break;
+		if(Orphans[subid].HostID>=0) break; //bug-fix: >0 to >=0; 10-02-2015.
 	}
 	MbdCat->NOrphanQuasi=NOrphans-1-subid;
 	myfree(MbdCat->Nodes);

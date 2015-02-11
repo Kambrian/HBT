@@ -14,14 +14,15 @@
 #include "history_vars.h"
 #include "history_proto.h"
 
-void load_halo_size(HALOSIZE *halosize,HBTInt Ngroups,HBTInt Nsnap)
+HBTReal load_halo_size(HALOSIZE *halosize,HBTInt Ngroups,HBTInt Nsnap)
 {
 	HBTInt i;
 	char buf[1024];
 	FILE *fp;
 	sprintf(buf,"%s/profile/logbin/halo_size_%03d",SUBCAT_DIR,(int)Nsnap);
 	myfopen(fp,buf,"r");
-	load_particle_header(Nsnap,SNAPSHOT_DIR);
+	IO_HEADER h;
+	load_particle_header_into(Nsnap,SNAPSHOT_DIR, &h);
 	for(i=0;i<Ngroups;i++)
 	{
 		fseek(fp,13*4L,SEEK_CUR);
@@ -32,11 +33,12 @@ void load_halo_size(HALOSIZE *halosize,HBTInt Ngroups,HBTInt Nsnap)
 		fread(&halosize[i].flag_fakehalo,sizeof(HBTInt),1,fp);
 		if(halosize[i].flag_badvir[0])
 		{
-			halosize[i].Rvir[0]=comoving_virial_radius(halosize[i].mass);
+			halosize[i].Rvir[0]=comoving_virial_radius_header(halosize[i].mass, &h);
 			halosize[i].Mvir[0]=halosize[i].mass;
 		}
 	}
 	fclose(fp);
+	return h.time;//return current scale factor
 }
 HBTInt load_halo_concentration(HBTReal *halocon,HBTInt Nsnap)
 {
@@ -86,6 +88,7 @@ HBTInt subid,Ngroups;
   fclose(fd);
   return subid;
 }
+
 HBTInt read_Ngroups(HBTInt Nsnap)
 {
 FILE *fd;
@@ -97,6 +100,24 @@ HBTInt Ngroups;
 
   fread(&Ngroups, sizeof(HBTInt), 1, fd);
   
+  fclose(fd);
+  return Ngroups;
+}
+HBTInt load_mainsubid(HBTInt Nsnap, HBTInt *(*MainSubID))
+{
+  FILE *fd;
+char buf[1024];
+HBTInt subid,Ngroups,Nsubs,Nids;
+
+  sprintf(buf, "%s/subcat_%03d", SUBCAT_DIR, (int)Nsnap);
+  myfopen(fd,buf,"r");
+
+  fread(&Ngroups, sizeof(HBTInt), 1, fd);
+  fread(&Nsubs,sizeof(HBTInt),1,fd);
+  fread(&Nids, sizeof(HBTInt), 1, fd);
+  fseek(fd,sizeof(HBTInt)*Ngroups,SEEK_CUR);//skip grplen_sub
+  *MainSubID=mymalloc(sizeof(HBTInt)*Ngroups);
+  fread(*MainSubID, sizeof(HBTInt), Ngroups, fd);//grpoffset_sub
   fclose(fd);
   return Ngroups;
 }

@@ -51,7 +51,7 @@ $(IODIR)/lib$(RUN_NUM)io.a: sub_IO.o $(IODIR)/user_IO.o mymath.o intra_vars.o $(
 	ar -r $(IODIR)/lib$(RUN_NUM)io.a $^
 	
 synccosma: clean
-	#rsync -avzL $(shell pwd) -e "ssh -p 4800" jvbq85@localhost:data/HBT/code/
+# 	rsync -avzL $(shell pwd) -e "ssh -p 4800" jvbq85@localhost:data/HBT/code/
 	rsync -avzL $(shell pwd) jvbq85@cosma-c:data/HBT/code/
 	
 sync4700:

@@ -194,19 +194,24 @@ void center_of_mass(HBTReal CoM[3], HBTInt *PInd, HBTInt np, HBTReal PPos[][3])
 		CoM[j]=sx[j];
 	}
 }
- 
+
 HBTReal comoving_virial_radius(HBTInt mass)
+{
+  comoving_virial_radius_header(mass, &header);
+}
+HBTReal comoving_virial_radius_header(HBTInt mass, IO_HEADER* h)
+//evaluate with given header
 {	HBTReal Hratio,scaleF,virialF,x,OmegaZ;
-	scaleF=header.time;
-	Hratio=header.Hz/HUBBLE0;
+	scaleF=h->time;
+	Hratio=h->Hz/HUBBLE0;
 	#ifdef OMEGA0
 	OmegaZ=OMEGA0/(scaleF*scaleF*scaleF)/Hratio/Hratio;
 	#else
-	OmegaZ=header.Omega0/(scaleF*scaleF*scaleF)/Hratio/Hratio;
+	OmegaZ=h->Omega0/(scaleF*scaleF*scaleF)/Hratio/Hratio;
 	#endif
 	x=OmegaZ-1;
 	virialF=18.0*3.1416*3.1416+82.0*x-39.0*x*x;//<Rho_vir>/Rho_cri
-	return pow(2.0*G*mass*header.mass[1]/virialF/header.Hz/header.Hz,1.0/3)/scaleF;
+	return pow(2.0*G*mass*h->mass[1]/virialF/h->Hz/h->Hz,1.0/3)/scaleF;
 }
 void *mymalloc(size_t n)
 {void * mem;

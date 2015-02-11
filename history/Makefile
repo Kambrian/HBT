@@ -12,9 +12,9 @@ OBJS     = history_io.o
 EXE_ALL  :=$(basename $(wildcard *.c))
 
 
-CFLAGS=  -openmp -include $(PARAM) -I $(BTDIR) -I $(GASDIR) -I $(BTDIR)/$(IODIR) -I.
+CFLAGS=  -openmp -include $(PARAM) -I $(BTDIR) -I $(GASDIR) -I $(BTDIR)/$(IODIR) -I. -g
 #GASLIB=-L$(GASDIR) -lgasio
-LDFLAGS= -openmp -L$(BTDIR)/$(IODIR) -l$(RUN_NUM)io $(FTNLIB) $(GASLIB) -limf
+LDFLAGS= -openmp -L$(BTDIR)/$(IODIR) -l$(RUN_NUM)io $(FTNLIB) $(GASLIB) -limf -g
 
 % : %.c   #cancel this implicit rule first; otherwise it will override the following rule
 

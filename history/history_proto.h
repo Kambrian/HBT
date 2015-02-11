@@ -1,5 +1,5 @@
 #define GetHostID(Member) (((Member)==NULL)?-2:((Member)->HostID))
-extern void load_halo_size(HALOSIZE *halosize,HBTInt Ngroups,HBTInt Nsnap);
+extern HBTReal load_halo_size(HALOSIZE *halosize,HBTInt Ngroups,HBTInt Nsnap);
 extern HBTInt load_halo_concentration(HBTReal *halocon,HBTInt Nsnap);
 extern HBTInt read_mainsubid(HBTInt Nsnap,HBTInt hostid);
 extern HBTInt read_Ngroups(HBTInt Nsnap);

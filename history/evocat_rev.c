@@ -34,6 +34,7 @@ HALOSIZE *(halosize[MaxSnap]);
 HBTReal *(halocon[MaxSnap]);
 HBTxyz *(SubCoM[MaxSnap]),*(SubVCoM[MaxSnap]);
 HBTInt * (Sub2Hist[MaxSnap]);
+HBTInt * (MainSubID[MaxSnap]);
 HBTReal scaleF[MaxSnap];
 HBTReal PartMass;
 void load_evocat_raw(EVOLUTIONCAT *EvoCat)
@@ -72,41 +73,43 @@ int main(int argc,char **argv)
 
 //~ char gasdir[1024]=GASCAT_DIR;
 char buf[1024];FILE *fp;
-HBTInt Nsnap,i,MemID,SnapInfall,Nsubs,Ngroups;
+HBTInt Nsnap,i,MemID,SnapInfall,Nsubs;
 HBTInt NumHist,HostID,HistID,HHistID;
 
 logfile=stdout;
+#pragma omp parallel for 
 for(Nsnap=0;Nsnap<MaxSnap;Nsnap++)
 {
 load_sub2hist(Nsnap,Sub2Hist+Nsnap,&Nsubs,SUBCAT_DIR);
-Ngroups=read_Ngroups(Nsnap);
+HBTInt Ngroups=read_Ngroups(Nsnap);
 halosize[Nsnap]=mymalloc(sizeof(HALOSIZE)*Ngroups);
-load_halo_size(halosize[Nsnap],Ngroups,Nsnap);
+scaleF[Nsnap]=load_halo_size(halosize[Nsnap],Ngroups,Nsnap);
 halocon[Nsnap]=mymalloc(sizeof(HBTReal)*Ngroups);
 load_halo_concentration(halocon[Nsnap],Nsnap);
+load_mainsubid(Nsnap,MainSubID+Nsnap);
 read_subpos(Nsnap,SubCoM+Nsnap);
 read_subvel(Nsnap,SubVCoM+Nsnap);
-load_particle_header(Nsnap,SNAPSHOT_DIR);
-scaleF[Nsnap]=header.time;
 printf(HBTIFMT".",Nsnap);fflush(stdout);
 }
 printf("\n");
+load_particle_header(MaxSnap-1, SNAPSHOT_DIR);
 PartMass=header.mass[1];
 load_evocat_raw(&EvoCat);
 load_evocat_raw(&EvoCatRev);
 NumHist=EvoCat.NHist;
+printf("%d Histories\n", NumHist);
 
 create_historyshards(&HistoryRevShard,NumHist);
 
-#pragma omp parallel for private(HistID,SnapInfall,HostID,HHistID,Nsnap)
-for(HistID=0;HistID<NumHist;HistID++)
+// #pragma omp parallel for private(HistID,SnapInfall,HostID,HHistID,Nsnap)
+for(HistID=0;HistID<10;HistID++)
 {
-	//~ static HBTInt progress=0;
-	//~ if(HistID>progress/100.0*NumHist)
-	//~ {
-		//~ printf("#");fflush(stdout);
-		//~ progress++;
-	//~ }
+	 static HBTInt progress=0;
+	 if(HistID>progress/1000.0*NumHist)
+	 {
+		 printf("#");fflush(stdout);
+		 progress++;
+	 }
 	HISTORY *History;
 	History=EvoCat.History+HistID;
 	SnapInfall=History->SnapEnter+1;
@@ -120,7 +123,7 @@ for(HistID=0;HistID<NumHist;HistID++)
 	}
 	else
 	{
-	HHistID=Sub2Hist[SnapInfall][read_mainsubid(SnapInfall,HostID)];
+	HHistID=Sub2Hist[SnapInfall][MainSubID[SnapInfall][HostID]];
 	for(Nsnap=History->SnapBirth;Nsnap<SnapInfall;Nsnap++)//extend pre-infall part
 		history_copy_host(GetMember(&EvoCatRev,HistID,Nsnap),GetMember(&EvoCat,HHistID,Nsnap));
 	extend_history(HistID,SnapInfall);//cover gaps during branch-crossing
@@ -179,6 +182,7 @@ void get_sat_concen(HBTInt HistID)
 }
 void get_shard_param(HBTInt HistID)
 {
+  	printf("get_shard_par...\n"); fflush(stdout);
 	struct ShardParam *ShardPar;
 	HBTInt i,ShardID,Nsnap,SnapEnd,FlagRvir,FlagTidal,SubID,MainID,HostID;
 	HBTReal Rup,Rdown,Rtidal,Tup,Tdown,r,rup,v,Pos[3],Vel[3],Kt,Kup,Kdown,j2up,j2down,vc2,sint2;
@@ -207,7 +211,7 @@ void get_shard_param(HBTInt HistID)
 			if(HostID<0||SubID<0)//host or sub died, for last shard
 			//~ {printf("error: HostID<0 or SubID<0 not expected here\n");exit(1);}
 			break;
-			MainID=read_mainsubid(Nsnap,HostID);
+			MainID=MainSubID[Nsnap][HostID];
 			if(MainID==SubID)//self-host
 			break;
 			rup=r;
@@ -353,6 +357,7 @@ void get_shard_param(HBTInt HistID)
 
 void split_history(HBTInt HistID)//this act on EvoCatRev.History, split according to mergers
 {
+  printf("splitting history...\n");fflush(stdout);
 	HBTInt NBirth_cache,SnapBirth_cache[MaxSnap];
 	HBTInt i,Nsnap,HostID_Up,HHistID_Up,HostID,HHistID;
 	HBTInt SnapBirth,SnapDeath;
@@ -368,7 +373,7 @@ void split_history(HBTInt HistID)//this act on EvoCatRev.History, split accordin
 		SnapBirth_cache[0]=i;//The first snapshot when sub and its host both exist,
 							//just in case the host could be born later than sub
 		HostID_Up=GetMember(&EvoCatRev,HistID,Nsnap)->HostID;
-		HHistID_Up=Sub2Hist[Nsnap][read_mainsubid(Nsnap,HostID_Up)];
+		HHistID_Up=Sub2Hist[Nsnap][MainSubID[Nsnap][HostID_Up]];
 		for(Nsnap=Nsnap+1;Nsnap<SnapDeath;Nsnap++)
 		{
 			HostID=GetMember(&EvoCatRev,HistID,Nsnap)->HostID;//get host from rev
@@ -379,7 +384,7 @@ void split_history(HBTInt HistID)//this act on EvoCatRev.History, split accordin
 				if(HostID<0) 
 				//~ {printf("error: HostID<0 not expected here:"HBTIFMT"\n",GetMember(&EvoCat,HistID,Nsnap)->HostID);exit(1);}
 				break;//host history ends
-				HHistID=Sub2Hist[Nsnap][read_mainsubid(Nsnap,HostID)];
+				HHistID=Sub2Hist[Nsnap][MainSubID[Nsnap][HostID]];
 				if(GetHostID(GetMember(&EvoCat,HHistID,Nsnap-1))!=HostID_Up)//also different pro-branch,branch-crossing is happenning,compare to original host history(not extended)
 				{
 					SnapBirth_cache[NBirth_cache]=Nsnap;
@@ -402,6 +407,7 @@ void split_history(HBTInt HistID)//this act on EvoCatRev.History, split accordin
 }
 void extend_history(HBTInt HistID,HBTInt SnapInfall)
 {
+  printf("extend_history...\n");fflush(stdout);
 	HBTInt i,Nsnap,HHistID_Up,HHistID_Down,HostID_Up,HostID_Down;
 	HBTInt SnapBirth,SnapDeath;
 	HBTReal Rup,Rdown;
@@ -413,7 +419,7 @@ void extend_history(HBTInt HistID,HBTInt SnapInfall)
 		if(GetMember(&EvoCat,HistID,Nsnap)->SubRank>0)//still staying in previous host
 		{
 			HostID_Up=GetMember(&EvoCat,HistID,Nsnap)->HostID;
-			HHistID_Up=Sub2Hist[Nsnap][read_mainsubid(Nsnap,HostID_Up)];
+			HHistID_Up=Sub2Hist[Nsnap][MainSubID[Nsnap][HostID_Up]];
 			Nsnap++;
 		}
 		else
@@ -431,15 +437,15 @@ void extend_history(HBTInt HistID,HBTInt SnapInfall)
 			else//extend Host info to fill the gap
 			{
 				HostID_Down=GetMember(&EvoCat,HistID,SnapInfall)->HostID;
-				HHistID_Down=Sub2Hist[SnapInfall][read_mainsubid(SnapInfall,HostID_Down)];
+				HHistID_Down=Sub2Hist[SnapInfall][MainSubID[SnapInfall][HostID_Down]];
 				while(Nsnap<SnapInfall)
 				{
 					HostID_Up=GetHostID(GetMember(&EvoCat,HHistID_Up,Nsnap));
 					HostID_Down=GetHostID(GetMember(&EvoCat,HHistID_Down,Nsnap));		
 					if(HostID_Up>=0&&HostID_Down>=0)
 					{
-						Rup=distance(SubCoM[Nsnap][read_mainsubid(Nsnap,HostID_Up)],SubCoM[Nsnap][GetMember(&EvoCat,HistID,Nsnap)->SubID]);
-						Rdown=distance(SubCoM[Nsnap][read_mainsubid(Nsnap,HostID_Down)],SubCoM[Nsnap][GetMember(&EvoCat,HistID,Nsnap)->SubID]);
+						Rup=distance(SubCoM[Nsnap][MainSubID[Nsnap][HostID_Up]],SubCoM[Nsnap][GetMember(&EvoCat,HistID,Nsnap)->SubID]);
+						Rdown=distance(SubCoM[Nsnap][MainSubID[Nsnap][HostID_Down]],SubCoM[Nsnap][GetMember(&EvoCat,HistID,Nsnap)->SubID]);
 						if(!(halosize[Nsnap][HostID_Up].flag_badvir[0])&&!(halosize[Nsnap][HostID_Down].flag_badvir[0]))
 						{
 							Rup=Rup/halosize[Nsnap][HostID_Up].Rvir[0];

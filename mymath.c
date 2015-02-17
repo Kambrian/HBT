@@ -197,7 +197,7 @@ void center_of_mass(HBTReal CoM[3], HBTInt *PInd, HBTInt np, HBTReal PPos[][3])
 
 HBTReal comoving_virial_radius(HBTInt mass)
 {
-  comoving_virial_radius_header(mass, &header);
+  return comoving_virial_radius_header(mass, &header);
 }
 HBTReal comoving_virial_radius_header(HBTInt mass, IO_HEADER* h)
 //evaluate with given header

@@ -26,11 +26,11 @@ HBTReal load_halo_size(HALOSIZE *halosize,HBTInt Ngroups,HBTInt Nsnap)
 	for(i=0;i<Ngroups;i++)
 	{
 		fseek(fp,13*4L,SEEK_CUR);
-		fread(&halosize[i].mass,sizeof(HBTInt),1,fp);
-		fread(halosize[i].Mvir,sizeof(HBTInt),3,fp);
-		fread(halosize[i].Rvir,sizeof(HBTReal),3,fp);
-		fread(halosize[i].flag_badvir,sizeof(HBTInt),3,fp);
-		fread(&halosize[i].flag_fakehalo,sizeof(HBTInt),1,fp);
+		fread(&halosize[i].mass,sizeof(int),1,fp);
+		fread(halosize[i].Mvir,sizeof(int),3,fp);
+		fread(halosize[i].Rvir,sizeof(float),3,fp);
+		fread(halosize[i].flag_badvir,sizeof(int),3,fp);
+		fread(&halosize[i].flag_fakehalo,sizeof(int),1,fp);
 		if(halosize[i].flag_badvir[0])
 		{
 			halosize[i].Rvir[0]=comoving_virial_radius_header(halosize[i].mass, &h);
@@ -40,24 +40,24 @@ HBTReal load_halo_size(HALOSIZE *halosize,HBTInt Ngroups,HBTInt Nsnap)
 	fclose(fp);
 	return h.time;//return current scale factor
 }
-HBTInt load_halo_concentration(HBTReal *halocon,HBTInt Nsnap)
+HBTInt load_halo_concentration(float *halocon,HBTInt Nsnap)
 {
 	HBTInt grpid,Ngroups,Ngroups2,halostatus;
 	char buf[1024];
 	FILE *fp;
 	sprintf(buf,"%s/profile/logbin/halo_param_%03d",SUBCAT_DIR,(int)Nsnap);
 	myfopen(fp,buf,"r");
-	fread(&Ngroups,sizeof(HBTInt),1,fp);
+	fread(&Ngroups,sizeof(int),1,fp);
 	for(grpid=0;grpid<Ngroups;grpid++)
 	{
-		fread(&halostatus,sizeof(HBTInt),1,fp);
-		fseek(fp,4*sizeof(HBTReal),SEEK_CUR);
-		//~ fread(halostatus+grpid,sizeof(HBTInt),1,fp);
-		fread(halocon+grpid,sizeof(HBTReal),1,fp);
+		fread(&halostatus,sizeof(int),1,fp);
+		fseek(fp,4*sizeof(float),SEEK_CUR);
+		//~ fread(halostatus+grpid,sizeof(int),1,fp);
+		fread(halocon+grpid,sizeof(float),1,fp);
 		if(halostatus!=0) halocon[grpid]=-1; //set concentration to -1 if fitting not successful
-		fseek(fp,sizeof(HBTReal)*2,SEEK_CUR);
+		fseek(fp,sizeof(float)*2,SEEK_CUR);
 	}	
-	fread(&Ngroups2,sizeof(HBTInt),1,fp);
+	fread(&Ngroups2,sizeof(int),1,fp);
 	if(Ngroups2!=Ngroups)
 	{
 		printf("error:Ngroups="HBTIFMT","HBTIFMT" do not match when loading \n %s\n" 

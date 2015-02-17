@@ -41,8 +41,7 @@
 #include "NFW_fun.c"
 #endif
 
-#define Factor_RMIN 1e-2 //rmin=max(ABS_RMIN, Factor_RMIN*rmax)
-#define ABS_RMIN SofteningHalo 
+#define Factor_RMIN 1e-2 //rmin=max(SofteningHalo, Factor_RMIN*rmax)
 #define mymalloc malloc
 #define myfopen(filepointer,filename,filemode) if(!((filepointer)=fopen(filename,filemode))){ fprintf(stderr,"Error opening file '%s'\n",filename);	fflush(stderr); exit(1);	}
 

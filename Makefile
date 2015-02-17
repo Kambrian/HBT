@@ -6,13 +6,13 @@ INCL	 = datatypes.h intra_vars.h $(IODIR)/iovars.h proto.h Makefile $(PARAM)
 targets  = HBT FoF FoF_mpi #hiercheck.o 
 EXEC     = $(addsuffix .$(RUN_NUM), $(targets))
 
-ANAL     = haloprof snap2 massfun_plot NFW_fit snaps #analysis routines
-targets += $(ANAL)
+TOOLS     = haloprof snap2 massfun_plot NFW_fit snaps #analysis routines
+targets += $(TOOLS)
 
 SRC =$(OBJS_COMM:%.o=%.c) $(addsuffix .c, $(targets))
 
-VPATH=anal/Image anal/MassFunction anal/Profile \
-      anal/Profile/concentration   
+VPATH=toolbox/Image toolbox/MassFunction toolbox/Profile \
+      toolbox/Profile/concentration   
       
 ifeq ($(CC), icc)
 CFLAGS=  -openmp -include $(PARAM) -I. -I $(IODIR) -g  

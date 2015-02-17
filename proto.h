@@ -44,7 +44,7 @@ extern void make_linklist(LINKLIST *ll, HBTInt np,HBTInt ndiv,
 						void *PosData, AccessPosFunc *GetPos, HBTInt UseFullBox);
 extern void free_linklist(LINKLIST *ll);
 extern HBTInt * linklist_search_sphere(LINKLIST *ll, HBTReal radius, 
-							HBTReal searchcenter[3], HBTInt *N_max_and_found);
+							HBTReal searchcenter[3], HBTInt *N_guess_and_found);
 
 //user_IO.c
 extern int check_grpcat_byteorder(char *filename);

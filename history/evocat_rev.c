@@ -31,7 +31,7 @@ void get_shard_param(HBTInt HistID);
 struct HistoryShards HistoryRevShard;
 EVOLUTIONCAT EvoCat,EvoCatRev;
 HALOSIZE *(halosize[MaxSnap]);
-HBTReal *(halocon[MaxSnap]);
+float *(halocon[MaxSnap]);
 HBTxyz *(SubCoM[MaxSnap]),*(SubVCoM[MaxSnap]);
 HBTInt * (Sub2Hist[MaxSnap]);
 HBTInt * (MainSubID[MaxSnap]);
@@ -73,18 +73,19 @@ int main(int argc,char **argv)
 
 //~ char gasdir[1024]=GASCAT_DIR;
 char buf[1024];FILE *fp;
-HBTInt Nsnap,i,MemID,SnapInfall,Nsubs;
+HBTInt Nsnap,i,MemID,SnapInfall;
 HBTInt NumHist,HostID,HistID,HHistID;
 
 logfile=stdout;
-#pragma omp parallel for 
+#pragma omp parallel for
 for(Nsnap=0;Nsnap<MaxSnap;Nsnap++)
 {
+HBTInt Ngroups, Nsubs;
 load_sub2hist(Nsnap,Sub2Hist+Nsnap,&Nsubs,SUBCAT_DIR);
-HBTInt Ngroups=read_Ngroups(Nsnap);
+Ngroups=read_Ngroups(Nsnap);
 halosize[Nsnap]=mymalloc(sizeof(HALOSIZE)*Ngroups);
 scaleF[Nsnap]=load_halo_size(halosize[Nsnap],Ngroups,Nsnap);
-halocon[Nsnap]=mymalloc(sizeof(HBTReal)*Ngroups);
+halocon[Nsnap]=mymalloc(sizeof(float)*Ngroups);
 load_halo_concentration(halocon[Nsnap],Nsnap);
 load_mainsubid(Nsnap,MainSubID+Nsnap);
 read_subpos(Nsnap,SubCoM+Nsnap);
@@ -101,13 +102,13 @@ printf("%d Histories\n", NumHist);
 
 create_historyshards(&HistoryRevShard,NumHist);
 
-// #pragma omp parallel for private(HistID,SnapInfall,HostID,HHistID,Nsnap)
-for(HistID=0;HistID<10;HistID++)
+#pragma omp parallel for private(HistID,SnapInfall,HostID,HHistID,Nsnap)
+for(HistID=0;HistID<NumHist;HistID++)
 {
-	 static HBTInt progress=0;
+	 static HBTInt progress;
 	 if(HistID>progress/1000.0*NumHist)
 	 {
-		 printf("#");fflush(stdout);
+		 printf("%d|",progress);fflush(stdout);
 		 progress++;
 	 }
 	HISTORY *History;
@@ -182,7 +183,7 @@ void get_sat_concen(HBTInt HistID)
 }
 void get_shard_param(HBTInt HistID)
 {
-  	printf("get_shard_par...\n"); fflush(stdout);
+//   	printf("get_shard_par...\n"); fflush(stdout);
 	struct ShardParam *ShardPar;
 	HBTInt i,ShardID,Nsnap,SnapEnd,FlagRvir,FlagTidal,SubID,MainID,HostID;
 	HBTReal Rup,Rdown,Rtidal,Tup,Tdown,r,rup,v,Pos[3],Vel[3],Kt,Kup,Kdown,j2up,j2down,vc2,sint2;
@@ -357,7 +358,7 @@ void get_shard_param(HBTInt HistID)
 
 void split_history(HBTInt HistID)//this act on EvoCatRev.History, split according to mergers
 {
-  printf("splitting history...\n");fflush(stdout);
+//   printf("splitting history...\n");fflush(stdout);
 	HBTInt NBirth_cache,SnapBirth_cache[MaxSnap];
 	HBTInt i,Nsnap,HostID_Up,HHistID_Up,HostID,HHistID;
 	HBTInt SnapBirth,SnapDeath;
@@ -380,12 +381,14 @@ void split_history(HBTInt HistID)//this act on EvoCatRev.History, split accordin
 			if(GetMember(&EvoCatRev,HistID,Nsnap)->SubID<0)//history ends
 			{printf("error: history ends before death:HistID="HBTIFMT",Nsnap="HBTIFMT"\n",HistID,Nsnap);exit(1);}
 			if(GetHostID(GetMember(&EvoCat,HHistID_Up,Nsnap))!=HostID)//different dest-branch,compare to original host history(not extended)
+			//hierarchical merger won't be counted as crossing, because the current host is also the host of the previous host
 			{
 				if(HostID<0) 
 				//~ {printf("error: HostID<0 not expected here:"HBTIFMT"\n",GetMember(&EvoCat,HistID,Nsnap)->HostID);exit(1);}
 				break;//host history ends
 				HHistID=Sub2Hist[Nsnap][MainSubID[Nsnap][HostID]];
 				if(GetHostID(GetMember(&EvoCat,HHistID,Nsnap-1))!=HostID_Up)//also different pro-branch,branch-crossing is happenning,compare to original host history(not extended)
+				//if a sub is ejected together with its host-sub, this won't trigger crossing either, because they are ejected from the same host. this is not ideal if you want to study the orbit with respect to the host...TODO.
 				{
 					SnapBirth_cache[NBirth_cache]=Nsnap;
 					NBirth_cache++;
@@ -407,7 +410,7 @@ void split_history(HBTInt HistID)//this act on EvoCatRev.History, split accordin
 }
 void extend_history(HBTInt HistID,HBTInt SnapInfall)
 {
-  printf("extend_history...\n");fflush(stdout);
+//   printf("extend_history...\n");fflush(stdout);
 	HBTInt i,Nsnap,HHistID_Up,HHistID_Down,HostID_Up,HostID_Down;
 	HBTInt SnapBirth,SnapDeath;
 	HBTReal Rup,Rdown;
@@ -429,7 +432,7 @@ void extend_history(HBTInt HistID,HBTInt SnapInfall)
 			{
 				while(Nsnap<SnapDeath)
 				{
-				history_copy_host(GetMember(&EvoCatRev,HistID,Nsnap),GetMember(&EvoCat,HHistID_Up,Nsnap));
+				history_copy_host(GetMember(&EvoCatRev,HistID,Nsnap),GetMember(&EvoCat,HHistID_Up,Nsnap));//host untouched. quasi still have host=-1.
 				Nsnap++;
 				}
 				break;

@@ -22,7 +22,7 @@ GSLLIB=-L/home/qypeng/softwares/gsl-1.15/lib -lgsl -lgslcblas
 
 VPATH=Check History Image MassFunction Profile \
       Profile/concentration  Profile/geometrical  Profile/sub  Profile/xray \
-      $(BTDIR)
+      $(BTDIR) $(BTDIR)/history
 
 SOURCES = $(wildcard *.c) $(wildcard **/*.c) $(wildcard **/*/*.c)
 EXEC =$(basename $(notdir $(SOURCES)))
@@ -134,6 +134,12 @@ StarPot : LDFLAGS+=-lhdf5_hl -lhdf5
 saveHDFhalo saveHDFhalo_addstrm saveHDFhalo_debug: hdf_util.o
 saveHDFhalo saveHDFhalo_addstrm saveHDFhalo_debug: LDFLAGS+=-lhdf5_hl -lhdf5
 saveHDFhalo saveHDFhalo_debug: subfindread.o
+
+collect_mostbounds: hdf_util.o history_io.o
+collect_mostbounds: LDFLAGS+=-lhdf5_hl -lhdf5 
+
+collect_mostbounds_virial: hdf_util.o history_io.o
+collect_mostbounds_virial: LDFLAGS+=-lhdf5_hl -lhdf5 
 
 clean:
 	rm -f *.o $(EXEC)

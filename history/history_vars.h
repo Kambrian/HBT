@@ -88,11 +88,11 @@ typedef struct
 //typedef HBTReal TYPE_XYZ[3]; //replaced by HBTxyz in datatypes.h
 typedef struct
 {
-	HBTInt mass;//fof mass
-	HBTInt Mvir[3];
-	HBTReal Rvir[3];//[tophat,c200,b200],comoving
-	HBTInt flag_badvir[3];
-	HBTInt flag_fakehalo;//set to 1 when halo is not self-bound,to 0 otherwise.
+	int mass;//fof mass
+	int Mvir[3];
+	float Rvir[3];//[tophat,c200,b200],comoving
+	int flag_badvir[3];
+	int flag_fakehalo;//set to 1 when halo is not self-bound,to 0 otherwise.
 } HALOSIZE;
 struct ShardParam
 {

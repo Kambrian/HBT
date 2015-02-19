@@ -42,7 +42,7 @@ HBTReal load_halo_size(HALOSIZE *halosize,HBTInt Ngroups,HBTInt Nsnap)
 }
 HBTInt load_halo_concentration(float *halocon,HBTInt Nsnap)
 {
-	HBTInt grpid,Ngroups,Ngroups2,halostatus;
+	int grpid,Ngroups,Ngroups2,halostatus;
 	char buf[1024];
 	FILE *fp;
 	sprintf(buf,"%s/profile/logbin/halo_param_%03d",SUBCAT_DIR,(int)Nsnap);
@@ -60,7 +60,7 @@ HBTInt load_halo_concentration(float *halocon,HBTInt Nsnap)
 	fread(&Ngroups2,sizeof(int),1,fp);
 	if(Ngroups2!=Ngroups)
 	{
-		printf("error:Ngroups="HBTIFMT","HBTIFMT" do not match when loading \n %s\n" 
+		printf("error: Ngroups=%d,%d do not match when loading \n %s\n" 
 			"probably file corruption or different file format\n",
 			Ngroups,Ngroups2,buf);
 		exit(-1);

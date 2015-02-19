@@ -40,7 +40,7 @@ struct PList
   HBTInt *PIndex;
   float (* pos)[3],(* vel)[3];
   int * mass, *IsDirectInfall, (*snapTVV)[3];
-  float (*massTVV)[3];
+  int (*massTVV)[3];
 };
 
 MBDCATALOGUE MbdCat;
@@ -219,7 +219,7 @@ void fill_particle_nodes(struct PList *p)
   p->mass=mymalloc(sizeof(int)*p->np);
   p->IsDirectInfall=mymalloc(sizeof(int)*np);//level-0 satellite at Mmax
   p->snapTVV=mymalloc(sizeof(float)*np*3); //Mmax, FirstInfall, LastInfall
-  p->massTVV=mymalloc(sizeof(float)*np*3);
+  p->massTVV=mymalloc(sizeof(int)*np*3);
   
   HBTInt CenHistID=Sub2Hist[MaxSnap-1][p->CenSubID];
 #pragma omp parallel for
@@ -245,7 +245,7 @@ void fill_particle_nodes(struct PList *p)
 	  p->snapTVV[i][0]=EvoCat.History[HistID].SnapBirth+imax;
 	  p->IsDirectInfall[i]=is_direct_satellite(CenHistID, HistID, p->snapTVV[i][0]);
 	  get_infall_snap(CenHistID, HistID, p->snapTVV[i]+1);
-	  for(j=1;j<2;j++)
+	  for(j=1;j<3;j++)
 	  {
 		if(p->snapTVV[i][j]>=0)
 		  p->massTVV[i][j]=GetMember(&EvoCat, HistID, p->snapTVV[i][j])->Mdm;
@@ -286,7 +286,7 @@ void dump_particles_hdf(char *outfile, struct PList *p)
 	status = H5LTmake_dataset(file_id,"/DirectInfall",1,&dims[0],H5T_NATIVE_INT,p->IsDirectInfall);//0, 1, -1(neverinfalled) for Mmax.
     status = H5LTmake_dataset(file_id,"/mass",1,&dims[0],H5T_NATIVE_INT,p->mass);//in particles
     status = H5LTmake_dataset(file_id,"/snapTVV",2,dims,H5T_NATIVE_INT,p->snapTVV);//SnapTidal, SnapFirstRvInfall, SnapLastRvInfall
-	status = H5LTmake_dataset(file_id,"/massTVV",2,dims,H5T_NATIVE_FLOAT,p->massTVV);//in particles
+	status = H5LTmake_dataset(file_id,"/massTVV",2,dims,H5T_NATIVE_INT,p->massTVV);//in particles
 		
     /* close file */
     status = H5Fclose (file_id);

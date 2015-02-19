@@ -34,9 +34,10 @@ int main(int argc,char **argv)
 	char buf[1024];
 	float step[3],range[3][2];
 
-	int *PIndex,grid[3],ipotmin=0;
+	HBTInt *PIndex,grid[3],ipotmin=0;
 	double *pot,potmin=0.,com[3];
-	float *rho,hguess;
+	float *rho;
+	HBTReal hguess;
 	char outputdir[1024];
 	#ifdef SUBFIND_DIR
 	sprintf(outputdir,"%s/image",OUTDIR);	

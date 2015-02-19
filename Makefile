@@ -30,7 +30,7 @@ snap2:   CFLAGS+=-DDISABLE_HALO_PARA
 
 default: HBT
 all:$(targets) ReBuild
-daily:HBT $(ANAL) ReBuild
+daily:HBT $(TOOLS) ReBuild
 ReBuild:
 	@$(MAKE) snap2 -B
 	

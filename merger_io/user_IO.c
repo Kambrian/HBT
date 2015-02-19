@@ -41,14 +41,14 @@ int check_snapshot_byteorder(char *filename)
 	exit(1);
 }
 
-int check_grpcat_byteorder(char *filename)
+int check_grpcat_byteorder(char *filename, int FileCounts)
 {
 	/* to check whether byteswap is needed, return 1 if yes, 0 if no, exit if error*/
 	int Nfiles,n,ns;
 	long offset;
 	FILE *fp;
 
-	n=NFILES_GRP;
+	n=FileCounts;
 	ns=n;
 	swap_Nbyte(&ns,1,sizeof(ns));
 	
@@ -520,7 +520,7 @@ IDatInt *PID;
 	}
   }
 	
-  ByteOrder=check_grpcat_byteorder(buf);
+  ByteOrder=check_grpcat_byteorder(buf, NFILES_GRP);
   	
   myfopen(fd,buf,"r");
 
@@ -602,7 +602,7 @@ IDatInt *PID;
 	fprintf(logfile,"error: grpfile_type not assigned? %s\n",buf);
 	exit(1);
   }
-  ByteOrder=check_grpcat_byteorder(buf);
+  ByteOrder=check_grpcat_byteorder(buf, NFILES_GRP);
   myfopen(fd,buf,"r");
 
   myfread(&Ngroups, sizeof(int), 1, fd);
@@ -707,7 +707,7 @@ IDatInt *PID;
 Nsnap=snaplist[Nsnap];
 #endif
   sprintf(buf, "%s/group_tab_%03d",GrpPath,(int)Nsnap);
-  ByteOrder=check_grpcat_byteorder(buf);
+  ByteOrder=check_grpcat_byteorder(buf,1);
   myfopen(fd,buf,"r");
 
   myfread(&Ngroups, sizeof(int), 1, fd);
@@ -730,7 +730,7 @@ Nsnap=snaplist[Nsnap];
 
 
   sprintf(buf, "%s/group_ids_%03d", GrpPath, (int)Nsnap);
-  ByteOrder=check_grpcat_byteorder(buf);
+  ByteOrder=check_grpcat_byteorder(buf,1);
   myfopen(fd,buf,"r");
 
   myfread(&dummy, sizeof(int), 1, fd);
@@ -822,7 +822,7 @@ IDatInt *PID;
 	}
   }
 	
-  ByteOrder=check_grpcat_byteorder(buf);
+  ByteOrder=check_grpcat_byteorder(buf, NFILES_GRP);
   	
   myfopen(fd,buf,"r");
 
@@ -905,7 +905,7 @@ IDatInt *PID;
 	fprintf(logfile,"error: grpfile_type not assigned? %s\n",buf);
 	exit(1);
   }
-  ByteOrder=check_grpcat_byteorder(buf);
+  ByteOrder=check_grpcat_byteorder(buf, NFILES_GRP);
   myfopen(fd,buf,"r");
 
   myfread(&Ngroups, sizeof(int), 1, fd);

@@ -14,6 +14,7 @@
 #include "proto.h"
 #include "history_vars.h"
 
+extern HBTInt CollectOrphans(HBTInt Nsnap, SUBCATALOGUE *SubCat, MBDCATALOGUE *MbdCat);
 int main(int argc,char **argv)
 {
 SUBCATALOGUE SubCat;	

@@ -2,9 +2,13 @@ import numpy as np
 import matplotlib.pyplot as plt
 import h5py
 
-datadir='/gpfs/data/jvbq85/HBT/data/AqA4/subcat/anal/'
+#C200 definition
+Mvir=134.22
+Rvir=179.38
+datadir='/work/Projects/SubProf/data/'
+HostProf=np.loadtxt(datadir+'/A4density.txt')
 
-mbdfile=h5py.File(datadir+'MbdInfall.hdf5','r')
+mbdfile=h5py.File(datadir+'MbdInfall_VIR1.hdf5','r')
 Mbd.m=mbdfile['/mass'][...]
 Mbd.x=mbdfile['/x'][...]
 Mbd.flag=mbdfile['/DirectInfall'][...]
@@ -15,10 +19,7 @@ mbdfile.close()
 
 f=(Mbd.m>100)&(Mbd.flag>0)
 #f=Mbd.mTVV[:,0]>10000
-R1=
-rbin=np.logspace(-2,0.5,20)*
-
-
+rbin=np.logspace(-2,0.5,20)*Rvir
 [xr3,n3,rhon3]=loghist(Mbd.r(f),rbin,[],[],1,3);
 plot(xr3/R1, rhon3/(sum(n3)/R1^3),'r--','displayname','Ninfall>1e4');hold on;
 % f=Mbd.m>100&Mbd.flag==0;

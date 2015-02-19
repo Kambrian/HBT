@@ -95,11 +95,11 @@ f=Mbd.flag<0&Mbd.m>0&Mbd.m<4.8e6;
 plot(Mbd.x(f,1), Mbd.x(f,2),'k.')
 %%
 hold on;
-reinasto=199e-3*0.73;
+reinasto=199*0.73;
 alpha=0.678;
 neinasto=einasto(xr1/reinasto,alpha);
 nnorm=quad(@(r) einasto(r/reinasto,alpha).*r.^2*4*pi,0,R1)/(4*pi/3*R1^3);
-plot(xr1/R1,neinasto/nnorm,'r');
+loglog(xr1/R1,neinasto/nnorm,'r');
 %%
 figure();
 loglog(r/R1, einasto(r/reinasto,alpha)./rho);

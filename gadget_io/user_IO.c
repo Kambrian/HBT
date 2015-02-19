@@ -3,6 +3,7 @@
 #include <math.h>
 #include <string.h>
 #include <limits.h>
+#include <glob.h>
 
 #include "datatypes.h"
 #include "intra_vars.h"
@@ -58,7 +59,7 @@ int check_snapshot_byteorder(char *filename)
 	exit(1);
 }
 
-int check_grpcat_byteorder(char *filename)
+int check_grpcat_byteorder(char *filename, int FileCounts)
 {
 	/* to check whether byteswap is needed, return 1 if yes, 0 if no, exit if error*/
 	int Nfiles,n,ns;
@@ -68,7 +69,7 @@ int check_grpcat_byteorder(char *filename)
 #ifdef GRP_V4FORMAT
 	n=sizeof(struct groupV4_header);
 #else
-	n=NFILES_GRP;
+	n=FileCounts;
 #endif
 	ns=n;
 	swap_Nbyte(&ns,1,sizeof(ns));	
@@ -629,12 +630,57 @@ for(i=0;i<Cat->Ngroups;i++)
   	}
 }
 #endif
-	
+int count_pattern_files(char *filename)
+{
+   glob_t globbuf;
+
+   globbuf.gl_offs = 0;
+   glob(filename, GLOB_ERR, NULL, &globbuf);
+   globfree(&globbuf);
+   return globbuf.gl_pathc;  
+}
+int find_group_file(HBTInt Nsnap, char *GrpPath, int *grpfile_type)
+{
+  int i=0;
+  char buf[1024],pattern[1024];
+    
+  sprintf(buf, "%s/groups_%03d/subhalo_tab_%03d.%d",GrpPath,(int)Nsnap,(int)Nsnap,(int)i);
+  if(try_readfile(buf))
+  {
+	*grpfile_type=1;
+	sprintf(pattern, "%s/groups_%03d/subhalo_tab_%03d.*",GrpPath,(int)Nsnap,(int)Nsnap);
+	return count_pattern_files(pattern);
+  }
+  
+  sprintf(buf, "%s/groups_%03d/group_tab_%03d.%d",GrpPath,(int)Nsnap,(int)Nsnap,(int)i);
+  if(try_readfile(buf))
+  {
+	*grpfile_type=2;
+	sprintf(pattern, "%s/groups_%03d/group_tab_%03d.*",GrpPath,(int)Nsnap,(int)Nsnap);
+	return count_pattern_files(pattern);
+  }
+  
+  sprintf(buf, "%s/subhalo_tab_%03d",GrpPath,(int)Nsnap);
+  if(try_readfile(buf))
+  {
+	  *grpfile_type=3;
+	  return 1;
+  }
+  
+  sprintf(buf, "%s/group_tab_%03d",GrpPath,(int)Nsnap);
+  if(try_readfile(buf))
+  {
+	*grpfile_type=4;
+	return 1;
+  }
+  
+  return 0; //0 files matching
+}
 void load_group_catalogue_v3(HBTInt Nsnap,CATALOGUE *Cat,char *GrpPath)
 {//PGADGET-3's subfind format
   FILE *fd;
   char buf[1024];
-  int Ngroups,TotNgroups,Nids,NFiles;
+  int Ngroups,TotNgroups,Nids,NFiles, FileCounts;
   long long i,Nload,TotNids;
   int ByteOrder,grpfile_type;
   
@@ -650,30 +696,35 @@ IDatInt *PID;
 	#endif
 
   Nload=0;
-  for(i=0;i<NFILES_GRP;i++)
+  FileCounts=find_group_file(Nsnap, GrpPath, &grpfile_type);
+  if(!FileCounts) 
   {
-  grpfile_type=1;	
-  sprintf(buf, "%s/groups_%03d/subhalo_tab_%03d.%d",GrpPath,(int)Nsnap,(int)Nsnap,(int)i);
-  if(!try_readfile(buf))
-  {
-	  sprintf(buf, "%s/groups_%03d/group_tab_%03d.%d",GrpPath,(int)Nsnap,(int)Nsnap,(int)i);
-	  grpfile_type=2;
+	fprintf(logfile, "Error: no group files found under %s at snapshot %d\n", GrpPath, Nsnap);
+	exit(1);
   }
-  if(1==NFILES_GRP)
+  
+  for(i=0;i<FileCounts;i++)
   {
-	if(!try_readfile(buf))
+	switch(grpfile_type)
 	{
+	  case 1:
+		sprintf(buf, "%s/groups_%03d/subhalo_tab_%03d.%d",GrpPath,(int)Nsnap,(int)Nsnap,(int)i);
+		break;
+	  case 2:
+		sprintf(buf, "%s/groups_%03d/group_tab_%03d.%d",GrpPath,(int)Nsnap,(int)Nsnap,(int)i);
+		break;
+	  case 3:
 		sprintf(buf, "%s/subhalo_tab_%03d",GrpPath,(int)Nsnap);
-		grpfile_type=3;
+		break;
+	  case 4:
+		sprintf(buf, "%s/group_tab_%03d",GrpPath,(int)Nsnap);
+		break;
+	  default:
+		fprintf(logfile, "Error: wrong grpfile_type=%d at snap %d\n", grpfile_type, Nsnap);
+		exit(1);
 	}
-	if(!try_readfile(buf))
-	{
-	sprintf(buf, "%s/group_tab_%03d",GrpPath,(int)Nsnap);
-	grpfile_type=4;
-	}
-  }
 	
-  ByteOrder=check_grpcat_byteorder(buf);
+  ByteOrder=check_grpcat_byteorder(buf, FileCounts);
   	
   myfopen(fd,buf,"r");
 
@@ -699,10 +750,10 @@ IDatInt *PID;
   myfread(&TotNsub,sizeof(int),1,fd);
   }
   
-  if(NFILES_GRP!=NFiles)
+  if(FileCounts!=NFiles)
 	  {
 		  fprintf(logfile,"error: number of grpfiles specified not the same as stored: %d,%d\n for file %s\n",
-		  NFILES_GRP,(int)NFiles,buf);
+		  FileCounts,(int)NFiles,buf);
 		  fflush(logfile);
 		  exit(1);
 	  }
@@ -735,7 +786,7 @@ IDatInt *PID;
   ICat.PID=mymalloc(sizeof(IDatInt)*Cat->Nids);
   Cat->ID2Halo=mymalloc(sizeof(HBTInt)*NP_DM);//consider move this out.............
   Nload=0;
-  for(i=0;i<NFILES_GRP;i++)
+  for(i=0;i<FileCounts;i++)
   {
   switch(grpfile_type)
   {
@@ -755,7 +806,7 @@ IDatInt *PID;
 	fprintf(logfile,"error: grpfile_type not assigned? %s\n",buf);
 	exit(1);
   }
-  ByteOrder=check_grpcat_byteorder(buf);
+  ByteOrder=check_grpcat_byteorder(buf, FileCounts);
   myfopen(fd,buf,"r");
 
   myfread(&Ngroups, sizeof(int), 1, fd);
@@ -861,7 +912,7 @@ Nsnap=snaplist[Nsnap];
 #endif
   sprintf(buf, "%s/group_tab_%03d",GrpPath,(int)Nsnap);
   if(!try_readfile(buf))  sprintf(buf, "%s/groups_catalogue/fof_special_catalogue_%03d",GrpPath,(int)Nsnap);
-  ByteOrder=check_grpcat_byteorder(buf);
+  ByteOrder=check_grpcat_byteorder(buf, 1);
   myfopen(fd,buf,"r");
 
   myfread(&Ngroups, sizeof(int), 1, fd);
@@ -885,7 +936,7 @@ Nsnap=snaplist[Nsnap];
 
   sprintf(buf, "%s/group_ids_%03d", GrpPath, (int)Nsnap);
   if(!try_readfile(buf))  sprintf(buf, "%s/groups_indexlist/fof_special_indexlist_%03d",GrpPath,(int)Nsnap);
-  ByteOrder=check_grpcat_byteorder(buf);
+  ByteOrder=check_grpcat_byteorder(buf,1);
   myfopen(fd,buf,"r");
 
   myfread(&dummy, sizeof(int), 1, fd);
@@ -977,7 +1028,7 @@ IDatInt *PID;
 	}
   }
 	
-  ByteOrder=check_grpcat_byteorder(buf);
+  ByteOrder=check_grpcat_byteorder(buf, NFILES_GRP);
   	
   myfopen(fd,buf,"r");
 
@@ -1060,7 +1111,7 @@ IDatInt *PID;
 	fprintf(logfile,"error: grpfile_type not assigned? %s\n",buf);
 	exit(1);
   }
-  ByteOrder=check_grpcat_byteorder(buf);
+  ByteOrder=check_grpcat_byteorder(buf, NFILES_GRP);
   myfopen(fd,buf,"r");
 
   myfread(&Ngroups, sizeof(int), 1, fd);
@@ -1213,7 +1264,7 @@ IDatInt *PID;
 	}
   }
 	
-  ByteOrder=check_grpcat_byteorder(buf);
+  ByteOrder=check_grpcat_byteorder(buf, NFILES_GRP);
   	
   myfopen(fp,buf,"r");
 

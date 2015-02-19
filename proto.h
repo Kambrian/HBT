@@ -47,7 +47,7 @@ extern HBTInt * linklist_search_sphere(LINKLIST *ll, HBTReal radius,
 							HBTReal searchcenter[3], HBTInt *N_guess_and_found);
 
 //user_IO.c
-extern int check_grpcat_byteorder(char *filename);
+extern int check_grpcat_byteorder(char *filename, int FileCounts);
 extern void load_particle_header_into(HBTInt Nsnap, char *SnapPath, IO_HEADER *h);
 extern void load_particle_header(HBTInt Nsnap,char *SnapPath);
 extern void load_particle_data(HBTInt Nsnap,char *SnapPath);

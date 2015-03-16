@@ -40,6 +40,7 @@ HBTInt *PID; //since Jing's snap data is stored according to PID, so this array 
 #endif
 HBTxyz *Pos;
 HBTxyz *Vel;
+HBTReal *Scalar; //scalar field
 HBTInt Nsnap; //this exists to help check whether the Pdat is loaded for the current snapshot
 };	
 

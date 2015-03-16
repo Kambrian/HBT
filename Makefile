@@ -44,7 +44,7 @@ FoF_mpi.$(RUN_NUM): CC=mpicc
 $(OBJS_MAIN) $(OBJS_COMM): $(INCL) Makefile
 
 $(OBJS_FTN): $(IODIR)/fortread.f90
-		$(FC) -c $(IODIR)/fortread.f90 -o $(IODIR)/fortread.o
+		$(FC) -c $(IODIR)/fortread.f90 -o $(IODIR)/fortread.o -openmp
 
 iolib:$(IODIR)/lib$(RUN_NUM)io.a ;
 $(IODIR)/lib$(RUN_NUM)io.a: sub_IO.o $(IODIR)/user_IO.o mymath.o intra_vars.o $(IODIR)/iovars.o $(OBJS_FTN)

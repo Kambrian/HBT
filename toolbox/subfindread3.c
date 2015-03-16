@@ -40,16 +40,18 @@ void subread(int Nsnap,char *subdir)
    #else
    SnapshotNum=Nsnap;
    #endif
+   int FileCounts, grpfile_type;
    
   long long Nloadgrp=0, Nloadsub=0;
-  for(i=0;i<NFILES_GRP;i++)
+  FileCounts=find_group_file(Nsnap, subdir, &grpfile_type);
+  for(i=0;i<FileCounts;i++)
   {
- // if(NFILES_GRP>0)	  
+ // if(FileCounts>0)	  
   sprintf(buf, "%s/groups_%03d/subhalo_tab_%03d.%d",subdir,SnapshotNum,SnapshotNum,i);
  // else
  // sprintf(buf, "%s/subhalo_tab_%03d",subdir,Nsnap);
   
-   ByteOrder=check_grpcat_byteorder(buf);
+   ByteOrder=check_grpcat_byteorder(buf, FileCounts);
   
   myfopen(fd,buf,"r");
     
@@ -60,10 +62,10 @@ void subread(int Nsnap,char *subdir)
   myfread(&NFiles, sizeof(int), 1, fd);
   myfread(&Nsubhalos, sizeof(int), 1, fd);
   myfread(&TotNsubhalos, sizeof(int),1,fd);
-  if(NFILES_GRP!=NFiles)
+  if(FileCounts!=NFiles)
 	  {
 		  fprintf(stderr,"error: number of files specified not the same as stored: %d,%d\n",
-		  NFILES_GRP,NFiles);
+		  FileCounts,NFiles);
 		  fflush(stderr);
 		  exit(1);
 	  }
@@ -197,9 +199,9 @@ for(i=0;i<TotNgroups;i++)
   printf("tab ok\n");fflush(stdout);
    
   long long Nloadid=0;
-  for(i=0;i<NFILES_GRP;i++)
+  for(i=0;i<FileCounts;i++)
   {
-//  if(NFILES_GRP>1)	  
+//  if(FileCounts>1)	  
   sprintf(buf, "%s/groups_%03d/subhalo_ids_%03d.%d",subdir,SnapshotNum,SnapshotNum,i); //gadget3 always output this way
 //  else
 //  sprintf(buf, "%s/subhalo_ids_%03d",subdir,Nsnap);

@@ -4,7 +4,7 @@
 #include <math.h>
 
 #include "hdf_util.h"
-//#include "mymath.h"
+// #include "mymath.h"
 
 size_t load_hdfmatrixF(char *datafile, FloatMat var[], int nvar)
 {//load a float32 matrix
@@ -23,6 +23,11 @@ for(i=0;i<nvar;i++)
 {
 	/* get the dimensions of the dataset */
 status=H5LTget_dataset_ndims ( file_id,var[i].name, &var[i].dim);
+if(status<0) 
+{
+  printf("Warning: dataset %s does not exist in %s\n", var[i].name, datafile);
+  return 0;
+}//failed to find the data
 var[i].size=malloc(sizeof(hsize_t)*var[i].dim);
 status = H5LTget_dataset_info(file_id,var[i].name,var[i].size,&dataclass,&element_size);
 
@@ -74,6 +79,11 @@ for(i=0;i<nvar;i++)
 {
 	/* get the dimensions of the dataset */
 status=H5LTget_dataset_ndims ( file_id,var[i].name, &var[i].dim);
+if(status<0) 
+{
+  printf("Warning: dataset %s does not exist in %s\n", var[i].name, datafile);
+  return 0;
+}//failed to find the data
 var[i].size=malloc(sizeof(hsize_t)*var[i].dim);
 status = H5LTget_dataset_info(file_id,var[i].name,var[i].size,&dataclass,&element_size);
 
@@ -124,6 +134,11 @@ for(i=0;i<nvar;i++)
 {
 	/* get the dimensions of the dataset */
 status=H5LTget_dataset_ndims ( file_id,var[i].name, &var[i].dim);
+if(status<0) 
+{
+  printf("Warning: dataset %s does not exist in %s\n", var[i].name, datafile);
+  return 0;
+}//failed to find the data
 var[i].size=malloc(sizeof(hsize_t)*var[i].dim);
 status = H5LTget_dataset_info(file_id,var[i].name,var[i].size,&var[i].dataclass,&var[i].element_size);
 

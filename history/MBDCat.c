@@ -239,8 +239,9 @@ HBTInt CollectOrphans(HBTInt Nsnap, SUBCATALOGUE *SubCat, MBDCATALOGUE *MbdCat)
 	load_group_catalogue(Nsnap,&Cat,GRPCAT_DIR);
 	fresh_ID2Index(&Cat,FRSH_GRPCAT); 	
 	prepare_ind2halo(&Cat);
+#define lookup_ID2Halo(pid) ((pid)<0?-1:Cat.ID2Halo[pid])
 	for(subid=0;subid<NOrphans;subid++)
-		Orphans[subid].HostID=Cat.ID2Halo[Orphans[subid].MBD_PID];
+		Orphans[subid].HostID=lookup_ID2Halo(Orphans[subid].MBD_PID);
 	free_catalogue(&Cat);
 	qsort(Orphans,NOrphans,sizeof(MBDNode),comp_NodeHost);
 	for(subid=NOrphans-1;subid>=0;subid--)

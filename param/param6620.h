@@ -6,7 +6,7 @@
 	#define HALO_PARA
 #endif
 	/*=========program IO params==========*/
-	#define ROOT_DIR "/mnt/ddnfs/jxhan/6610/"
+	#define ROOT_DIR "/mnt/ddnfs/jxhan/6620/"
 	#define SUBCAT_DIR  ROOT_DIR "subcat"			//the output directory for subcatalogues and srccatalogues, this must be an existing directory
 	#define GRPCAT_DIR  ROOT_DIR "fof"				     //the input directory for GrpCatalogues
 	#define SNAPSHOT_DIR ROOT_DIR "simu"				//the input directory for simulation snapshots
@@ -16,7 +16,7 @@
 	#define NP_SIM	28991029248LL //total Number of all kinds of particles
 	#define NP_GAS 0
 	#define NP_DM 28991029248LL
-	#define BOXSIZE 600000.0 //kpc/h
+	#define BOXSIZE 1200000.0 //kpc/h
 	/*=extension params=*/
 	#define BOXHALF (BOXSIZE/2.)
 	#define OMEGA0 0.268
@@ -26,9 +26,9 @@
 	/*=======Tree algorithm params========*/
 	#define TREE_ALLOC_FACTOR 2// 3? MaxNodes = ((maxnodes>500)?maxnodes:500);
 	#define ErrTolTheta 0.45
-	#define SofteningHalo 3.3  //ita=10 kpc/h ,epsilon=ita/3
-	#define NodeResolution 0.33  //0.1*Softening
-	#define NodeReso_half 0.165
+	#define SofteningHalo 6.6  //ita=20 kpc/h ,epsilon=ita/3
+	#define NodeResolution 0.66  //0.1*Softening
+	#define NodeReso_half 0.33
 
 	/*=======unbinding algorithm params=====*/
 	#define SAT_ACCR_ON      //define this to enable hierarchical accretion of satellite subs; comment this out to disable it
@@ -54,7 +54,7 @@
 	#define HUBBLE0 0.1    //H_0 in internal units
 	#define MaxSnap 100//total number of snapshot outputs
 	
-	#define RUN_NUM 6610   //simulation name
+	#define RUN_NUM 6620   //simulation name
 	#define SNAP_DIV_SCALE -1  //last snapnum with scale
 	//~ #define PID_ORDERED        //this macro disables the PID part in particle_data and use fast switch between PID and PIndex (+1 or -1).
 	#define VEL_INPUT_PHYSICAL  //this macro allows for the input velocity from load_particle_data() to be physical rather than in GADGET manner,i.e, do not need to multiply sqrt(a)

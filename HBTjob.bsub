@@ -3,6 +3,7 @@
 ##BSUB -L /bin/bash       # script shell language (/bin/tcsh, /bin/ksh etc.) NOTE: this cause problem on SHAO cluster of missing libimf.so
 #BSUB -n 32               # number of cores required
 #BSUB -M 100000        #max (MB)
+##BSUB -m "cosma-f"
 ##BSUB -R "rusage[mem=3000]"  #reserve 3gb
 #BSUB -J HBT               # name of job
 #BSUB -o HBT.Log.%J    # log file for standard output

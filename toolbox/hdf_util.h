@@ -35,6 +35,8 @@ typedef struct
 	char name[1024]; //name of matrix
 } DoubleMat;
 
+#define FREE_HDFMATRIX(M) {free(M.size);free(M.x);}
+
 extern size_t load_hdfmatrixF(char *datafile, FloatMat var[], int nvar);
 extern size_t load_hdfmatrixD(char *datafile, DoubleMat var[], int nvar);
 extern size_t load_hdfmatrix(char *datafile, GenericMat var[], int nvar, hid_t datatype);

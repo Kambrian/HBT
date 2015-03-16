@@ -58,7 +58,7 @@ massfun_plotN massfun_pickN abundanceN: %N: %.c
 			 								
 #image
 #NEED_SUBFIND+=subparticles subcen snaps snap2 snap3 snaps_phase snaps_phase_diff
-NEED_TREE+=snap2 snaps_phase snaps_reacc snaps_energy snaps_energy2
+NEED_TREE+=snap2 snaps_phase snaps_reacc snaps_energy snaps_energy2 DumpParticleEnergies
 NEED_TREESEARCH+=snap2
 NEED_GSL+=subparticles NFW_fit NFW_halo
 		
@@ -101,7 +101,7 @@ plotSubInSub.dyn:plotSubInSub.c
 Lxsub gasprofile gasprofile2: LDFLAGS+=-lgsl -lgslcblas
 				
 #Check/				
-			
+
 loadview:CFLAGS+=-g
 match_subcat back_binding:subfindread.o			
 
@@ -140,6 +140,9 @@ collect_mostbounds: LDFLAGS+=-lhdf5_hl -lhdf5
 
 collect_mostbounds_virial: hdf_util.o history_io.o
 collect_mostbounds_virial: LDFLAGS+=-lhdf5_hl -lhdf5 
+
+collect_mostbounds_DTrees: hdf_util.o history_io.o
+collect_mostbounds_DTrees: LDFLAGS+=-lhdf5_hl -lhdf5 
 
 clean:
 	rm -f *.o $(EXEC)

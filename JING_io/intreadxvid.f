@@ -6,7 +6,7 @@
 !     iior: unused. for backward compatibility
 !     what precision? real*8 and int*8?
       real x(3,npmax),v(3,npmax),lambdat
-      integer id(npmax)
+      integer id(npmax) !integer*8
       character inf1*100,inf2*3,inf*(*),infv*(*)
 
       nrwproc=10 !parallel processes

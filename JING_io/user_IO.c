@@ -2,13 +2,16 @@
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
+#include <omp.h>
 
 #include "datatypes.h"
 #include "intra_vars.h"
 #include "iovars.h"
 #include "proto.h"
 
+extern int alloc_file_unit_(int *reset);
 extern void open_fortran_file_(char *filename,int *fileno,int *endian,int *error);
+extern void skip_fortran_record_(int *fileno);
 extern void read_fortran_record1_(void *arr,long int *arr_len,int *fileno);
 extern void read_fortran_record2_(void *arr,long int *arr_len,int *fileno);
 extern void read_fortran_record4_(void *arr,long int *arr_len,int *fileno);
@@ -46,10 +49,16 @@ extern void read_group_header_int8_(float *b,long int *ngrp, int *fileno);
 #define FLG_ENDIAN 0
 #endif
 
+#if defined(NFILE_ID)&defined(NFILE_POS)&defined(NFILE_VEL)
+#define NFILE_CHUNK (NFILE_ID+NFILE_POS+NFILE_VEL+1)
+#else 
+#define NFILE_CHUNK 4 //allocate one more thread
+#endif
+
 #ifndef PID_ORDERED
-void read_id_file_single(HBTInt *pid, long int np, int fileno, char *filename, int flag_endian)
+static void read_id_file_single(HBTInt *pid, long int np, char *filename, int flag_endian)
 {
-	  int filestat;
+	  int fileno, filestat;
 	  open_fortran_file_(filename,&fileno,&flag_endian,&filestat);
 	  if(filestat)
 	  {
@@ -59,38 +68,40 @@ void read_id_file_single(HBTInt *pid, long int np, int fileno, char *filename, i
 	  read_fortran_record_HBTInt(pid, &np, &fileno);
 	  close_fortran_file_(&fileno);
 }
-static HBTInt read_part_id_JING(int Nsnap,char *snapdir)
+static void check_part_id_range()
+{
+  HBTInt i;
+  #pragma omp parallel for
+	for(i=0;i<NP_DM;i++)
+		if(Pdat.PID[i]<1||Pdat.PID[i]>NP_SIM)
+		{fprintf(logfile,"error: id not in the range 0~"HBTIFMT", for i="HBTIFMT", pid="HBTIFMT", snap=%d\n",NP_SIM,i,Pdat.PID[i],(int)header.Nsnap);fflush(logfile);}
+}
+static void read_part_id_JING(int Nsnap,char *snapdir)
 {
 	char buf[1024];
 	HBTInt i;
 	long int nread;
-	int fileno=10, ifile;
+	int ifile;
 	
 	Pdat.PID=mymalloc(sizeof(HBTInt)*NP_DM);
 		
 #if !defined(NFILE_ID)||NFILE_ID==1
 	sprintf(buf,"%s/id%d.%04d",snapdir,RUN_NUM,(int)Nsnap);
-	read_id_file_single(Pdat.PID, NP_DM, fileno, buf, FLG_ENDIAN);
+	read_id_file_single(Pdat.PID, NP_DM, buf, FLG_ENDIAN);
 #else
 	nread=NP_DM/NFILE_ID;
-	#pragma omp parallel for num_threads(NFILE_ID) private(ifile,buf)
 	for(ifile=0;ifile<NFILE_ID;ifile++)
+	#pragma omp task firstprivate(ifile,nread) private(buf)
 	{
 	  sprintf(buf,"%s/id%d.%04d.%02d",snapdir,RUN_NUM,(int)Nsnap, ifile+1);
-	  read_id_file_single(Pdat.PID+nread*ifile, nread, fileno+ifile, buf, FLG_ENDIAN);
+	  read_id_file_single(Pdat.PID+nread*ifile, nread, buf, FLG_ENDIAN);
 	}
 #endif	
-#pragma omp parallel for
-	for(i=0;i<NP_DM;i++)
-		if(Pdat.PID[i]<1||Pdat.PID[i]>NP_SIM)
-		{fprintf(logfile,"error: id not in the range 0~"HBTIFMT", for i="HBTIFMT", pid="HBTIFMT", snap=%d\n",NP_SIM,i,Pdat.PID[i],Nsnap);fflush(logfile);}
-	
-	return NP_DM;
 }
 #endif
-void read_pos_file_single(HBTReal pos[][3], long int np, int fileno, char *filename, int flag_endian, int has_header, int has_scale)
+static void read_pos_file_single(HBTReal pos[][3], long int np, char *filename, int flag_endian, int has_header, int has_scale)
 {
-  int filestat;
+  int fileno,filestat;
   HBTInt i,j;
   open_fortran_file_(filename,&fileno,&flag_endian,&filestat);
 	if(filestat)
@@ -99,14 +110,7 @@ void read_pos_file_single(HBTReal pos[][3], long int np, int fileno, char *filen
 		exit(1);
 	}
 	
-	if(has_header)
-	{
-	read_part_header(&header.Np,&header.ips,&header.ztp,&header.Omegat,&header.Lambdat,
-						&header.rLbox,&header.xscale,&header.vscale,&fileno);
-	 printf("Np="HBTIFMT",ips="HBTIFMT",Omegat=%g,Lambdat=%g,Lbox=%g\nztp=%g,xscale=%g,vscale=%g\n",
-		 header.Np,header.ips,header.Omegat,header.Lambdat,header.rLbox,header.ztp,header.xscale,header.vscale);
-	if(header.Np!=NP_DM){fprintf(logfile,"error:particle number do not match in %s\n "HBTIFMT"\n", filename, header.Np);fflush(logfile);exit(1);}
-	}
+	if(has_header)	skip_fortran_record_(&fileno);
 	
 // 	Pdat.Pos=mymalloc(sizeof(HBTReal)*3*NP_DM);
 	if(has_scale)//has scale
@@ -130,9 +134,9 @@ void read_pos_file_single(HBTReal pos[][3], long int np, int fileno, char *filen
 		read_part_arr(pos,&np,&fileno);
 	close_fortran_file_(&fileno);
 }
-void read_vel_file_single(HBTReal vel[][3], long int np, int fileno, char *filename, int flag_endian, int has_header, int has_scale)
+static void read_vel_file_single(HBTReal vel[][3], long int np, char *filename, int flag_endian, int has_header, int has_scale)
 {
-  int filestat;
+  int fileno,filestat;
   HBTInt i,j;
   open_fortran_file_(filename,&fileno,&flag_endian,&filestat);
 	if(filestat)
@@ -141,14 +145,7 @@ void read_vel_file_single(HBTReal vel[][3], long int np, int fileno, char *filen
 		exit(1);
 	}
 	
-	if(has_header)
-	{
-	read_part_header(&header.Np,&header.ips,&header.ztp,&header.Omegat,&header.Lambdat,
-						&header.rLbox,&header.xscale,&header.vscale,&fileno);
-	 printf("Np="HBTIFMT",ips="HBTIFMT",Omegat=%g,Lambdat=%g,Lbox=%g\nztp=%g,xscale=%g,vscale=%g\n",
-		 header.Np,header.ips,header.Omegat,header.Lambdat,header.rLbox,header.ztp,header.xscale,header.vscale);
-	if(header.Np!=NP_DM){fprintf(logfile,"error:particle number do not match in %s\n "HBTIFMT"\n", filename, header.Np);fflush(logfile);exit(1);}
-	}
+	if(has_header)	skip_fortran_record_(&fileno);
 	
 	if(has_scale)//has scale
 	{
@@ -171,48 +168,52 @@ void read_vel_file_single(HBTReal vel[][3], long int np, int fileno, char *filen
 		read_part_arr(vel,&np,&fileno);
 	close_fortran_file_(&fileno);
 }
-static HBTInt read_part_pos_JING(int Nsnap,char *snapdir)
+static void read_part_pos_JING(int Nsnap,char *snapdir)
 {
 	char buf[1024];
-	int fileno=11,ifile;
+	int ifile;
 	long int nread;
 	
 	Pdat.Pos=mymalloc(sizeof(HBTReal)*3*NP_DM);
 	
 #if !defined(NFILE_POS)||NFILE_POS==1
+	#pragma omp task private(buf)
+	{
 	sprintf(buf,"%s/pos%d.%04d",snapdir,RUN_NUM,Nsnap);
-	read_pos_file_single(Pdat.Pos, NP_DM, fileno, buf, FLG_ENDIAN, 1, Nsnap<=SNAP_DIV_SCALE);
+	read_pos_file_single(Pdat.Pos, NP_DM, buf, FLG_ENDIAN, 1, Nsnap<=SNAP_DIV_SCALE);
+	}
 #else
 	nread=NP_DM/NFILE_POS;
-	#pragma omp parallel for num_threads(NFILE_POS) private(ifile,buf)
 	for(ifile=0;ifile<NFILE_POS;ifile++)
+  	#pragma omp task firstprivate(ifile,nread) private(buf)
 	{
 	  sprintf(buf,"%s/pos%d.%04d.%02d",snapdir,RUN_NUM,(int)Nsnap, ifile+1);
-	  read_pos_file_single(Pdat.Pos+nread*ifile, nread, fileno+ifile, buf, FLG_ENDIAN, 0==ifile,  Nsnap<=SNAP_DIV_SCALE);
+	  read_pos_file_single(Pdat.Pos+nread*ifile, nread, buf, FLG_ENDIAN, 0==ifile,  Nsnap<=SNAP_DIV_SCALE);
 	}
 #endif	
-	return header.Np;
 }
-static HBTInt read_part_vel_JING(int Nsnap,char *snapdir)
+static void read_part_vel_JING(int Nsnap,char *snapdir)
 {
 	char buf[1024];
-	int fileno=12,ifile;
+	int ifile;
 	long int nread;
 	
 	Pdat.Vel=mymalloc(sizeof(HBTReal)*NP_DM*3);
 #if !defined(NFILE_VEL)||NFILE_VEL==1	
+	#pragma omp task private(buf)
+	{
 	sprintf(buf,"%s/vel%d.%04d",snapdir,RUN_NUM,Nsnap);
-	read_vel_file_single(Pdat.Vel, NP_DM, fileno, buf, FLG_ENDIAN, 1, Nsnap<=SNAP_DIV_SCALE);
+	read_vel_file_single(Pdat.Vel, NP_DM, buf, FLG_ENDIAN, 1, Nsnap<=SNAP_DIV_SCALE);
+	}
 #else
 	nread=NP_DM/NFILE_VEL;
-	#pragma omp parallel for num_threads(NFILE_VEL) private(ifile,buf)
 	for(ifile=0;ifile<NFILE_VEL;ifile++)
+	#pragma omp task firstprivate(ifile,nread) private(buf)
 	{
 	  sprintf(buf,"%s/vel%d.%04d.%02d",snapdir,RUN_NUM,(int)Nsnap, ifile+1);
-	  read_vel_file_single(Pdat.Vel+nread*ifile, nread, fileno+ifile, buf, FLG_ENDIAN, 0==ifile,  Nsnap<=SNAP_DIV_SCALE);
+	  read_vel_file_single(Pdat.Vel+nread*ifile, nread, buf, FLG_ENDIAN, 0==ifile,  Nsnap<=SNAP_DIV_SCALE);
 	}
 #endif
-	return header.Np;
 }
 void load_particle_header(HBTInt Nsnap, char *SnapPath)
 {	
@@ -225,7 +226,10 @@ void load_particle_header_into(HBTInt Nsnap, char *SnapPath, IO_HEADER *h)
 
 	char buf[1024];
 	short *tmp;
-	int flag_endian,filestat,fileno=13;
+	int flag_endian,filestat,fileno;
+	
+	int reset_fileno=1;
+	alloc_file_unit_(&reset_fileno);//reset fortran fileno pool 
 	
 	flag_endian=FLG_ENDIAN;
 #if !defined(NFILE_POS)||NFILE_POS==1	
@@ -244,9 +248,13 @@ void load_particle_header_into(HBTInt Nsnap, char *SnapPath, IO_HEADER *h)
 	{
 	read_part_header(&h->Np,&h->ips,&h->ztp,&h->Omegat,&h->Lambdat,
 						&h->rLbox,&h->xscale,&h->vscale,&fileno);
-	//~ printf("Np=%d,ips=%d,Omegat=%g,Lambdat=%g,Lbox=%g\nztp=%g,xscale=%g,vscale=%g\n",
-		//~ h->Np,h->ips,h->Omegat,h->Lambdat,h->rLbox,h->ztp,h->xscale,h->vscale);
-	if(h->Np!=NP_DM){fprintf(logfile,"error:particle number do not match(pos) "HBTIFMT"\n",h->Np);fflush(logfile);exit(1);}
+	fprintf(logfile, "Np="HBTIFMT",ips="HBTIFMT",Omegat=%g,Lambdat=%g,Lbox=%g\nztp=%g,xscale=%g,vscale=%g\n",
+			h->Np,h->ips,h->Omegat,h->Lambdat,h->rLbox,h->ztp,h->xscale,h->vscale);
+	if(h->Np!=NP_DM)
+	{
+	  fprintf(logfile,"error:particle number do not match(pos) "HBTIFMT"\n",h->Np);
+	  fflush(logfile);exit(1);
+	}
 	}
 	close_fortran_file_(&fileno);
 
@@ -268,9 +276,7 @@ void load_particle_header_into(HBTInt Nsnap, char *SnapPath, IO_HEADER *h)
 }
 
 
-/* this routine loads particle data from Gadget's default
- * binary file format. (A snapshot may be distributed
- * into multiple files). use the bitwise loadflags to 
+/*  use the bitwise loadflags to 
  * determine which part of the data to load. the last 3 bits
  * of loadflags encodes whether to load vel, pos and id.
  */
@@ -281,6 +287,8 @@ void load_particle_data_bypart(HBTInt Nsnap, char *SnapPath, unsigned char loadf
 	float scale_reduced,scale0;//a,R0
 	unsigned char flag_id,flag_pos,flag_vel;
 	
+	load_particle_header(Nsnap, SnapPath);//always do this before loading the data
+	
 	/*loadflags encodes the flag to load id,pos,vel in its lowest,second lowest and third lowest bit */
 	flag_id=get_bit(loadflags,0);
 	flag_pos=get_bit(loadflags,1);
@@ -288,6 +296,9 @@ void load_particle_data_bypart(HBTInt Nsnap, char *SnapPath, unsigned char loadf
 	
 	Pdat.Nsnap=Nsnap;
 	
+#pragma omp parallel num_threads(NFILE_CHUNK)
+#pragma omp single
+	{
 	if(flag_pos)
 		read_part_pos_JING(snaplist[Nsnap],SnapPath);
 	else
@@ -308,21 +319,10 @@ void load_particle_data_bypart(HBTInt Nsnap, char *SnapPath, unsigned char loadf
 	{
 		Pdat.PID=NULL;
 	}
+	}
 	
-	fprintf(logfile,"z=%g\n",header.ztp);fflush(logfile);
-	Hratio=sqrt(OMEGAL0/header.Lambdat);
-	header.Hz=HUBBLE0*Hratio;
-	scale_reduced=1./(1.+header.ztp);
-	header.time=scale_reduced;
-	header.mass[0]=0.;
-	header.mass[1]=PMass;
-	header.Omega0=OMEGA0;
-	header.OmegaLambda=OMEGAL0;	
-	scale0=1+Redshift_INI;//scale_INI=1,scale_reduced_INI=1./(1.+z_ini),so scale0=scale_INI/scale_reduce_INI;
-	header.vunit=100.*header.rLbox*Hratio*scale_reduced*scale_reduced*scale0;   /*vunit=100*L*R*(H*R)/(H0*R0)
-																				*      =100*L*(H/H0)*a*a*R0
-																				* where a=R/R0;         */
-	header.Nsnap=Nsnap;
+	if(flag_id) check_part_id_range();
+		
 	if(flag_pos)
 		#pragma omp parallel for private(i,j)
 		for(i=0;i<header.Np;i++)
@@ -343,31 +343,21 @@ void load_particle_data(HBTInt Nsnap,char *SnapPath)
 	HBTInt i,j;
 	float Hratio; //(Hz/H0)
 	float scale_reduced,scale0;//a,R0
-//	#pragma omp parallel sections
+	
+	load_particle_header(Nsnap, SnapPath);//always do this before loading the data
+	
+	#pragma omp parallel num_threads(NFILE_CHUNK)
+	#pragma omp single nowait //creating tasks inside
 	{
-//	#pragma omp section
 	read_part_pos_JING(snaplist[Nsnap],SnapPath);
-//	#pragma omp section
 	read_part_vel_JING(snaplist[Nsnap],SnapPath);
 	#ifndef PID_ORDERED
-//	#pragma omp section
 	read_part_id_JING(snaplist[Nsnap],SnapPath);
 	#endif
 	}
-	fprintf(logfile,"z=%g\n",header.ztp);fflush(logfile);
-	Hratio=sqrt(OMEGAL0/header.Lambdat);
-	header.Hz=HUBBLE0*Hratio;
-	scale_reduced=1./(1.+header.ztp);
-	header.time=scale_reduced;
-	header.mass[0]=0.;
-	header.mass[1]=PMass;
-	header.Omega0=OMEGA0;
-	header.OmegaLambda=OMEGAL0;	
-	scale0=1+Redshift_INI;//scale_INI=1,scale_reduced_INI=1./(1.+z_ini),so scale0=scale_INI/scale_reduce_INI;
-	header.vunit=100.*header.rLbox*Hratio*scale_reduced*scale_reduced*scale0;   /*vunit=100*L*R*(H*R)/(H0*R0)
-																				*      =100*L*(H/H0)*a*a*R0
-																				* where a=R/R0;         */
-	header.Nsnap=Nsnap;
+	#pragma omp taskwait
+	
+	check_part_id_range();
 	#pragma omp parallel for private(i,j)
 	for(i=0;i<header.Np;i++)
 		for(j=0;j<3;j++)
@@ -398,7 +388,7 @@ void load_group_catalogue(HBTInt Nsnap,CATALOGUE *Cat,char *GrpPath)
   char buf[1024];
   float b;
   HBTInt i,j;
-  int flag_endian,filestat,fileno=13;
+  int flag_endian,filestat,fileno;
   long int nread;
 	
 	flag_endian=FLG_ENDIAN;

@@ -84,13 +84,15 @@ int main(int argc, char **argv)
   data.Rmax=3.*halosize[Nsnap][0].Rvir[VIRTYPE];
   for(i=0;i<3;i++)
   {//or MbdCat.Node[CenSubID].Pos;
-	data.Cen[i]=SubCat.Property[data.CenSubID].CoM[i];
-	data.VCen[i]=SubCat.Property[data.CenSubID].VCoM[i];
+// 	data.Cen[i]=SubCat.Property[data.CenSubID].CoM[i];
+// 	data.VCen[i]=SubCat.Property[data.CenSubID].VCoM[i];
+	data.Cen[i]=MbdCat.Nodes[data.CenSubID].Pos[i];
+	data.VCen[i]=MbdCat.Nodes[data.CenSubID].Vel[i];
   }
   collect_particles(&data);
   fill_particle_nodes(&data);
   char outfile[1024];
-  sprintf(outfile, "%s/anal/MbdInfall_VIR%d.hdf5", SUBCAT_DIR, VIRTYPE);
+  sprintf(outfile, "%s/anal/MbdInfall_VIR%d.CenMBD.hdf5", SUBCAT_DIR, VIRTYPE);
   dump_particles_hdf(outfile, &data);
   
   return 0;
@@ -144,7 +146,7 @@ HBTInt is_direct_satellite(HBTInt CenHistID,HBTInt HistID, HBTInt Nsnap)//return
 	
 	HostID=GetMember(&EvoCat,HistID,Nsnap)->HostID;	
 // 	if(HostID<0) return -1; //quasi halo and never infall
-	CenID=GetMember(&EvoCat,CenHistID,Nsnap)->HostID;
+	CenID=GetMember(&EvoCatPre,CenHistID,Nsnap)->HostID; //get original hostid, in case some early merger messes up the history
 	if(CenID<0||CenID!=HostID) return 0;
 	
 	return 1;
@@ -185,10 +187,10 @@ void get_infall_snap(HBTInt CenHistID, HBTInt HistID, int SnapInfall[2])
   SnapBirth=MAX(EvoCat.History[HistID].SnapBirth, EvoCat.History[CenHistID].SnapBirth);
   for(Nsnap=SnapBirth;Nsnap<EvoCat.History[HistID].SnapDeath;Nsnap++)
   {
-	SubNode *CenNode=GetMember(&EvoCat, CenHistID, Nsnap);
+	SubNode *CenNode=GetMember(&EvoCatPre, CenHistID, Nsnap);//use EvoCatPre, in case early merger has resulted in a host for CenHistID.
 	SubNode *SatNode=GetMember(&EvoCat, HistID, Nsnap);
 	HBTReal r;
-	if(CenNode!=NULL&&SatNode!=NULL)
+	if(CenNode!=NULL&&SatNode!=NULL&&CenNode->HostID>=0)
 	{
 	  HALOSIZE * halo=&(halosize[Nsnap][CenNode->HostID]);
 	  if(0==halo->flag_badvir[VIRTYPE]&&0==halo->flag_fakehalo)//skip bad halos

@@ -19,7 +19,7 @@
 #endif
 #define SKIP myfread(&dummy,sizeof(dummy),1,fp)
 #define SKIP2 myfread(&dummy2,sizeof(dummy2),1,fp)
-#define CHECK if(dummy!=dummy2){fprintf(logfile,"error!record brackets not match for Snap%d!\t%d,%d\n",(int)Nsnap,dummy,dummy2);fflush(logfile);exit(1);} 
+#define CHECK(i) if(dummy!=dummy2){fprintf(logfile,"error!record brackets not match for %s at %d!\t%d,%d\n",buf,i,dummy,dummy2);fflush(logfile);exit(1);} 
 struct groupV4_header
 {
   int Ngroups;
@@ -28,14 +28,14 @@ struct groupV4_header
   int TotNgroups;
   int TotNsubgroups;
   int TotNids;
-  int num_files;
+  int num_files;//long? no, but padding may exist.
   double time;
   double redshift;
   double HubbleParam;
   double BoxSize;
   double Omega0;
   double OmegaLambda;
-  int flag_doubleprecision;
+  int flag_doubleprecision;//long? no, but padding may exist
 };
 
 int check_snapshot_byteorder(char *filename)
@@ -100,6 +100,7 @@ static int read_gadget_header(FILE *fp,IO_HEADER * h)
 {//read the header part, assign header extensions, and do several consistency check
 //return ByteOrder
 	int dummy,dummy2,n,ns,ByteOrder;
+	HBTInt NumPart;
 	
 	n=sizeof(IO_HEADER);
 	ns=n;
@@ -181,48 +182,52 @@ static int read_gadget_header(FILE *fp,IO_HEADER * h)
 	int j;
 	for(j=0, NumPart=0; j<6; j++)
 	    NumPart+= h->npartTotal[j];	
+/*	
 	if(NP_SIM!=NumPart)
 	{
-		fprintf(logfile,"error:Total Number of Particles differ: %lld,%lld\n",(long long)NP_SIM,(long long)NumPart);
+		fprintf(logfile,"Warning:Total Number of Particles differ: %lld,%lld\n",(long long)NP_SIM,(long long)NumPart);
 		fflush(logfile);
-		exit(1);
+// 		exit(1);
 	}
 	if(NP_GAS!=h->npartTotal[0])
 	{
-		fprintf(logfile,"error:Number of Gas Particles differ: %lld,%u\n",(long long)NP_GAS,h->npartTotal[0]);
+		fprintf(logfile,"Warning:Number of Gas Particles differ: %lld,%u\n",(long long)NP_GAS,h->npartTotal[0]);
 		fflush(logfile);
-		exit(1);
+// 		exit(1);
 	}
 	if(NP_DM!=h->npartTotal[1])
 	{
-		fprintf(logfile,"error:Number of DM Particles differ: %lld,%u\n",(long long)NP_DM,h->npartTotal[1]);
+		fprintf(logfile,"Warning:Number of DM Particles differ: %lld,%u\n",(long long)NP_DM,h->npartTotal[1]);
 		fflush(logfile);
-		exit(1);
+// 		exit(1);
 	}
-	
+*/	
 	return ByteOrder;
 	
 }
-void load_particle_header_into(HBTInt Nsnap, char *SnapPath, IO_HEADER *h)
+void load_particle_header_i_into(HBTInt Nsnap, char *SnapPath, IO_HEADER *h, int ifile)
 {
 	FILE *fp;
 	char buf[1024];
-	HBTInt NumPart;
 
 	#ifdef SNAPLIST
 	Nsnap=snaplist[Nsnap];
 	#endif
-	sprintf(buf,"%s/snapdir_%03d/%s_%03d.0",SnapPath,(int)Nsnap,SNAPFILE_BASE,(int)Nsnap);
+	sprintf(buf,"%s/snapdir_%03d/%s_%03d.%d",SnapPath,(int)Nsnap,SNAPFILE_BASE,(int)Nsnap,ifile);
     if(1==NFILES)
 	 if(!try_readfile(buf))	sprintf(buf,"%s/%s_%03d",SnapPath,SNAPFILE_BASE,(int)Nsnap); //try the other convention
 	
-	if(!try_readfile(buf))	sprintf(buf,"%s/%s_%03d.%d",SnapPath,SNAPFILE_BASE,(int)Nsnap,0); //try the other convention
-	if(!try_readfile(buf))	sprintf(buf,"%s/%d/%s.%d",SnapPath,(int)Nsnap,SNAPFILE_BASE,0);//for BJL's RAMSES output
+	if(!try_readfile(buf))	sprintf(buf,"%s/%s_%03d.%d",SnapPath,SNAPFILE_BASE,(int)Nsnap,ifile); //try the other convention
+	if(!try_readfile(buf))	sprintf(buf,"%s/%d/%s.%d",SnapPath,(int)Nsnap,SNAPFILE_BASE,ifile);//for BJL's RAMSES output
 
 	myfopen(fp,buf,"r");
 	read_gadget_header(fp,h);
 	fclose(fp);
 	h->Nsnap=Nsnap;
+}
+void load_particle_header_into(HBTInt Nsnap, char *SnapPath, IO_HEADER *h)
+{
+  load_particle_header_i_into(Nsnap, SnapPath, h, 0);
 }
 void load_particle_header(HBTInt Nsnap, char *SnapPath)
 {
@@ -263,9 +268,9 @@ static int comp_IDatInt(const void *a, const void *b)//used to sort PID in ascen
  */
 void load_particle_data_bypart(HBTInt Nsnap, char *SnapPath, unsigned char loadflags)
 {
-	unsigned char flag_id,flag_pos,flag_vel;
+	unsigned char flag_id,flag_pos,flag_vel,flag_scalar;
 	int dummy,dummy2,ByteOrder;
-	long int pre_len,tail_len;
+	long pre_len,tail_len;
 	FILE *fp;
 	char buf[1024];
 	HBTInt i,j;
@@ -275,12 +280,14 @@ void load_particle_data_bypart(HBTInt Nsnap, char *SnapPath, unsigned char loadf
 	IDatInt *PID;	
 	IDatReal (*Pos)[3];
 	IDatReal (*Vel)[3];
+	IDatReal (*Pot)[2];
 	} IDat; //input particle data, temporary.
 	
 	/*loadflags encodes the flag to load id,pos,vel in its lowest,second lowest and third lowest bit */
 	flag_id=get_bit(loadflags,0);
 	flag_pos=get_bit(loadflags,1);
 	flag_vel=get_bit(loadflags,2);
+	flag_scalar=get_bit(loadflags,3);
 	
 	IDat.PID=NULL;
 	IDat.Pos=NULL;
@@ -291,6 +298,8 @@ void load_particle_data_bypart(HBTInt Nsnap, char *SnapPath, unsigned char loadf
 	IDat.Pos=mymalloc(sizeof(IDatReal)*3*NP_DM);
 	if(flag_vel)
 	IDat.Vel=mymalloc(sizeof(IDatReal)*3*NP_DM);
+	if(flag_scalar)
+	  IDat.Pot=mymalloc(sizeof(IDatReal)*NP_DM);
 	
 	Pdat.Nsnap=Nsnap;
 	#ifdef SNAPLIST
@@ -317,22 +326,22 @@ void load_particle_data_bypart(HBTInt Nsnap, char *SnapPath, unsigned char loadf
       SKIP;
 	  fseek(fp,pre_len,SEEK_CUR);//load only DM data;
 	  if(flag_pos)
-	  myfread(IDat.Pos+Nload,sizeof(IDatReal)*3,header.npart[1],fp);
+	  myfread(IDat.Pos+Nload,sizeof(IDatReal),3L*header.npart[1],fp);
 	  else
 	  fseek(fp,sizeof(IDatReal)*3*header.npart[1],SEEK_CUR);
 	  fseek(fp,tail_len,SEEK_CUR);
       SKIP2;
-	  CHECK;
+	  CHECK(1);
 	
       SKIP;
       fseek(fp,pre_len,SEEK_CUR);//load only DM data;
 	  if(flag_vel)
-	  myfread(IDat.Vel+Nload,sizeof(IDatReal)*3,header.npart[1],fp);
+		myfread(IDat.Vel+Nload,sizeof(IDatReal),3L*header.npart[1],fp);
 	  else
-	  fseek(fp,sizeof(IDatReal)*3*header.npart[1],SEEK_CUR);
+		fseek(fp,sizeof(IDatReal)*3*header.npart[1],SEEK_CUR);
 	  fseek(fp,tail_len,SEEK_CUR);
       SKIP2;
-	  CHECK;
+	  CHECK(2);
       
 #ifndef NO_ID_RECORD //for Huiyuan's data.
 	  pre_len=header.npart[0]*sizeof(IDatInt);
@@ -346,9 +355,33 @@ void load_particle_data_bypart(HBTInt Nsnap, char *SnapPath, unsigned char loadf
 	  fseek(fp,sizeof(IDatInt)*header.npart[1],SEEK_CUR);
 	  fseek(fp,tail_len,SEEK_CUR);
       SKIP2;
-	  CHECK;
+	  CHECK(3);
 #endif	  
 	  
+	  if(flag_scalar)
+	  {
+	  //gravity record
+		SKIP;
+		fseek(fp, sizeof(IDatReal)*3*NP_SIM, SEEK_CUR);
+		SKIP2;
+		CHECK(31);
+	  //fifth force record
+		SKIP;
+		fseek(fp, sizeof(IDatReal)*3*NP_SIM, SEEK_CUR);
+		SKIP2;
+		CHECK(32);
+	  //potential record
+		pre_len=header.npart[0]*sizeof(IDatReal)*2;
+		for(j=2,tail_len=0;j<6;j++)tail_len+=header.npart[j];
+		tail_len*=sizeof(IDatReal)*2;
+		SKIP;
+		fseek(fp,pre_len,SEEK_CUR);//load only DM data;
+		myfread(IDat.Pot+Nload,sizeof(IDatReal)*2,header.npart[1],fp);
+		fseek(fp,tail_len,SEEK_CUR);
+		SKIP2;
+		CHECK(33);
+	  }
+		
 	  if(feof(fp))
 	  {
 		fprintf(logfile,"error:End-of-File in %s\n",buf);
@@ -356,7 +389,7 @@ void load_particle_data_bypart(HBTInt Nsnap, char *SnapPath, unsigned char loadf
 	  }
 	
 	  Nload+=header.npart[1];
-     
+//      printf("%d,%d,%ld\n",i, header.npart[1], Nload);fflush(stdout);
       fclose(fp);
   }
   if(NP_DM!=Nload)
@@ -453,6 +486,16 @@ if(flag_vel)
 else
 Pdat.Vel=NULL;
 
+if(flag_scalar)
+{  
+  Pdat.Vel=mymalloc(sizeof(HBTReal)*NP_DM);
+  for(i=0;i<NP_DM;i++)
+	Pdat.Scalar[i]=IDat.Pot[i][1];//pass scalar field to Pdat
+  myfree(IDat.Pot);
+}
+else
+  Pdat.Scalar=NULL;
+
 }
 
 void load_particle_data(HBTInt Nsnap, char *SnapPath)
@@ -467,6 +510,7 @@ void free_particle_data()
 #endif
 	myfree(Pdat.Pos);
 	myfree(Pdat.Vel);
+	myfree(Pdat.Scalar);
 	Pdat.Nsnap=-100;
 }
 
@@ -644,7 +688,7 @@ int find_group_file(HBTInt Nsnap, char *GrpPath, int *grpfile_type)
   int i=0;
   char buf[1024],pattern[1024];
     
-  sprintf(buf, "%s/groups_%03d/subhalo_tab_%03d.%d",GrpPath,(int)Nsnap,(int)Nsnap,(int)i);
+  sprintf(buf, "%s/groups_%03d/subhalo_ids_%03d.%d",GrpPath,(int)Nsnap,(int)Nsnap,(int)i);
   if(try_readfile(buf))
   {
 	*grpfile_type=1;
@@ -1218,6 +1262,29 @@ void free_catalogue(CATALOGUE *A)
 	//~ free(A->HaloMaskSrc);
 	myfree(A->ID2Halo);
 }
+void get_group_file_v4(char *buf, HBTInt Nsnap, char *GrpPath, HBTInt ifile)
+{
+//   grpfile_type=1;	
+  sprintf(buf, "%s/groups_%03d/fof_subhalo_tab_%03d.%d",GrpPath,(int)Nsnap,(int)Nsnap,(int)ifile);
+  if(!try_readfile(buf))
+  {
+	  sprintf(buf, "%s/groups_%03d/group_tab_%03d.%d",GrpPath,(int)Nsnap,(int)Nsnap,(int)ifile);
+// 	  grpfile_type=2;
+  }
+  if(1==NFILES_GRP)
+  {
+	if(!try_readfile(buf))
+	{
+		sprintf(buf, "%s/fof_subhalo_tab_%03d",GrpPath,(int)Nsnap);
+// 		grpfile_type=3;
+	}
+	if(!try_readfile(buf))
+	{
+	sprintf(buf, "%s/group_tab_%03d",GrpPath,(int)Nsnap);
+// 	grpfile_type=4;
+	}
+  }
+}
 
 void load_group_catalogue_v4(HBTInt Nsnap,CATALOGUE *Cat,char *GrpPath)
 {//PGADGET-4's subfind format, loaded as GRPINPUT_INDEX
@@ -1225,6 +1292,7 @@ void load_group_catalogue_v4(HBTInt Nsnap,CATALOGUE *Cat,char *GrpPath)
   char buf[1024];
 //   int Ngroups,TotNgroups,Nids,NFiles;
   HBTInt i,Nload;
+  long long TotNids=0, TotNgroups=0;
   int ByteOrder,grpfile_type, dummy, dummy2;
 
 struct groupV4_header grp_header;
@@ -1239,70 +1307,61 @@ IDatInt *PID;
   	#ifdef SNAPLIST
 	Nsnap=snaplist[Nsnap];
 	#endif
-
-  Nload=0;
   for(i=0;i<NFILES_GRP;i++)
   {
-  grpfile_type=1;	
-  sprintf(buf, "%s/groups_%03d/fof_subhalo_tab_%03d.%d",GrpPath,(int)Nsnap,(int)Nsnap,(int)i);
-  if(!try_readfile(buf))
-  {
-	  sprintf(buf, "%s/groups_%03d/group_tab_%03d.%d",GrpPath,(int)Nsnap,(int)Nsnap,(int)i);
-	  grpfile_type=2;
-  }
-  if(1==NFILES_GRP)
-  {
-	if(!try_readfile(buf))
-	{
-		sprintf(buf, "%s/fof_subhalo_tab_%03d",GrpPath,(int)Nsnap);
-		grpfile_type=3;
-	}
-	if(!try_readfile(buf))
-	{
-	sprintf(buf, "%s/group_tab_%03d",GrpPath,(int)Nsnap);
-	grpfile_type=4;
-	}
-  }
-	
-  ByteOrder=check_grpcat_byteorder(buf, NFILES_GRP);
-  	
-  myfopen(fp,buf,"r");
+	get_group_file_v4(buf, Nsnap, GrpPath, i);
+	ByteOrder=check_grpcat_byteorder(buf, NFILES_GRP);
+	myfopen(fp,buf,"r");
 
-  SKIP;
-  myfread(&grp_header,sizeof(grp_header),1,fp);
-  SKIP2;
-  CHECK;
-  Cat->Ngroups=grp_header.TotNgroups;
-  #ifndef HBT_INT8
-  if(grp_header.TotNids>INT_MAX)
-  {
-	  printf("error: TotNids larger than HBTInt can hold! %d\n",grp_header.TotNids);
-	  exit(1);
-  }
-  #endif
-  Cat->Nids=grp_header.TotNids;
-   
-  if(NFILES_GRP!=grp_header.num_files)
+	SKIP;
+	myfread(&grp_header,sizeof(grp_header),1,fp);
+	SKIP2;
+	CHECK(4);
+	if(NFILES_GRP!=grp_header.num_files)
 	  {
 		  fprintf(logfile,"error: number of grpfiles specified not the same as stored: %d,%d\n for file %s\n",
 		  NFILES_GRP,(int)grp_header.num_files,buf);
 		  fflush(logfile);
 		  exit(1);
 	  }
- 
-  if(0==i)
-  fprintf(logfile,"Snap="HBTIFMT"  Ngroups=%d  Nids=%d  TotNgroups=%d  NFiles=%d\n", Nsnap, grp_header.Ngroups, grp_header.Nids, (int)(Cat->Ngroups), grp_header.num_files);
-  
-  if(0==i)
+	TotNgroups+=grp_header.Ngroups;
+	TotNids+=grp_header.Nids;
+  }
+
+  fprintf(logfile,"Snap="HBTIFMT"  Ngroups=%ld  Nids=%ld  NFiles=%d\n", Nsnap, TotNgroups, TotNids, (int) grp_header.num_files);
+	
+  Cat->Ngroups=TotNgroups;
+  #ifndef HBT_INT8
+  if(TotNids>INT_MAX)
   {
+	  printf("error: TotNids larger than HBTInt can hold! %ld\n",TotNids);
+	  exit(1);
+  }
+  #endif
+  Cat->Nids=TotNids;
+  
   ICat.Len= mymalloc(sizeof(int)*Cat->Ngroups);
   ICat.Offset=mymalloc(sizeof(int)*Cat->Ngroups);
-  }
   
+  Nload=0;
+  for(i=0;i<NFILES_GRP;i++)
+  {
+  get_group_file_v4(buf, Nsnap, GrpPath, i);
+  ByteOrder=check_grpcat_byteorder(buf, NFILES_GRP);
+  myfopen(fp,buf,"r");
+
   SKIP;
-  myfread(ICat.Len+Nload, sizeof(int), grp_header.Ngroups, fp);
+  myfread(&grp_header,sizeof(grp_header),1,fp);
   SKIP2;
-  CHECK;
+  CHECK(4);
+  
+  if(grp_header.Ngroups)
+  {
+	SKIP;
+	myfread(ICat.Len+Nload, sizeof(int), grp_header.Ngroups, fp);
+	SKIP2;
+	CHECK(5);
+  }
   if(feof(fp))
   {
 	fprintf(logfile,"error:End-of-File in %s\n",buf);

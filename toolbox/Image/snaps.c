@@ -9,7 +9,7 @@
 #include "iovars.h"
 #include "proto.h"
 
-#define NO_SUBCAT
+// #define NO_SUBCAT
 // #define SUBFIND_DIR "/home/jvbq85/data/HBT/data/AqE5W/subfind"
 // #define OUTDIR "/home/jvbq85/data/HBT/data/AqE5W/subcat/anal/subfind"
 
@@ -60,17 +60,24 @@ int main(int argc,char **argv)
 	}
 
 	load_group_catalogue(SnapLoad,&Cat,GRPCAT_DIR);
+	printf("GrpLen=%ld\n", (long) Cat.Len[grpid]);
 #ifndef NO_SUBCAT
 	load_sub_catalogue(SnapLoad,&SubCat,SUBCAT_DIR);
+	printf("SubLen=%ld\n", (long) SubCat.SubLen[Cat.Offset[grpid]]);
 #endif
-	load_particle_data(SnapPlot,SNAPSHOT_DIR);
+	load_particle_data_bypart(SnapPlot,SNAPSHOT_DIR,FLAG_LOAD_ID);
+	printf("particle data loaded\n");fflush(stdout);
 	fill_PIDHash();
+	printf("PIDHash ready\n");fflush(stdout);
 	fresh_ID2Index(&Cat,-1); 	
 #ifndef NO_SUBCAT
 	fresh_ID2Index(&SubCat,-2);	
 #endif
 	free_PIDHash();
+	printf("ID2Index done\n");fflush(stdout);
+	free_particle_data();
 	
+	load_particle_data_bypart(SnapPlot,SNAPSHOT_DIR,FLAG_LOAD_POS);
 	PIndex=Cat.PIDorIndex+Cat.Offset[grpid];
 	for(i=0;i<3;i++)
 		for(j=0;j<2;j++)

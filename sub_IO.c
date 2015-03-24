@@ -79,6 +79,7 @@ void fill_PIDHash2()
 {
 	HBTInt i;
 	PIDHash.table=mymalloc(sizeof(struct ID2Ind)*NP_DM);
+	#pragma omp parallel for
 	for(i=0;i<NP_DM;i++)
 	{
 		#ifdef PID_ORDERED
@@ -138,11 +139,16 @@ void fill_PIDHash1()
 							i.e.,its subscript ranges the same as particle ID range.
 							* PID_all[PIndex[PID]]=PID;*/
 	PIDHash.PInd_offset=idmin;
+	#pragma omp parallel
+	{
+	#pragma omp for private(i)
 	for(i=idmin;i<=idmax;i++)
 		PIDHash.PIndex[i]=-1; //initialize with -1, although not necessary
 	/*====make ID index for query====*/
+	#pragma omp for private(i)
 	for(i=0;i<NP_DM;i++)
-	PIDHash.PIndex[Pdat.PID[i]]=i;		
+	  PIDHash.PIndex[Pdat.PID[i]]=i;		
+	}
 	PIDHash.np=idmax-idmin+1;
 	#else
 	PIDHash.np=NP_DM;
@@ -203,6 +209,7 @@ void fresh_ID2Index(const void *src, HBTInt src_len)
 	{
 		#ifndef GRPINPUT_INDEX //fofcat of JING's data are originally PIndex rather than PID
 		Cat=(CATALOGUE *)src;
+		#pragma omp parallel for
 		for(i=0;i<Cat->Nids;i++)
 			Cat->PIDorIndex[i]=lookup_ID2Ind(Cat->PIDorIndex[i]);//Now PIDorIndex has been refilled with particle Index in Pdat
 		#endif	
@@ -211,6 +218,7 @@ void fresh_ID2Index(const void *src, HBTInt src_len)
 	{
 		SubCat=(SUBCATALOGUE *)src;
 		/*====refresh SubCat with particle Index===*/
+		#pragma omp parallel for private(j,pid)
 		for(i=0;i<SubCat->Nsubs;i++)
 		{
 			for(j=0;j<SubCat->SubLen[i];j++)
@@ -224,6 +232,7 @@ void fresh_ID2Index(const void *src, HBTInt src_len)
 	{
 		SrcCat=(SRCCATALOGUE *)src;
 		/*====refresh SubCat with particle Index===*/
+		#pragma omp parallel for private(j,pid)
 		for(i=0;i<SrcCat->Nsubs;i++)
 		{
 			for(j=0;j<SrcCat->SubLen[i];j++)
@@ -241,6 +250,7 @@ void fresh_ID2Index(const void *src, HBTInt src_len)
 	else if(src_len>=0)
 	{
 		Arr=(HBTInt *)src;
+		#pragma omp parallel for
 		for(i=0;i<src_len;i++)
 			Arr[i]=lookup_ID2Ind(Arr[i]);
 	}

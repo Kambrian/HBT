@@ -347,7 +347,7 @@ void load_particle_data(HBTInt Nsnap,char *SnapPath)
 	load_particle_header(Nsnap, SnapPath);//always do this before loading the data
 	
 	#pragma omp parallel num_threads(NFILE_CHUNK)
-	#pragma omp single nowait //creating tasks inside
+	#pragma omp single //nowait //creating tasks inside
 	{
 	read_part_pos_JING(snaplist[Nsnap],SnapPath);
 	read_part_vel_JING(snaplist[Nsnap],SnapPath);
@@ -355,7 +355,7 @@ void load_particle_data(HBTInt Nsnap,char *SnapPath)
 	read_part_id_JING(snaplist[Nsnap],SnapPath);
 	#endif
 	}
-	#pragma omp taskwait
+// 	#pragma omp taskwait
 	
 	check_part_id_range();
 	#pragma omp parallel for private(i,j)

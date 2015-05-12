@@ -175,7 +175,9 @@ HBTInt unbind(HBTInt *P2Len,HBTInt **P2PIndex, struct SubProperty *Prop,HBTInt *
 			 dvy+=Hz*dy;
 			 dvz+=Hz*dz;
 			 E=pot[i]+0.5*(dvx*dvx+dvy*dvy+dvz*dvz);
+			 #ifndef HALO_PARA  //2015-05-12: only do critical if particle para.
 			 #pragma omp critical (unbinding)
+			 #endif
 			#ifdef NO_UNBINDING
 				if(1)
 			#else 

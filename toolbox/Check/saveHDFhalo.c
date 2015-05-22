@@ -38,11 +38,15 @@ extern void load_subfind_catalogue(int Nsnap,SUBCATALOGUE *SubCat,char *inputdir
 #endif
 
 #define h0 0.73
+#define MUNIT (1./h0) //10^10Msun
 #ifdef CONVERT_LENGTH_MPC_KPC //already converted to kpc
-  #define LUNIT ((1/h0)) //kpc, for A4
+  #define LUNIT ((1./h0)) //kpc, for A4
 #else
-  #define LUNIT ((1/h0)*1000) //kpc, for B4, A2, B2,....
+  #define LUNIT ((1./h0)*1000) //kpc, for B4, A2, B2,....
 #endif
+
+// #define RMAX 5000. //Phoenix
+#define RMAX 500. //Aqua
 
 struct PList
 {
@@ -71,6 +75,7 @@ int main(int argc, char** argv)
 	{printf("usage: %s [Nsnap], otherwise Nsnap=%d\n",argv[0],Nsnap);fflush(stdout);}
 	else
 	Nsnap=atoi(argv[1]);
+	printf("Munit=%g\n", MUNIT);
 	
 /**/	
 	load_group_catalogue(Nsnap,&Cat,GRPCAT_DIR);
@@ -132,8 +137,8 @@ void collect_particles(struct PList * p)
   LINKLIST ll;
   make_linklist(&ll, NP_DM, 50, Pdat.Pos, GetArrPos, 0);
   p->np=Cat.Len[0];
-  p->PIndex=linklist_search_sphere(&ll, 500/LUNIT, SubCat.Property[0].CoM, &p->np);
-  printf("Mv=%g\n", p->np*header.mass[1]/h0);
+  p->PIndex=linklist_search_sphere(&ll, RMAX/LUNIT, SubCat.Property[0].CoM, &p->np);
+  printf("Mv=%g\n", p->np*header.mass[1]*MUNIT);
   free_linklist(&ll);
 }
 
@@ -142,7 +147,7 @@ void collect_subhaloes(struct PList * p)
   LINKLIST ll;
   make_linklist(&ll, SubCat.Nsubs, 50, SubCat.Property, GetSubCoM, 0);
   p->np=SubCat.GrpLen_Sub[0];
-  p->PIndex=linklist_search_sphere(&ll, 500/LUNIT, SubCat.Property[0].CoM, &p->np);
+  p->PIndex=linklist_search_sphere(&ll, RMAX/LUNIT, SubCat.Property[0].CoM, &p->np);
   printf("N=%d, %d\n", (int)p->np, (int)SubCat.GrpLen_Sub[0]);
   free_linklist(&ll);
 }
@@ -196,7 +201,7 @@ void dump_particles_hdf(char *outfile, HBTInt *PIndex, HBTInt np, HBTInt *ID2Sub
       }
     }
     dims[0]=1;
-	float pmass=header.mass[1]/h0;
+	float pmass=header.mass[1]*MUNIT;
     status = H5LTmake_dataset(file_id,"/PartMass", 1, dims, H5T_NATIVE_FLOAT, &pmass); 
     dims[0]=np;
     dims[1]=3;

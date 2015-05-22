@@ -321,8 +321,9 @@ void load_particle_data_bypart(HBTInt Nsnap, char *SnapPath, unsigned char loadf
 	}
 	}
 	
+	#ifndef PID_ORDERED
 	if(flag_id) check_part_id_range();
-		
+	#endif	
 	if(flag_pos)
 		#pragma omp parallel for private(i,j)
 		for(i=0;i<header.Np;i++)
@@ -357,7 +358,9 @@ void load_particle_data(HBTInt Nsnap,char *SnapPath)
 	}
 // 	#pragma omp taskwait
 	
+#ifndef PID_ORDERED
 	check_part_id_range();
+#endif
 	#pragma omp parallel for private(i,j)
 	for(i=0;i<header.Np;i++)
 		for(j=0;j<3;j++)
@@ -456,15 +459,15 @@ for(i=0;i<Cat->Ngroups;i++)
 #endif
 void free_catalogue(CATALOGUE *A)
 {
-	free(A->Len);
-	free(A->HaloCen[0]);
-	free(A->HaloCen[1]);
-	free(A->HaloCen[2]);	
-	free(A->Offset);
-	free(A->PIDorIndex);
-	//~ free(A->HaloMask);
-	//~ free(A->HaloMaskSrc);
-	free(A->ID2Halo);
+	myfree(A->Len);
+	myfree(A->HaloCen[0]);
+	myfree(A->HaloCen[1]);
+	myfree(A->HaloCen[2]);	
+	myfree(A->Offset);
+	myfree(A->PIDorIndex);
+	//~ myfree(A->HaloMask);
+	//~ myfree(A->HaloMaskSrc);
+	myfree(A->ID2Halo);
 }
 
 #undef FLG_ENDIAN

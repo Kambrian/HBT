@@ -9,9 +9,9 @@ rootdir='/work/Projects/SubProf/'
 datadir=rootdir+'data/'
 outdir=rootdir+'plots/'
 
-A1=HaloData('A1', 'DTree')  
-A2=HaloData('A2', 'DTree')
-A3=HaloData('A3', 'DTree')
+A1=HaloData('A1')  
+A2=HaloData('A2')
+A3=HaloData('A3')
 A4=HaloData('A4')
 A5=HaloData('A5')
 
@@ -38,7 +38,8 @@ denSubRef0*=C
 plt.figure()
 hall=[]
 f=denSub/denHalo>0
-htmp,=plt.plot(rSub[f], (denSub/denHalo/C)[f], 'k-', label='A1 all')
+htmp,=plt.plot(rSub[f], (denSub/denHalo/C)[f], 'k-', lw=5, alpha=0.4, label='A1 all')
+y0=denSub/denHalo/C
 hall.append(htmp)
 for H in [A1,A2,A3,A4,A5]:
   rSub,denSub,denSubRef,denSubErr=H.get_sub_density((H.massTVV[:,iInfall]>mMin/H.mP/1)&(H.m>0), xbin, Rref)
@@ -46,19 +47,24 @@ for H in [A1,A2,A3,A4,A5]:
   #C=(denSub/denHalo)[f].mean() #normalize individually.
   C=denSubRef0/denSubRef #normalize by A1all
   f=denSub/denHalo>0
+  y=(denSub/denHalo/C/y0)[(rSub>0.6)&(rSub<1.)].mean()
+  print y
   if H!=A1:
 	htmp,=plt.plot(rSub[f], (denSub/denHalo/C)[f], fmt[H]+'-', color=colors[H], label=H.name)
   else:
 	htmp=plt.errorbar(rSub[f], (denSub/denHalo/C)[f], (denSubErr/denHalo/C)[f], fmt=fmt[H]+'-', color=colors[H], alpha=0.7, label=H.name)
+	#plt.xscale('log')
+	#y=0.6
+	#plt.plot(plt.xlim(), [y,y], 'k--')
   hall.append(htmp)
 plt.ylim([5e-2,3])
 plt.yscale('log', nonposy='clip')
 plt.xscale('log')
-plt.legend(hall, [h.get_label() for h in hall], loc=4)
+plt.legend(hall, [h.get_label() for h in hall], loc=3, fontsize=15)
 plt.plot(plt.xlim(), [1,1], 'k--')  
 plt.xlabel(r'$R/R_{\rm 200}$')
 plt.ylabel(r'$\rho_{\rm Sub}/\rho_{\rm Halo}$')
-plt.savefig(outdir+'/SubprofInfall_resolved.rat.samenorm.pdf')
+#plt.savefig(outdir+'/SubprofInfall_resolved.rat.samenorm.pdf')
 
 plt.figure()
 nbin=80
@@ -80,10 +86,10 @@ for H in [A1,A2,A3,A4,A5]:
   plt.plot(rSub[denSub>0],denSub[denSub>0]/C,'-',color=colors[H], alpha=1, label=H.name+r',$N_0>%s$'%fmtexp10(mMin/H.mP,'%.1f'))
 plt.yscale('log', nonposy='clip')
 plt.xscale('log')
-plt.legend(loc=1)
+plt.legend(loc=3,fontsize=15)
 plt.xlabel(r'$R/R_{\rm 200}$')
-plt.ylabel(r'$\rho/\rho_{200}$')
-plt.savefig(outdir+'/SubprofInfall_resolved.samenorm.eps')
+plt.ylabel(r'$\rho(R)/\rho(R_{200})$')
+#plt.savefig(outdir+'/SubprofInfall_resolved.samenorm.eps')
 
 #decompose A2
 
@@ -111,8 +117,8 @@ plt.yscale('log', nonposy='clip')
 plt.xscale('log')
 plt.legend(loc=1)
 plt.xlabel(r'$R/R_{\rm 200}$')
-plt.ylabel(r'$\rho/\rho_{200}$')
-plt.savefig(outdir+'/SubprofInfall_Decompose.pdf')
+plt.ylabel(r'$\rho(R)/\rho(R_{200})$')
+#plt.savefig(outdir+'/SubprofInfall_Decompose.pdf')
 
 ## mass dependence (only depend on stripping fraction?) todo.............
 nbin=20
@@ -138,8 +144,8 @@ for H in [A1,A2,A3,A4,A5]:
 plt.ylim([5e-2,3])
 plt.yscale('log', nonposy='clip')
 plt.xscale('log')
-plt.legend(hall, [h.get_label() for h in hall], loc=4)
+plt.legend(hall, [h.get_label() for h in hall], loc=3, fontsize=15)
 plt.plot(plt.xlim(), [1,1], 'k--')  
 plt.xlabel(r'$R/R_{\rm 200}$')
 plt.ylabel(r'$\rho_{\rm Sub}/\rho_{\rm Halo}$')
-plt.savefig(outdir+'/SubprofInfall_resolved.rat.pdf')
+#plt.savefig(outdir+'/SubprofInfall_resolved.rat.pdf')

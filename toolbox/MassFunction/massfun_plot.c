@@ -13,9 +13,9 @@
 //#define NORM  //produce normalized massfunction (in terms Msub/Mhost rather than Msub)
 #define RMIN 0
 #define RMAX 1	 //statistics done in RMIN*rvi<r<RMAX*rvir
-#define NBIN 15  //bin number for Msub
-#define AUTOBIN
-#define NFUN 3   //bin number for Mhost
+#define NBIN 20  //bin number for Msub
+// #define AUTOBIN
+#define NFUN 5   //bin number for Mhost
 //#define FIX_XBIN  //define this to use preset xmass bin
 
 struct MassList
@@ -88,11 +88,11 @@ int main(int argc,char **argv)
 	logspace(Mmin,Mmax,NFUN+1,Mgrpbin);
 	#else
 	Mgrpbin[0]=pow(10,2);
-	//~ Mgrpbin[1]=pow(10,2.5);
-	Mgrpbin[1]=pow(10,3);
-	//~ Mgrpbin[3]=pow(10,3.5);
-	Mgrpbin[2]=pow(10,4);
-	Mgrpbin[3]=pow(10,5);
+	Mgrpbin[1]=pow(10,2.5);
+	Mgrpbin[2]=pow(10,3);
+	Mgrpbin[3]=pow(10,3.5);
+	Mgrpbin[4]=pow(10,4);
+	Mgrpbin[5]=pow(10,5);
 	#endif
 	
 	makell_sub();
@@ -112,13 +112,14 @@ int main(int argc,char **argv)
 	freell_sub();
 	
 	char outputdir[1024];
+// 	sprintf(outputdir,"/home/kambrain/data/%d/Analysis", RUN_NUM);
 	sprintf(outputdir,"%s/anal/massfun",SUBCAT_DIR);
 	mkdir(outputdir,0755);
 	
 	#ifdef NORM
-	sprintf(buf,"%s/anal/massfun/massfunN_%03d.%d",SUBCAT_DIR,Nsnap,VirType);
+	sprintf(buf,"%s/massfunN_%03d.%d",outputdir,Nsnap,VirType);
 	#else
-	sprintf(buf,"%s/anal/massfun/massfun_%03d.%d",SUBCAT_DIR,Nsnap,VirType);
+	sprintf(buf,"%s/massfun_%03d.%d",outputdir,Nsnap,VirType);
 	#endif
 	myfopen(fp,buf,"w");	
 	{

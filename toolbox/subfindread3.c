@@ -43,13 +43,13 @@ void subread(int Nsnap,char *subdir)
    int FileCounts, grpfile_type;
    
   long long Nloadgrp=0, Nloadsub=0;
-  FileCounts=find_group_file(Nsnap, subdir, &grpfile_type);
+  FileCounts=find_group_file(SnapshotNum, subdir, &grpfile_type);
   for(i=0;i<FileCounts;i++)
   {
  // if(FileCounts>0)	  
   sprintf(buf, "%s/groups_%03d/subhalo_tab_%03d.%d",subdir,SnapshotNum,SnapshotNum,i);
  // else
- // sprintf(buf, "%s/subhalo_tab_%03d",subdir,Nsnap);
+ // sprintf(buf, "%s/subhalo_tab_%03d",subdir,SnapshotNum);
   
    ByteOrder=check_grpcat_byteorder(buf, FileCounts);
   
@@ -383,6 +383,7 @@ int main()
 	logfile=stdout;
 	
 	subread(Nsnap,inputdir);
+	printf("M200=%g, R200=%g\n", Halo_M_Crit200[0], Halo_R_Crit200[0]);
 	return 0;
 }
 #endif

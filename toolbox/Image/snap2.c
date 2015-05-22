@@ -29,7 +29,7 @@ int main(int argc,char **argv)
 {
 	CATALOGUE Cat;
 	SUBCATALOGUE SubCat;
-	int SnapLoad,SnapPlot,i,j,pid,subid,grpid;
+	HBTInt SnapLoad,SnapPlot,i,j,pid,subid,grpid;
 	FILE *fp,*fpr,*fpv;
 	char buf[1024];
 	float step[3],range[3][2];
@@ -61,10 +61,12 @@ int main(int argc,char **argv)
 
 	load_group_catalogue(SnapLoad,&Cat,GRPCAT_DIR);
 	load_sub_catalogue(SnapLoad,&SubCat,SUBCAT_DIR);
-	load_particle_data(SnapPlot,SNAPSHOT_DIR);
+	load_particle_data_bypart(SnapPlot,SNAPSHOT_DIR, FLAG_LOAD_ID);
 	fill_PIDHash();
 	fresh_ID2Index(&Cat,-1); 	fresh_ID2Index(&SubCat,-2);	
 	free_PIDHash();
+	free_particle_data();
+	load_particle_data_bypart(SnapPlot,SNAPSHOT_DIR, FLAG_LOAD_POS);
 	
 	PIndex=Cat.PIDorIndex+Cat.Offset[grpid];
 	fprintf(logfile,"calculating densities ...\n");fflush(logfile);
@@ -159,7 +161,7 @@ int main(int argc,char **argv)
 		{
 			grid[j]=floor((Pdat.Pos[pid][j]-range[j][0])/step[j]);
 			if(grid[j]>=NGRID) grid[j]=NGRID-1;
-			fprintf(fp,"%d\t",grid[j]);
+			fprintf(fp,""HBTIFMT"\t",grid[j]);
 		}
 		fprintf(fp,"\n");
 	}
@@ -231,10 +233,10 @@ int main(int argc,char **argv)
 			com[j]=SubCat.Property[subid].CoM[j];
 			grid[j]=floor((com[j]-range[j][0])/step[j]);
 			if(grid[j]>=NGRID) grid[j]=NGRID-1;
-			fprintf(fp,"%d\t",grid[j]);
+			fprintf(fp,""HBTIFMT"\t",grid[j]);
 		}
 		fprintf(fp,"\n");
-		fprintf(fpr,"%d\t%f\t%f\t%f\n",SubCat.SubLen[subid],com[0],com[1],com[2]);
+		fprintf(fpr,""HBTIFMT"\t%f\t%f\t%f\n",SubCat.SubLen[subid],com[0],com[1],com[2]);
 	}
 	fclose(fp);
 	fclose(fpr);

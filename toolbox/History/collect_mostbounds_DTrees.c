@@ -23,8 +23,6 @@
 #include "history_proto.h"
 
 #define VIRTYPE 1
-// #define RVIR 179.4e-3 //Mpc/h, A
-#define RVIR 137.86e-3 //B
 
 #ifdef CONVERT_LENGTH_MPC_KPC
 #define LSCALE 1e-3
@@ -83,7 +81,20 @@ int main(int argc, char **argv)
 //   load_tree(&Tree, "/gpfs/data/jch/Aquarius/Trees/Aq-A/3/trees/treedir_063/tree_063.0.hdf5");
 //   load_tree(&Tree, "/gpfs/data/jch/Aquarius/Trees/Aq-A/4/trees/treedir_127/tree_127.0.hdf5");
 //   load_tree(&Tree, "/gpfs/data/jch/Aquarius/Trees/Aq-A/5/trees/treedir_127/tree_127.0.hdf5");
-  load_tree(&Tree, "/gpfs/data/jch/Aquarius/Trees/Aq-B/4/trees/treedir_127/tree_127.0.hdf5");
+//   load_tree(&Tree, "/gpfs/data/jch/Aquarius/Trees/Aq-B/4/trees/treedir_127/tree_127.0.hdf5");
+load_tree(&Tree, "/gpfs/data/jch/Aquarius/Trees/Aq-F/2/trees/treedir_097/tree_097.0.hdf5");
+// #define RVIR 179.4e-3 //Mpc/h, A
+// #define RVIR 137.86e-3 //B
+#define RVIR 180e-3 //Mpc/h, conservative.
+//   load_tree(&Tree, "/gpfs/data/jch/Phoenix/Trees/pha-2/trees/treedir_071/tree_071.0.hdf5");
+// #define RVIR 1.414 //PhA
+// #define RVIR 1.526 //B
+// #define RVIR 1.332 //C
+// #define RVIR 1.386 //D
+// #define RVIR 1.369 //E
+// #define RVIR 1.509 //F
+// #define RVIR 1.704 //G
+// #define RVIR 2.411 //I
   data.CenBranchID=get_mostmassive_branch(&Tree);
   
   Nsnap=MaxSnap-1;

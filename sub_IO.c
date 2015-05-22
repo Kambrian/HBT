@@ -218,7 +218,7 @@ void fresh_ID2Index(const void *src, HBTInt src_len)
 	{
 		SubCat=(SUBCATALOGUE *)src;
 		/*====refresh SubCat with particle Index===*/
-		#pragma omp parallel for private(j,pid)
+		#pragma omp parallel for private(i,j,pid)
 		for(i=0;i<SubCat->Nsubs;i++)
 		{
 			for(j=0;j<SubCat->SubLen[i];j++)

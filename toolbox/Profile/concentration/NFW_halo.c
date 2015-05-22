@@ -7,6 +7,8 @@
 #include <gsl/gsl_multifit_nlin.h>
 #include "datatypes.h"
 
+#define PRINT_PROF
+
 #define NUM_PARAM 2
 
 #define TOL_FIT 1e-6
@@ -304,6 +306,16 @@ if(status==0)
  err_M[0]=err_M[1]=err_M[2]=0.;	
  return NFW_BADBIN;
 }
+
+#ifdef PRINT_PROF
+struct data *d=f.params;
+printf("-------------------------------------------\n")
+printf("#r, rho, sigma\n");
+int i;
+for(i=0;i<d->nbin;i++)
+ printf("%g, %g, %g\n", d->r[i], d->rho[i], d->sigma[i]);
+printf("-------------------------------------------\n")
+#endif
 
 covar = gsl_matrix_alloc (NUM_PARAM, NUM_PARAM);
 T = gsl_multifit_fdfsolver_lmsder;

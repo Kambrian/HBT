@@ -12,7 +12,7 @@
 	#define NP_GAS 	0
 	#define NP_DM  414336000LL	
 	#define BOXSIZE 100.0  //Mpc/h
-	#define MP_DM  0. 
+	#define MP_DM  4.946e-7
 	#define MP_GAS   0.
 	//#define partmass=2.8679e-05  Msun/h
 
@@ -47,16 +47,16 @@
 	                   //because this is usually the only difference between standard gadget unit and user unit
 	#define G 43.0071
 	#define HUBBLE0 100.0    //H_0 in internal units
-	#define MaxSnap 128//total number of snapshot outputs
-	#define SNAPFILE_BASE "snap_9_1_53_1200"
-//	#define SNAPLIST  11210     //snaplist identifier to enable the corresponding snaplist in iovars.c
-	#define NFILES 128   //number of files per snapshot
-	#define NFILES_GRP 256//number of group files per snapshot
-	#define INPUT_REAL8   //datatype for input in double precision
-	#define INPUT_INT8    //datatype for input ID
-	#define HBT_REAL8    //datatype for HBT calculation and output
+	#define MaxSnap 98 //total number of snapshot outputs
+	#define SNAPFILE_BASE "snapshot"
+	#define SNAPLIST  1621     //snaplist identifier to enable the corresponding snaplist in iovars.c
+	#define NFILES 8   //number of files per snapshot
+	#define NFILES_GRP 32//number of group files per snapshot
+	#define INPUT_REAL4   //datatype for input in double precision
+	#define INPUT_INT4    //datatype for input ID
+	#define HBT_REAL4    //datatype for HBT calculation and output
 //	#define HBT_INT8    //datatype of HBT integers, must be able to hold all PIDs, at least after conversion
-	#define HBTPID_RANKSTYLE //replace PIDs with their ranks at input(in the range [0~NP_DM-1]), to save memory
+// 	#define HBTPID_RANKSTYLE //replace PIDs with their ranks at input(in the range [0~NP_DM-1]), to save memory
                              //in this case HBT_INT can be smaller than INPUT_INT if the original pids are not on ground state
 							//these ground state pids will also be saved into subcat files
 //	#define PID_NEED_HASH //if PID is not in the range [1~NP_SIM], need to make hash table to convert ID to address

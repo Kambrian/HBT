@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <math.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "datatypes.h"
 #include "intra_vars.h"
@@ -219,6 +220,7 @@ void *mymalloc(size_t n)
 	{
 		if(!(mem=malloc(n)))
 		{fprintf(logfile,"failed to allocate memory for %zd bytes.\n", n);fflush(logfile);
+// 		  pause();
 		exit(1);
 		}
 	}
@@ -458,7 +460,7 @@ HBTInt linklist_get_hoc_safe(LINKLIST *ll, HBTInt i,HBTInt j,HBTInt k)
 	#define FIXGRID(i) linklist_fix_gridid(i,ll)
 	return ll->hoc[FIXGRID(i)+FIXGRID(j)*ll->ndiv+FIXGRID(k)*ll->ndiv*ll->ndiv];
 }
-
+//TODO:discard the fortran-style ll; use struct or indexed table to parallelize the linklist!
 void make_linklist(LINKLIST *ll, HBTInt np,HBTInt ndiv, void *PosData, 
 								AccessPosFunc *GetPos, HBTInt UseFullBox)
 {

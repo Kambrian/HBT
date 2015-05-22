@@ -680,6 +680,7 @@ int count_pattern_files(char *filename)
 
    globbuf.gl_offs = 0;
    glob(filename, GLOB_ERR, NULL, &globbuf);
+//    printf("couting %s...\n found %d files\n", filename, globbuf.gl_pathc);
    globfree(&globbuf);
    return globbuf.gl_pathc;  
 }

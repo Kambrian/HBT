@@ -1,5 +1,5 @@
 #~~~~~~~~ modify this to be the simulation name   ~~~~~~~#
-RUN_NUM=6620#this is simulation name corresponding to some parameter file, see below
+RUN_NUM=6113#this is simulation name corresponding to some parameter file, see below
 IODIR=JING_io#uncomment this for JING's data
 #IODIR=gadget_io#uncomment this for gadget data
 #IODIR=merger_io

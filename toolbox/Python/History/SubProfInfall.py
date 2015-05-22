@@ -9,12 +9,12 @@ rootdir='/work/Projects/SubProf/'
 datadir=rootdir+'data/'
 outdir=rootdir+'plots/'
 
-A1=HaloData('A1')  
-A2=HaloData('A2')
-A3=HaloData('A3')
-A4=HaloData('A4')
-A5=HaloData('A5')
-B4=HaloData('B4')
+A1=HaloData('AqA1')  
+A2=HaloData('AqA2')
+A3=HaloData('AqA3')
+A4=HaloData('AqA4')
+A5=HaloData('AqA5')
+D2=HaloData('AqD2')
 
 ##plot profiles
 Rref=1
@@ -25,12 +25,12 @@ mMin=1e-4*A2.Mvir
 
 xbin=np.logspace(np.log10(Rconv), np.log10(500*0.73), nbin)/A2.Rvir
 #xbin=np.linspace(Rconv, 500*0.73, nbin)/A2.Rvir
-fmt={A1:'d',A2:'x',A3:'^',A4:'s',A5:'o'}
-colors={A1:'k',A2:'r',A3:'g',A4:'b',A5:'c'}
+fmt={A1:'d',A2:'x',A3:'^',A4:'s',A5:'o',D2:'+'}
+colors={A1:'k',A2:'r',A3:'g',A4:'b',A5:'c',D2:'m'}
 
 ## density profile
 rHalo,denHalo,denHaloRef,denHaloErr=A2.get_host_density(xbin, Rref)
-for H in [A1,A2,A3,A4,A5]:
+for H in [A1,A2,A3,A4,A5,D2]:
 #for H in [A4]:
   rSub,denSub,denSubRef,denSubErr=H.get_sub_density(H.massTVV[:,iInfall]>mMin/H.mP, xbin, Rref)
   if H==A1:
@@ -38,8 +38,13 @@ for H in [A1,A2,A3,A4,A5]:
 	f=(denSub/denHalo>0)&(rSub<1.8)&(rSub>0.6)
 	C=(denSub/denHalo)[f].mean()
 	C0=C
+	lw=5
+	alpha=0.3
+  else:
+	lw=1
+	alpha=0.6
   C=denSubRef0*C0/denSubRef #same normalization
-  plt.plot(rSub[denSub>0],denSub[denSub>0]/C,'-',color=colors[H], alpha=0.5, label=H.name+r',$N_0>%s$'%fmtexp10(mMin/H.mP,'%.1f'))
+  plt.plot(rSub[denSub>0],denSub[denSub>0]/C,'-', lw=lw, color=colors[H], alpha=alpha, label=H.name+r',$N_0>%s$'%fmtexp10(mMin/H.mP,'%.1f'))
   #plt.errorbar(rSub,denSub, denSubErr, fmt=fmt[H], color=colors[H], label=H.name)
 #plt.yscale('log', nonposy='clip')
 plt.yscale('log', nonposy='mask')
@@ -55,6 +60,8 @@ for H in [A2,A4]:
 plt.legend(halolines, [a.get_label() for a in halolines], loc=3,fontsize=15)
 plt.gca().add_artist(legend1)
 
+plt.plot([0.6/H.Rvir,0.6/H.Rvir], [1,2])
+plt.plot([2./H.Rvir,2./H.Rvir], [1,2])
 ##add B4
 #mMinB=1e-4*B4.Mvir
 #rHalo,denHalo,denHaloRef,denHaloErr=B4.get_host_density(xbin, Rref)
@@ -66,7 +73,7 @@ plt.gca().add_artist(legend1)
 
 plt.ylim([0.05,1e7])
 plt.xlabel(r'$R/R_{\rm 200}$')
-plt.ylabel(r'$\rho/\rho(R_{200})$')
+plt.ylabel(r'$\rho(R)/\rho(R_{200})$')
 #plt.savefig(outdir+'/SubprofInfall.pdf')
 
 

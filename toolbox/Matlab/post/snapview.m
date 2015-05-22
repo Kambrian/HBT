@@ -1,14 +1,15 @@
-RunNum='CoCo';SnapLoad=0;grpid=0;
+RunNum='6620';SnapLoad=70;grpid=0;
 SnapPlot=SnapLoad;
+datadir=['/mnt/uv/',RunNum,'/subcat/anal/image/'];
 % datadir=['/mnt/uv/HBT/data/',RunNum,'/subcat/anal/image/'];
 % datadir=['/mnt/A4700/data/',RunNum,'/subcat/anal/image/'];
-datadir=['/mnt/charon/HBT/data/',RunNum,'/test/anal/image/'];
+% datadir=['/mnt/charon/HBT/data/',RunNum,'/test/anal/image/'];
 % datadir=['/mnt/A4700/data/',RunNum,'/subcatS/anal/image/'];
 % fofmap=load([datadir,'fofmapxy_',num2str(SnapLoad,'%03d'),'_',num2str(grpid,'%d')]);
 % subpos=load([datadir,'subcen_',num2str(SnapLoad,'%03d'),'_',num2str(grpid,'%d')]);  %position of most bound particle better marks subhalo than CoM
 % subcom=load([datadir,'subcom_',num2str(SnapLoad,'%03d'),'_',num2str(grpid,'%d')]);
 % fofsize=load([datadir,'fofsize_',num2str(SnapLoad,'%03d'),'_',num2str(grpid,'%d')]);
-fofmap=load([datadir,'fofmap2xy_',num2str(SnapLoad,'%03d'),'_',num2str(grpid,'%d'),'.',num2str(SnapPlot,'%03d')]);
+fofmap=load([datadir,'fofmapyz_',num2str(SnapLoad,'%03d'),'_',num2str(grpid,'%d'),'.',num2str(SnapPlot,'%03d')]);
 subpos=load([datadir,'subcen_',num2str(SnapLoad,'%03d'),'_',num2str(grpid,'%d'),'.',num2str(SnapPlot,'%03d')]);  %position of most bound particle better marks subhalo than CoM
 subcom=load([datadir,'subcom_',num2str(SnapLoad,'%03d'),'_',num2str(grpid,'%d')]);
 % subpos=subcom(:,2:4);
@@ -27,10 +28,10 @@ addpath('../post');
 % rvir=1609.3;
 % rvir=1517.0;
 % rivr=1452;
-% rvir=nan;
+rvir=nan;
 
-dim=[1,2];
-massmin=10;
+dim=[2,3];
+massmin=20;
 %%
 subid=0;
 % file=fullfile(datadir,['SubInSub_S',num2str(SnapLoad),'B',num2str(subid),'.COM.2'])
@@ -58,7 +59,10 @@ sfmsize=load_subsize(sizefile);
 % outputdir='/home/kam/Projects/HBT/presentation/baposter/images';
 outputdir='/work/Projects/HBT/code/data/show/images';
 myfigure;%('visible','off');
-cmap=contrast(log(fofmap));imagesc(fofsize(dim(1),:),fofsize(dim(2),:),(log(fofmap)'));colormap(cmap);colormap('bone');
+cmap=contrast(log(fofmap));
+imagesc(fofsize(dim(1),:),fofsize(dim(2),:),(log(fofmap+0)'));
+colormap(cmap);
+% colormap('bone');
 % imagesc(fofsize(1,:),fofsize(2,:),(log(fofmap+1)'));colormap('gray');
 hold on;
 tc=0:0.1:2*pi+0.1;
@@ -68,8 +72,14 @@ plot(rvir*sin(tc)+subpos(1,dim(1)),rvir*cos(tc)+subpos(1,dim(2)),'r--');
 % for i=[7,13]  % grpid=0 switch
 % for i=[3,14]  % grpid=3
 % for i=[5,24]  % grpid=26
+% figure();
+% for i=1:sum(subcom(:,1)>massmin)
+% plot(subcom(i,dim(1)+1),subcom(i,dim(2)+1),'og','MarkerSize',40./i.^0.6,'displayname',num2str(i-1));hold on;
+% % plot(rtidal(i)*sin(tc)+subpos(i,1),rtidal(i)*cos(tc)+subpos(i,2),'r-');
+% end
+% figure;
 for i=1:sum(subcom(:,1)>massmin)
-plot(subpos(i,dim(1)),subpos(i,dim(2)),'or','MarkerSize',40./i.^0.6,'displayname',num2str(i-1));
+plot(subpos(i,dim(1)),subpos(i,dim(2)),'or','MarkerSize',40./i.^0.6,'displayname',num2str(i-1));hold on;
 % plot(rtidal(i)*sin(tc)+subpos(i,1),rtidal(i)*cos(tc)+subpos(i,2),'r-');
 end
 % plot(subpos(4,1),subpos(4,3),'xr','MarkerSize',8,'displayname',num2str(i-1));

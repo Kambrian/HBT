@@ -1,3 +1,4 @@
+//TODO:check the sub_hierarchy parallelization; check satellite accretion. whether they caused the wrong slope of subhalo mass function in halopara mode: probably the latter, since the slope appear mass dependent, so that small host haloes are given more satellite accretion..
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>

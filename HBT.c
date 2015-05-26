@@ -338,11 +338,14 @@ time_end=time(NULL);
 fprintf(logfile,"Program %s Finished in %ld minutes (or %ld hours) (or %ld seconds).\n",argv[0], (time_end-time_start)/60,(time_end-time_start)/3600,time_end-time_start);
 fclose(logfile);
 
-//remove write permissions from all to protect the files
-#ifndef UNBIND_FOF
+//finalize directory structure and permissions
+// #if !(defined(UNBIND_FOF)|defined(SANP_BY_SNAP))
+if(SnapshotNum>=MaxSnap)
+{
+//remove write permissions from all to protect the files  
 sprintf(buf,"chmod a-w %s/* -R",SUBCAT_DIR);
 system(buf);
-#endif
+
 //create additional directories for future use
 sprintf(buf,"%s/profile",SUBCAT_DIR); //density profile dir, not used by HBT, to be used by post-processing
 mkdir(buf,0755);
@@ -350,6 +353,8 @@ sprintf(buf,"%s/history",SUBCAT_DIR);//evolution_cat dir, to be used by post－p
 mkdir(buf,0755);
 sprintf(buf,"%s/anal",SUBCAT_DIR);//analysis dir, to be used by post-proc
 mkdir(buf,0755);
+}
+// #endif
 
 return 0;
 }

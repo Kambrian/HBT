@@ -460,34 +460,17 @@ HBTInt linklist_get_hoc_safe(LINKLIST *ll, HBTInt i,HBTInt j,HBTInt k)
 	#define FIXGRID(i) linklist_fix_gridid(i,ll)
 	return ll->hoc[FIXGRID(i)+FIXGRID(j)*ll->ndiv+FIXGRID(k)*ll->ndiv*ll->ndiv];
 }
-typedef struct 
-{
-  HBTInt *hoc;
-  HBTInt *toc;
-} ChainTable;
-void init_chaintable(ChainTable *table, HBTInt ncells)
-{
-  table->hoc=mymalloc(sizeof(HBTInt)*ncells);
-  table->toc=mymalloc(sizeof(HBTInt)*ncells);
-  HBTInt i;
-  for(i=0;i<ncells;i++)
-  {
-	table->hoc[i]=-1;
-	table->toc[i]=-1;
-  }
-}
 //TODO:discard the fortran-style ll; use struct or indexed table to parallelize the linklist!
 void make_linklist(LINKLIST *ll, HBTInt np,HBTInt ndiv, void *PosData, 
 								AccessPosFunc *GetPos, HBTInt UseFullBox)
 {
 	HBTInt i,j,grid[3];
-	HBTInt ind,ndiv2,ndiv3;
+	HBTInt ind,ndiv2;
 	HBTReal x;
 	//~ float range[3][2],step[3];
 	printf("creating linked list..\n");
 	
 	ndiv2=ndiv*ndiv;
-	ndiv3=ndiv2*ndiv;
 	ll->ndiv=ndiv;
 	ll->np=np;
 	ll->UseFullBox=UseFullBox;
@@ -524,64 +507,21 @@ void make_linklist(LINKLIST *ll, HBTInt np,HBTInt ndiv, void *PosData,
 			ll->step[j]=(ll->range[j][1]-ll->range[j][0])/ll->ndiv;
 	}
 	/*initialize hoc*/
-	#ifdef _OPEN_MP
-	int nthreads=omp_get_num_threads();
-	ChainTable * chains=mymalloc(sizeof(ChainTable)*nthreads);
-	#else
-	ChainTable chain;
-	#endif
-	#pragma omp parallel
-	{
-	#ifdef _OPEN_MP
-	  int thread_id=omp_get_thread_num();
-	  init_chaintable(chains[thread_id]);
-	#else
-	  init_chaintable(&chain);
-	#endif
-	#pragma omp for	//build chain in each thread
+	HBTInt *phoc=ll->hoc;
+	for(i=0;i<ndiv*ndiv*ndiv;i++,phoc++)
+		*phoc=-1;
+		
 	for(i=0;i<np;i++)
 	{
-	  HBTInt *hoc, *toc, *pchain;
-	  #ifdef _OPEN_MP
-			pchain=chains+thread_id;
-	  #else
-			pchain=&chain;
-	  #endif
-	  hoc=pchain->hoc;
-	  toc=pchain->toc;
-	  for(j=0;j<3;j++)
+		for(j=0;j<3;j++)
 		{
 			grid[j]=floor((GetPos(i,PosData)[j]-ll->range[j][0])/ll->step[j]);
 			grid[j]=linklist_fix_gridid(grid[j],ll);
 		}
 		ind=grid[0]+grid[1]*ndiv+grid[2]*ndiv2;
-		if(hoc[ind]<0) toc[ind]=i; //chain still empty, record the current particle
-		ll->list[i]=hoc[ind];
-		hoc[ind]=i;/*use hoc[ind] as swap varible to temporarily 
-			      	store last ll index, and finally the head*/
-	}
-	//merge chains......
-  #ifdef _OPEN_MP
-	#pragma omp single
-	ll->hoc=mymalloc(sizeof(HBTInt)*ndiv3);
-	#pragma omp for
-	  for(i=0;i<ndiv3;i++)
-	  {
-		ll->hoc[i]=chains[0].hoc[i];
-		for(j=0;j<nthreads-1;j++)
-		  ll->list[chains[j].toc[i]]=chains[j+1].hoc[i];
-	  }
-	#pragma omp for
-	  for(i=0;i<nthreads;i++)
-	  {
-		myfree(chains[i].hoc);
-		myfree(chains[i].toc);
-	  }
-  #else
-	ll->hoc=chain.hoc;
-	myfree(chain.toc);
-  #endif
-	//FIXME..verify this code......................
+		ll->list[i]=ll->hoc[ind];
+		ll->hoc[ind]=i; /*use hoc[ind] as swap varible to temporarily 
+			      						store last ll index, and finally the head*/
 	}
 }
 

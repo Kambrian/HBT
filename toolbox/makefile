@@ -20,7 +20,7 @@ GSLLIB=-L/home/qypeng/softwares/gsl-1.15/lib -lgsl -lgslcblas
 #this is only necessary when code+data size>2Gb
 #CFLAGS+=-mcmodel=medium -share-intel
 
-VPATH=Check History Image MassFunction Profile \
+VPATH=Check History History/BranchTable Image MassFunction Profile \
       Profile/concentration  Profile/geometrical  Profile/sub  Profile/xray \
       $(BTDIR) $(BTDIR)/history
 
@@ -143,6 +143,8 @@ collect_mostbounds_virial: LDFLAGS+=-lhdf5_hl -lhdf5
 
 collect_mostbounds_DTrees: hdf_util.o history_io.o
 collect_mostbounds_DTrees: LDFLAGS+=-lhdf5_hl -lhdf5 
+
+BranchTable: BranchFuncs.o
 
 clean:
 	rm -f *.o $(EXEC)

@@ -46,8 +46,13 @@ for H in [A1,A2,A3,A4,A5]:
 	par=st.norm.fit(np.log(x[x>0]))
 	frac0=1.*np.sum(x>0)/len(x)
 	#plt.plot(xbin, frac0*st.norm.sf(np.log(xbin),loc=par[0], scale=par[1]), '-', color=(.7,.7,.7), alpha=1, lw=5)
-	plt.plot(xbin, frac0*st.norm.sf(np.log(xbin),loc=np.median(np.log(x[x>0])), scale=par[1]), '-', color=(.7,.7,.7), alpha=1, lw=5)
-	print par,frac0
+	loc=np.median(np.log(x[x>0]))
+	mumax=min(loc+2*par[1],0)
+	df=st.norm(loc=loc, scale=par[1])
+	plt.plot(xbin, frac0*df.sf(np.log(xbin)), '-', color=(.7,.7,.7), alpha=1, lw=5)
+	df=st.norm(loc=loc+0., scale=1.1)
+	plt.plot(xbin, frac0*(df.sf(np.log(xbin))-df.sf(mumax))/df.cdf(mumax), '-', color=(.8,0,0), alpha=.3, lw=7)
+	print par,frac0,mumax
 plt.semilogx()
 plt.ylim([0,1])
 #plt.xlim([4e-3,1])
@@ -77,8 +82,8 @@ p,xmid=cross_section(x[y>0],y[y>0],xbin,[(100-68.3)/2,50,(100+68.3)/2])
 plt.plot(xmid, p[1], 'r-', lw=2, label='Resolved')
 plt.plot(xmid, p[[0,2]].T, 'r--',lw=2)
 p,xmid=cross_section(x,y,xbin,100*(1-fs)+fs*np.array([(100-68.3)/2,50,(100+68.3)/2]))
-plt.plot(xmid, p[1], 'k-', lw=2, label='Disruption-corrected')
-plt.plot(xmid, p[[0,2]].T, 'k--', lw=2)
+#plt.plot(xmid, p[1], 'k-', lw=2, label='Disruption-corrected')
+#plt.plot(xmid, p[[0,2]].T, 'k--', lw=2)
 plt.yscale('log', nonposy='clip')
 plt.xscale('log')
 f0=(xmid<1.)&(xmid>0.01)&(p[1]>100./nMinInfall)
@@ -103,16 +108,16 @@ mustar=pars[0][2]
 
 yscale=(p[1][f0]/(xmid[f0]/x0)**beta).mean()
 yerr=np.sqrt((denSubErr/denSub)**2+(denHaloErr/denHalo)**2)/alpha*denRat**(1/alpha)*yscale
-plt.errorbar(rSub, denRat**(1/alpha)*yscale, yerr=yerr, fmt='bo',label=r'$(\rho_{\rm Sub}/\rho_{\rm Halo})^{1/\alpha}$')
+#plt.errorbar(rSub, denRat**(1/alpha)*yscale, yerr=yerr, fmt='bo',label=r'$(\rho_{\rm Sub}/\rho_{\rm Halo})^{1/\alpha}$')
 
 ypred=(xmid)**beta*mustar*yscale
 print 'R*:', x0*yscale**(-1./beta), 'beta:', beta, 'mu*:', mustar*yscale
 
 #plt.errorbar(rSub, (denSub/denHalo)**(1/alpha)*yscale, yerr=np.sqrt((denSubErr/denSub)**2+(denHaloErr/denHalo)**2)*denSub/denHalo*yscale, fmt='bo',label=r'$\rho_{\rm Sub}/\rho_{\rm Halo}$') #label=r'$m/M_{200}>10^{%d}$'%(np.log10(Hsub.mP*mMin/Hsub.Mvir)))
 
-plt.plot(xmid, ypred, 'g-', lw=2, label=r'$\beta=%.1f$'%(beta))
-plt.plot(xmid, ypred*np.exp(sigma), 'g--', lw=2)
-plt.plot(xmid, ypred/np.exp(sigma), 'g--', lw=2)
+#plt.plot(xmid, ypred, 'g-', lw=2, label=r'$\beta=%.1f$'%(beta))
+#plt.plot(xmid, ypred*np.exp(sigma), 'g--', lw=2)
+#plt.plot(xmid, ypred/np.exp(sigma), 'g--', lw=2)
 
 #tidal limits
 Host=NFWHalo(183,15)
@@ -132,13 +137,13 @@ plt.xlabel(r'$R/R_{\rm 200}$')
 plt.ylabel(r'$m/m_0$')
 plt.xlim([0.04,3])
 plt.ylim([1e-3,1])
-plt.plot(plt.xlim(), 20./nMinInfall*np.array([1,1]), 'r:')
-plt.plot(plt.xlim(), 100./nMinInfall*np.array([1,1]), 'r:')
-plt.text(plt.xlim()[0]*1.1, 20./nMinInfall, '20', color='r')
-plt.text(plt.xlim()[0]*1.1, 100./nMinInfall, '100', color='r')
+#plt.plot(plt.xlim(), 20./nMinInfall*np.array([1,1]), 'r:')
+#plt.plot(plt.xlim(), 100./nMinInfall*np.array([1,1]), 'r:')
+#plt.text(plt.xlim()[0]*1.1, 20./nMinInfall, '20', color='r')
+#plt.text(plt.xlim()[0]*1.1, 100./nMinInfall, '100', color='r')
 #plt.savefig(outdir+'/StrippingResolved.'+H.name+'.nMin1e4.pdf')
 #plt.savefig(outdir+'/StrippingResolved.'+H.name+'.pdf')
-
+#plt.savefig(outdir+'/StrippingResolved.show.pdf')
 '''
 ## infall mass dependence
 H=A1

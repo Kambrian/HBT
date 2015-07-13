@@ -1,10 +1,12 @@
 import numpy as np
 from scipy.optimize import fsolve
+from scipy.special import lambertw
+from scipy.interpolate import interp1d
 
-OmegaM=0.3
-OmegaL=0.7
-G=43.0071
-H0=100. #km/s/(Mpc/h)
+OmegaM=0.25
+OmegaL=0.75
+G=43007.1
+H0=0.1 #km/s/(kpc/h)
 RhoCrit=3*H0**2/8/np.pi/G
 #z=0.
 #scaleF=1./(1+z);
@@ -12,6 +14,36 @@ RhoCrit=3*H0**2/8/np.pi/G
 #Hratio=Hz/HUBBLE0
 #OmegaZ=OmegaM/scaleF**3./Hratio**2
 
+#rootdir='/gpfs/data/jvbq85/SubProf/'
+rootdir='/work/Projects/SubProf/'
+datadir=rootdir+'data/'
+LudlowData=np.loadtxt(datadir+'Ludlow/WMAP1_cMz.dat')
+LudlowSpline=interp1d(LudlowData[:,0],LudlowData[:,1], bounds_error=False)
+
+def mean_concentration(m200, model='Ludlow'):
+  ''' average concentration at z=0 
+  m200 in units of 1e10msun/h '''
+  if model=='Prada':
+	'''according to Sanchez-Conde&Prada14, with scatter of 0.14dex.'''
+	x=np.log(m200*1e10)
+	pars=[37.5153, -1.5093, 1.636e-2, 3.66e-4, -2.89237e-5, 5.32e-7][::-1]
+	return np.polyval(pars, x)
+  
+  if model=='Duffy':
+	#return 5.74*(m200/2e2)**-0.097 #Duffy08, C200, at z=0, all
+	return 6.67*(m200/2e2)**-0.092 #relaxed
+	#return 5.71*(m200/2e2)**-0.084/2**0.47 #z=1, all
+	
+  if model=='MaccioW1':
+	#return 7.57*(m200/1e2)**-0.119 #Maccio08 WMAP1, C200, z=0, all; sigma(log10)=0.13
+	return 8.26*(m200/1e2)**-0.104 #Maccio08 WMAP1, C200, z=0, relaxed; sigma(log10)=0.11
+  
+  if model=='Ludlow':
+	return LudlowSpline(np.log10(m200)) #Ludlow14, z=0
+  
+  print "Unknown model!"
+  raise
+	  
 def NFWFunc(x):
   return np.log(1+x)-x/(1+x)
 
@@ -21,9 +53,7 @@ class NFWHalo:
 	'''initialize '''
 	self.M=m
 	if c is None:
-	  self.C=5.74*(self.M/2e2)**-0.097 #Duffy08, C200, at z=0, all
-	  #self.C=6.67*(self.M/2e2)**-0.092 #relaxed
-	  #self.C=5.71*(self.M/2e2)**-0.084/2**0.47 #z=1, all
+	  self.C=mean_concentration(self.M)
 	else:
 	  self.C=c
 	self.Rhos=DeltaC/3.*self.C**3/NFWFunc(self.C)*RhoCrit
@@ -35,10 +65,19 @@ class NFWHalo:
 	  #TODO: complete this
 	self.Ms=4*np.pi*self.Rhos*self.Rs**3
 	self.Pots=4*np.pi*self.Rhos*self.Rs**2
+	self.Ls=4*np.pi/3.*self.Rhos**2*self.Rs**3
 	
+  def radius(self, m):
+	''' inversion of mass(r)'''
+	return (-1./lambertw(-np.exp(-(1.+m/self.Ms)))-1.).real*self.Rs
+  
   def mass(self,r):
 	'''cumulative mass profile'''
 	return self.Ms*NFWFunc(r/self.Rs)
+  
+  def luminosity(self, r):
+	'''luminosity profile'''
+	return (1.-(1.+r/self.Rs)**-3)*self.Ls #this is quite insensitive to truncation outside Rs.
   
   def density(self,r):
 	'''density'''
@@ -62,3 +101,5 @@ class NFWHalo:
 	if np.isscalar(r):
 	  return y[0]
 	return y
+	
+	

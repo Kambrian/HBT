@@ -151,21 +151,25 @@ parsInfall=powerlaw_fit(x[y>0],(y/x)[y>0],)
 #parsInfall[0][0]-=0.002
 plt.figure()
 plotBand(Aq['x'], Aq['yi'], 'Aquarius', 'r', '--', 0.2)
+plt.plot(Aq['x'], 0.089*Aq['x']**(1-0.95), 'k-')
 plotBand(Ph['x'], Ph['yi'], 'Phoenix', 'g', '--', 0.2)
-plt.plot(x, x*(x/(parsInfall[0][0]))**parsInfall[0][1], 'k-',label=r'$\alpha=%.2f$'%(-parsInfall[0][1]))
+plt.plot(Ph['x'], 0.080*Ph['x']**(1-0.95), 'k-')
+plt.plot(x, x*(x/(parsInfall[0][0]))**parsInfall[0][1], 'k:',label=r'$\alpha=%.2f$'%(-parsInfall[0][1]))
 
 y=np.hstack([Aq['y'].mean(0), Ph['y'].mean(0)])
 a=np.nanmean(y/x**(1+parsInfall[0][1]));pars=[[np.nan,parsInfall[0][1],a],];
 pars=powerlaw_fit(x[y>0],(y/x)[y>0])
 plotBand(Aq['x'], Aq['y'], None, 'r', '--', 0.2)
 plotBand(Ph['x'], Ph['y'], None, 'g', '--', 0.2)
-plt.plot(x, x*pars[0][2]*x**pars[0][1], 'k-')#, label=r'$\alpha=%.2f$'%(-pars[0][1]))
+plt.plot(Aq['x'], 0.0077*Aq['x']**(1-0.95), 'k-')
+plt.plot(Ph['x'], 0.0080*Ph['x']**(1-0.95), 'k-')
+plt.plot(x, x*pars[0][2]*x**pars[0][1], 'k:')#, label=r'$\alpha=%.2f$'%(-pars[0][1]))
 plt.yscale('log', nonposy='clip')
 
 plt.legend(loc=3)
 plt.xlabel(r'$m[10^{10}M_{\odot}/h]$')
 plt.ylabel(r'$(m/M_{200})\mathrm{d}N/\mathrm{d}\ln m$')
-#plt.savefig(outdir+'MFabs.All.pdf')
+#plt.savefig(outdir+'MFabs.All2.pdf')
 
 #plt.plot(x, x*AqA['pi'][0][2]*x**AqA['pi'][0][1], 'ko', label=r'$\alpha=%.2f$'%(-AqA['pi'][0][1]))  
 #plt.plot(x, 0.073*x**-0.96*x, 'k:',label=r'$\alpha=%.2f$'%(0.96))

@@ -22,7 +22,7 @@ alpha=0.96
 #alpha=0.99; A=0.056 #weighted fit to MF
 sigma=1.2
 fs=0.56 #this 1.2 fudge factor is not good....
-B=0.65
+B=0.6
 
 Halo=HaloData('AqA1')
 
@@ -41,12 +41,15 @@ for fMin,fmt in [(1e-7,'o'),(1e-6,'d'),(1e-5,'s'),(1e-4,'^')]:
   rho=rho0*(rSub)**(alpha*beta)*mustar**alpha
   plt.plot(rSub, rho,'--', color=l.get_color())
   print A*(mMin**(-alpha)-(0.1*Halo.Mvir)**(-alpha))/alpha
+  x=rSub
+  f=x<1
+  print 'Mint/M200=', np.sum((denHalo*denHaloRef*Halo.Rvir**3*x**3)[f])*4*np.pi*np.log(x[1]/x[0])/Halo.Mvir
 plt.ylim([1,1e6])  
 #plt.plot(rHalo, denHalo*denSubRef, 'g-', label='Halo')
 plt.legend(loc=3, fontsize=15)
 plt.xlabel(r'$R/R_{200}$')
 plt.ylabel(r'$dN/d(R/R_{200})^3$')
-plt.savefig(outdir+'AqProfPred.eps')
+#plt.savefig(outdir+'AqProfPred.eps')
 #nbin=30
 #nMinInfall=2000
 #H=A1

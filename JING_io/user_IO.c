@@ -369,6 +369,8 @@ void load_particle_data(HBTInt Nsnap,char *SnapPath)
 			Pdat.Pos[i][j]*=BOXSIZE;				//comoving coordinate in units of kpc/h
 			Pdat.Vel[i][j]*=header.vunit;			//physical peculiar velocity in units of km/s
 		}
+	
+	Pdat.Nsnap=Nsnap;
 }
 
 void free_particle_data()

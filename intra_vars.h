@@ -140,7 +140,7 @@ struct GroupData
 typedef HBTReal * AccessPosFunc(HBTInt pid,void *PosData);
 typedef struct 
 {
-	HBTInt ndiv;
+	HBTInt ndiv,ndivsquare;
 	HBTInt np;
 	HBTInt UseFullBox; //whether to use a local enclosing-box or full simulation box (latter for periodic boudary)
 	HBTInt *hoc;

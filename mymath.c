@@ -453,12 +453,12 @@ HBTInt linklist_fix_gridid(HBTInt i, LINKLIST *ll)
 }
 HBTInt linklist_get_hoc(LINKLIST *ll, HBTInt i,HBTInt j,HBTInt k)
 {
-	return ll->hoc[i+j*ll->ndiv+k*ll->ndiv*ll->ndiv];
+	return ll->hoc[i+j*ll->ndiv+k*ll->ndivsquare];
 }
 HBTInt linklist_get_hoc_safe(LINKLIST *ll, HBTInt i,HBTInt j,HBTInt k)
 {//force fixing of gridids
 	#define FIXGRID(i) linklist_fix_gridid(i,ll)
-	return ll->hoc[FIXGRID(i)+FIXGRID(j)*ll->ndiv+FIXGRID(k)*ll->ndiv*ll->ndiv];
+	return ll->hoc[FIXGRID(i)+FIXGRID(j)*ll->ndiv+FIXGRID(k)*ll->ndivsquare];
 }
 typedef struct 
 {
@@ -476,7 +476,6 @@ void init_chaintable(ChainTable *table, HBTInt ncells)
 	table->toc[i]=-1;
   }
 }
-//TODO:discard the fortran-style ll; use struct or indexed table to parallelize the linklist!
 void make_linklist(LINKLIST *ll, HBTInt np,HBTInt ndiv, void *PosData, 
 								AccessPosFunc *GetPos, HBTInt UseFullBox)
 {
@@ -489,9 +488,10 @@ void make_linklist(LINKLIST *ll, HBTInt np,HBTInt ndiv, void *PosData,
 	ndiv2=ndiv*ndiv;
 	ndiv3=ndiv2*ndiv;
 	ll->ndiv=ndiv;
+	ll->ndivsquare=ndiv2;
 	ll->np=np;
 	ll->UseFullBox=UseFullBox;
-	ll->hoc=mymalloc(sizeof(HBTInt)*ndiv*ndiv*ndiv);
+	ll->hoc=mymalloc(sizeof(HBTInt)*ndiv3);
 	ll->list=mymalloc(sizeof(HBTInt)*np);
 	ll->PosData=PosData;
 	ll->GetPos=GetPos;
@@ -524,29 +524,36 @@ void make_linklist(LINKLIST *ll, HBTInt np,HBTInt ndiv, void *PosData,
 			ll->step[j]=(ll->range[j][1]-ll->range[j][0])/ll->ndiv;
 	}
 	/*initialize hoc*/
-	#ifdef _OPEN_MP
-	int nthreads=omp_get_num_threads();
-	ChainTable * chains=mymalloc(sizeof(ChainTable)*nthreads);
-	#else
-	ChainTable chain;
-	#endif
+	int FlagParallel=0;
+	int nthreads=1;
+	ChainTable *chains, chain;
+#ifdef _OPEN_MP
+	FlagParallel=1;
+	if(omp_in_parallel()) FlagParallel=0; //already in a parallel region, swith off to avoid nested parallelization
+	nthreads=omp_get_num_threads(); 
+	if(1==nthreads) FlagParallel=0; //single thread, swith off parallelization
+#endif
+
+	if(FlagParallel) chains=mymalloc(sizeof(ChainTable)*nthreads);
 	#pragma omp parallel
 	{
-	#ifdef _OPEN_MP
-	  int thread_id=omp_get_thread_num();
-	  init_chaintable(chains[thread_id]);
-	#else
-	  init_chaintable(&chain);
-	#endif
+	 int thread_id;
+	 if(FlagParallel) 
+	 {
+	   thread_id=omp_get_thread_num();
+	   init_chaintable(chains+thread_id, ndiv3);
+	 }
+	 else
+	  init_chaintable(&chain, ndiv3);
 	#pragma omp for	//build chain in each thread
 	for(i=0;i<np;i++)
 	{
-	  HBTInt *hoc, *toc, *pchain;
-	  #ifdef _OPEN_MP
+	  HBTInt *hoc, *toc;
+	  ChainTable *pchain;
+	  if(FlagParallel)
 			pchain=chains+thread_id;
-	  #else
+	  else
 			pchain=&chain;
-	  #endif
 	  hoc=pchain->hoc;
 	  toc=pchain->toc;
 	  for(j=0;j<3;j++)
@@ -560,8 +567,9 @@ void make_linklist(LINKLIST *ll, HBTInt np,HBTInt ndiv, void *PosData,
 		hoc[ind]=i;/*use hoc[ind] as swap varible to temporarily 
 			      	store last ll index, and finally the head*/
 	}
-	//merge chains......
-  #ifdef _OPEN_MP
+	//merge chains
+  if(FlagParallel)
+  {
 	#pragma omp single
 	ll->hoc=mymalloc(sizeof(HBTInt)*ndiv3);
 	#pragma omp for
@@ -577,12 +585,14 @@ void make_linklist(LINKLIST *ll, HBTInt np,HBTInt ndiv, void *PosData,
 		myfree(chains[i].hoc);
 		myfree(chains[i].toc);
 	  }
-  #else
+  }
+  else
+  {
 	ll->hoc=chain.hoc;
 	myfree(chain.toc);
-  #endif
-	//FIXME..verify this code......................
-	}
+  }
+  //FIXME..verify this code......................further beautify/unify paral/serial modes.....
+  }
 }
 
 void free_linklist(LINKLIST *ll)

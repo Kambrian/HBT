@@ -19,6 +19,7 @@ int main(int argc,char **argv)
 	HBTInt *pro2dest, Npro,NsubLast;
 	HBTInt Nsnap,SnapRange[2];
 	
+	logfile=stdout;
 	parse_snap_args(SnapRange, argc, argv);	
 	Nsnap=SnapRange[0]-1;
 	load_cross_section(Nsnap, &Sec);//load previous cross-section
@@ -31,7 +32,7 @@ int main(int argc,char **argv)
 	  free_sub_table(&SubCat);
 	}
 	
-	for(Nsnap=SnapRange[0];Nsnap<SnapRange[1];Nsnap++)
+	for(Nsnap=SnapRange[0];Nsnap<=SnapRange[1];Nsnap++)
 	{
 	  load_sub_catalogue(Nsnap, &SubCat, SUBCAT_DIR);
 	  load_group_catalogue(Nsnap, &Cat, GRPCAT_DIR);
@@ -49,24 +50,43 @@ int main(int argc,char **argv)
 	  #pragma omp parallel for
 	  for(NodeID=0;NodeID<Sec.NumNode;NodeID++)
 		node_update(Sec.Node+NodeID, pro2dest, &SubCat, &Cat);
-	  NodeID=Sec.NumNode-1;//last node
-	  #pragma omp parallel
-	  #pragma omp single
+	  NodeID=Sec.NumNode;//last node
 	  for(SubID=0;SubID<SubCat.Nsubs;SubID++)
 	  {
-		if(SubCat.HaloChains[SubID].ProSubID<0||SubCat.HaloChains[SubID].ProSubID>=NsubLast) /*no progenitor or splitter;
-																							*TODO: consider treating splitters differently */
+		if(SubCat.HaloChains[SubID].ProSubID<0||SubCat.HaloChains[SubID].ProSubID>=NsubLast) //no progenitor or splitter;
+																							//TODO consider treating splitters differently
 		{
+		  section_create_node(&Sec, NodeID, SubID);
 		  NodeID++;
-		  if(NodeID==Sec.NumNodeAlloc)
-		  {
-			Sec.NumNodeAlloc*=2;
-			Sec.Node=realloc(Sec.Node, sizeof(BranchNode)*Sec.NumNodeAlloc);
-		  }//this is finished before any of the tasks below is executed, so they all see the updated Sec.
-		  #pragma omp task firstprivate(NodeID,SubID)//each task will have its own NodeID and SubID at the time of creation
-		  section_fill_new_node(&Sec, NodeID, SubID, &SubCat);
 		}
 	  }
+	  HBTInt NumNodeNew=NodeID;
+	  printf("NewNodes=%d, NewSub=%d\n", (int)(NumNodeNew-Sec.NumNode), (int)(SubCat.Nbirth+SubCat.Nsplitter));
+	  #pragma omp parallel for
+	  for(NodeID=Sec.NumNode;NodeID<NumNodeNew;NodeID++)
+		node_fill(Sec.Node+NodeID, &SubCat);
+	  Sec.NumNode=NumNodeNew;
+	  //==========why the following does not work?? segfault at some stage, but does produce correct result before segfault.====
+	 /* #pragma omp parallel
+	  #pragma omp single
+	   {
+		  for(SubID=0;SubID<SubCat.Nsubs;SubID++)
+		  {
+			if(SubCat.HaloChains[SubID].ProSubID<0||SubCat.HaloChains[SubID].ProSubID>=NsubLast) //no progenitor or splitter;
+																								//TODO: consider treating splitters differently
+			{
+			  if(NodeID==Sec.NumNodeAlloc)
+			  {
+				Sec.NumNodeAlloc*=2;
+				Sec.Node=realloc(Sec.Node, sizeof(BranchNode)*Sec.NumNodeAlloc);
+			  }//this is finished before any of the tasks below is executed, so they all see the updated Sec.
+			  #pragma omp task firstprivate(NodeID,SubID)//each task will have its own NodeID and SubID at the time of creation
+			  section_fill_new_node(&Sec, NodeID, SubID, &SubCat);
+			  NodeID++;
+			}
+		  }
+		  Sec.NumNode=NodeID;
+	   }*/
 	  NsubLast=SubCat.Nsubs;
 	  section_Ind2ID(&Sec);
 	  save_cross_section(Nsnap, &Sec);

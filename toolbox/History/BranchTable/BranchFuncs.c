@@ -52,7 +52,7 @@ void save_cross_section(HBTInt Nsnap, CrossSection *sec)
   sprintf(buf, "%s/CrossSection_%03d", outdir, (int)Nsnap);
   myfopen(fp,buf,"w");
   fwrite(&sec->NumNode, sizeof(HBTInt), 1, fp);
-  fwrite(&sec->Node, sizeof(BranchNode), sec->NumNode, fp);
+  fwrite(sec->Node, sizeof(BranchNode), sec->NumNode, fp);
   fwrite(&sec->NumNode, sizeof(HBTInt), 1, fp);
   fclose(fp);
 }
@@ -72,7 +72,7 @@ void load_cross_section(HBTInt Nsnap, CrossSection * sec)
   fread(&sec->NumNode, sizeof(HBTInt), 1, fp);
   sec->NumNodeAlloc=(sec->NumNode<NumNodeAllocMin?NumNodeAllocMin:sec->NumNode);
   sec->Node=mymalloc(sizeof(BranchNode)*sec->NumNodeAlloc);
-  fread(&sec->Node, sizeof(BranchNode), sec->NumNode, fp);
+  fread(sec->Node, sizeof(BranchNode), sec->NumNode, fp);
   HBTInt n;
   fread(&n, sizeof(HBTInt), 1, fp);
   fclose(fp);
@@ -81,6 +81,16 @@ void load_cross_section(HBTInt Nsnap, CrossSection * sec)
 	fprintf(logfile, "Error: numbers of nodes do not match in %s\n"HBTIFMT","HBTIFMT"\nFile corruption?\n", buf, sec->NumNode, n);
 	exit(1);
   }
+}
+void get_phys_vel(HBTxyz vel, HBTInt PID)
+{
+  #ifdef VEL_INPUT_PHYSICAL
+  memcpy(vel, Pdat.Vel+PID, sizeof(HBTxyz));
+  #else
+  int i;
+  for(i=0;i<3;i++)
+	vel[i]=Pdat.Vel[PID][i]*sqrt(header.time);
+  #endif
 }
 void section_fill_new_node(CrossSection *sec, HBTInt NodeID, HBTInt SubID, SUBCATALOGUE *SubCat)
 {
@@ -98,7 +108,42 @@ void section_fill_new_node(CrossSection *sec, HBTInt NodeID, HBTInt SubID, SUBCA
   {
 	node->MstBndID=SubCat->PSubArr[SubID][0];
 	memcpy(node->MstBndPos, Pdat.Pos+node->MstBndID, sizeof(HBTxyz));
-	memcpy(node->MstBndVel, Pdat.Vel+node->MstBndID, sizeof(HBTxyz));
+	get_phys_vel(node->MstBndVel, node->MstBndID);
+  }
+  else
+  {
+	node->MstBndID=-1;
+	int i;
+	for(i=0;i<3;i++)
+	{
+	  node->MstBndPos[i]=0.;
+	  node->MstBndVel[i]=0.;
+	}
+  }
+  node->NpBnd=SubCat->SubLen[SubID];
+  node->NpBndPeak=node->NpBnd;
+  node->SnapNumPeak=Pdat.Nsnap;
+}
+void section_create_node(CrossSection * sec, HBTInt NodeID, HBTInt SubID)
+{
+  if(NodeID==sec->NumNodeAlloc)
+  {
+	sec->NumNodeAlloc*=2;
+	sec->Node=realloc(sec->Node, sizeof(BranchNode)*sec->NumNodeAlloc);
+  }
+  sec->Node[NodeID].BranchID=NodeID;
+  sec->Node[NodeID].SubID=SubID;
+}
+void node_fill(BranchNode *node, SUBCATALOGUE *SubCat)
+{
+  HBTInt SubID=node->SubID;
+  node->HostID=SubCat->HaloChains[SubID].HostID;
+  node->SubRank=SubCat->SubRank[SubID];
+  if(SubCat->SubLen[SubID])
+  {
+	node->MstBndID=SubCat->PSubArr[SubID][0];
+	memcpy(node->MstBndPos, Pdat.Pos+node->MstBndID, sizeof(HBTxyz));
+	get_phys_vel(node->MstBndVel, node->MstBndID);
   }
   else
   {
@@ -123,9 +168,14 @@ void node_update(BranchNode *node, HBTInt *pro2dest, SUBCATALOGUE *SubCat, CATAL
 	//BranchID,MstBndID,NpBndPeak,SnapBndPeak does not change.
 	node->SubID=-1;
 	node->SubRank=-1; //disrupted subhalo
-	node->HostID=Cat->ID2Halo[node->MstBndID];
-	memcpy(node->MstBndPos, Pdat.Pos+node->MstBndID, sizeof(HBTxyz));
-	memcpy(node->MstBndVel, Pdat.Vel+node->MstBndID, sizeof(HBTxyz));
+	if(node->MstBndID<0) //no bound particle
+	  node->HostID=-1;
+	else
+	{
+	  node->HostID=Cat->ID2Halo[node->MstBndID];
+	  memcpy(node->MstBndPos, Pdat.Pos+node->MstBndID, sizeof(HBTxyz));
+	  get_phys_vel(node->MstBndVel, node->MstBndID);
+	}
 	node->NpBnd=0;
   }
   else
@@ -137,7 +187,7 @@ void node_update(BranchNode *node, HBTInt *pro2dest, SUBCATALOGUE *SubCat, CATAL
 	if(SubCat->SubLen[DestID])//only update mstbndID if the dest has non-zero bound mass
 	  node->MstBndID=SubCat->PSubArr[DestID][0];//PSubArr already converted to index
 	memcpy(node->MstBndPos, Pdat.Pos+node->MstBndID, sizeof(HBTxyz));
-	memcpy(node->MstBndVel, Pdat.Vel+node->MstBndID, sizeof(HBTxyz));
+	get_phys_vel(node->MstBndVel, node->MstBndID);
 	node->NpBnd=SubCat->SubLen[DestID];
 	if(node->NpBndPeak<node->NpBnd)
 	{

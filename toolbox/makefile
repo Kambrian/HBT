@@ -28,7 +28,7 @@ SOURCES = $(wildcard *.c) $(wildcard **/*.c) $(wildcard **/*/*.c)
 EXEC =$(basename $(notdir $(SOURCES)))
 
 echo:
-	#$(EXEC)
+	@echo $(EXEC)
 	
 #this rule automatically adds any additional dependences which are specified later to the recipe.
 #so do not need to specify $(LDFLAGS) anymore
@@ -144,7 +144,7 @@ collect_mostbounds_virial: LDFLAGS+=-lhdf5_hl -lhdf5
 collect_mostbounds_DTrees: hdf_util.o history_io.o
 collect_mostbounds_DTrees: LDFLAGS+=-lhdf5_hl -lhdf5 
 
-BranchTable: BranchFuncs.o
+BranchTable BranchView: BranchFuncs.o
 
 clean:
 	rm -f *.o $(EXEC)

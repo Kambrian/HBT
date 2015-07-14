@@ -29,5 +29,7 @@ extern void section_free(CrossSection * sec);
 extern void save_cross_section(HBTInt Nsnap, CrossSection *sec);
 extern void load_cross_section(HBTInt Nsnap, CrossSection * sec);
 extern void section_fill_new_node(CrossSection *sec, HBTInt NodeID, HBTInt SubID, SUBCATALOGUE *SubCat);
+extern void section_create_node(CrossSection * sec, HBTInt NodeID, HBTInt SubID);
+extern void node_fill(BranchNode *node, SUBCATALOGUE *SubCat);
 extern void node_update(BranchNode *node, HBTInt *pro2dest, SUBCATALOGUE *SubCat, CATALOGUE *Cat);
 extern void parse_snap_args(HBTInt SnapRange[2], int argc, char **argv);

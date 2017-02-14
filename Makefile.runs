@@ -7,6 +7,11 @@ IODIR=JING_io#uncomment this for JING's data
 
 PARAM =param/param$(RUN_NUM).h
 
+CC		=icc
+FC		=ifort
+# CC		=gcc
+# FC		=gfortran
+
 NEED_FORTRAN=no
 ifeq ($(IODIR),JING_io)
 NEED_FORTRAN=yes
@@ -18,16 +23,12 @@ ifeq ($(FC), ifort)
 #IFORTLIB=/home/kambrain/intel/Compiler/11.1/059/lib/ia64  #altix
 FTNLIB=-L$(IFORTLIB) -lifport -lifcore
 endif
-ifeq ($(FC), gfortran)
+ifeq "$(FC)" "gfortran"
 FTNLIB=-lgfortran
 endif
 OBJS_FTN= $(IODIR)/fortread.o
 endif
 
-# CC		=   icc
-# FC		=   ifort 
-CC		=   gcc
-FC		=   gfortran 
 
 # GSLINC=-I/home/qypeng/bin/gsl-1.15/include
 # GSLLIB=-L/home/qypeng/bin/gsl-1.15/lib -lgsl -lgslcblas
@@ -36,3 +37,5 @@ FC		=   gfortran
 GSLINC=-I/gpfs/COSMA/gsl/intel_11.1/1.14/include
 GSLLIB=-L/gpfs/COSMA/gsl/intel_11.1/1.14/lib -lgsl -lgslcblas
 
+show: 
+	@echo $(NEED_FORTRAN) $(FTNLIB) $(FC) $(OBJS_FTN)

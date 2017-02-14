@@ -17,9 +17,11 @@ VPATH=toolbox/Image toolbox/MassFunction toolbox/Profile \
 ifeq ($(CC), icc)
 CFLAGS=  -openmp -include $(PARAM) -I. -I $(IODIR) -g  
 LDFLAGS= -openmp  $(FTNLIB) -limf
+FFLAGS= -openmp
 else 												#using gcc
 CFLAGS =-fopenmp -include $(PARAM) -I. -I $(IODIR) -g
 LDFLAGS=-lm -lgfortran -fopenmp 
+FFLAGS= -fopenmp
 endif
 
 #this is used only when code+data size >2GB
@@ -44,7 +46,7 @@ FoF_mpi.$(RUN_NUM): CC=mpicc
 $(OBJS_MAIN) $(OBJS_COMM): $(INCL) Makefile
 
 $(OBJS_FTN): $(IODIR)/fortread.f90
-		$(FC) -c $(IODIR)/fortread.f90 -o $(IODIR)/fortread.o -openmp
+		$(FC) -c $(IODIR)/fortread.f90 -o $(IODIR)/fortread.o $FFLAGS
 
 iolib:$(IODIR)/lib$(RUN_NUM)io.a ;
 $(IODIR)/lib$(RUN_NUM)io.a: sub_IO.o $(IODIR)/user_IO.o mymath.o intra_vars.o $(IODIR)/iovars.o $(OBJS_FTN)

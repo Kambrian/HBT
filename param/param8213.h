@@ -5,7 +5,7 @@
 	#define HALO_PARA
 #endif
 	/*=========program IO params==========*/
-	#define SUBCAT_DIR  "/home/kambrain/data/8213/subcat"			//the output directory for subcatalogues and srccatalogues, this must be an existing directory
+	#define SUBCAT_DIR  "/home/kambrain/data/8213/subcat_timing"			//the output directory for subcatalogues and srccatalogues, this must be an existing directory
 	#define GRPCAT_DIR  "/home/kambrain/data/8213/fof"				     //the input directory for GrpCatalogues
 	#define SNAPSHOT_DIR  "/home/kambrain/data/8213/simu"				//the input directory for simulation snapshots
 	//~ #define SUBCAT_DIR  "/home/kambrain/sd8/8213/subcat"			//the output directory for subcatalogues and srccatalogues, this must be an existing directory

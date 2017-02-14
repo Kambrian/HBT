@@ -6,7 +6,7 @@
 #endif
 	/*=========program IO params==========*/
 	#define GASCAT_DIR  "/gpfs/data/jvbq85/HBT/data/MilliMill/gascat"			//the output directory for gashalocat,gassubcat and gassrccat, this must be an existing directory
-	#define SUBCAT_DIR  "/gpfs/data/jvbq85/HBT/data/MilliMill/subcatnew"			//the output directory for subcatalogues and srccatalogues, this must be an existing directory
+	#define SUBCAT_DIR  "/gpfs/data/jvbq85/HBT/data/MilliMill/subcat"			//the output directory for subcatalogues and srccatalogues, this must be an existing directory
 	//necessary sub-dirs: splitters,pro2dest,history
 	#define GRPCAT_DIR  "/gpfs/data/jch/MilliMillennium/Snapshots"				//the input directory for GrpCatalogues
 	#define  SNAPSHOT_DIR  "/gpfs/data/jch/MilliMillennium/Snapshots"					//the input directory for simulation snapshots

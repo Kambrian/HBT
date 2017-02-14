@@ -39,7 +39,7 @@ ReBuild:
 #the implicit rule search is too picky; let's define it static.
 $(targets):% : %.$(RUN_NUM) ;
 %.$(RUN_NUM): %.o $(OBJS_COMM)
-	$(CC) $(LDFLAGS) $^ -o $@
+	$(CC) $^ $(LDFLAGS) -o $@
 	
 #FoF_mpi.$(RUN_NUM): LDFLAGS+=-lmpi
 FoF_mpi.$(RUN_NUM): CC=mpicc

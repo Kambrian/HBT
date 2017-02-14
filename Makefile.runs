@@ -1,7 +1,7 @@
 #~~~~~~~~ modify this to be the simulation name   ~~~~~~~#
-RUN_NUM=MillenniumII#this is simulation name corresponding to some parameter file, see below
-# IODIR=JING_io#uncomment this for JING's data
-IODIR=gadget_io#uncomment this for gadget data
+RUN_NUM=8213#this is simulation name corresponding to some parameter file, see below
+IODIR=JING_io#uncomment this for JING's data
+#IODIR=gadget_io#uncomment this for gadget data
 #IODIR=merger_io
 #IODIR=star_io
 
@@ -13,9 +13,14 @@ NEED_FORTRAN=yes
 endif
 
 ifeq ($(NEED_FORTRAN),yes)
+ifeq ($(FC), ifort)
 #IFORTLIB=/home/kambrain/opt/intel/Compiler/11.1/059/lib/ia64 #a4700
 #IFORTLIB=/home/kambrain/intel/Compiler/11.1/059/lib/ia64  #altix
 FTNLIB=-L$(IFORTLIB) -lifport -lifcore
+endif
+ifeq ($(FC), gfortran)
+FTNLIB=-lgfortran
+endif
 OBJS_FTN= $(IODIR)/fortread.o
 endif
 

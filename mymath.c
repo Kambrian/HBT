@@ -3,6 +3,7 @@
 #include <math.h>
 #include <string.h>
 #include <unistd.h>
+#include <omp.h>
 
 #include "datatypes.h"
 #include "intra_vars.h"
@@ -164,6 +165,15 @@ HBTReal distance(HBTReal x[3],HBTReal y[3])
 	dx[1]=NEAREST(dx[1]);
 	dx[2]=NEAREST(dx[2]);
 	#endif
+	return sqrt(dx[0]*dx[0]+dx[1]*dx[1]+dx[2]*dx[2]);
+}
+
+HBTReal raw_distance(HBTReal x[3],HBTReal y[3])
+{
+	HBTReal dx[3];
+	dx[0]=x[0]-y[0];
+	dx[1]=x[1]-y[1];
+	dx[2]=x[2]-y[2];
 	return sqrt(dx[0]*dx[0]+dx[1]*dx[1]+dx[2]*dx[2]);
 }
 

@@ -18,6 +18,18 @@
 #define NFUN 5   //bin number for Mhost
 //#define FIX_XBIN  //define this to use preset xmass bin
 
+
+#define SUBFIND_DIR "/home/jvbq85/data/HBT/data/AqE5W/subfind"
+#define OUTDIR "/home/jvbq85/data/HBT/data/AqE5W/subcat/anal/subfind"
+
+#ifdef SUBFIND_DIR
+extern void load_subfind_catalogue(int Nsnap,SUBCATALOGUE *SubCat,char *inputdir);	
+#define load_sub_catalogue load_subfind_catalogue
+#define load_halo_virial_size load_subfind_halo_size
+#undef SUBCAT_DIR
+#define SUBCAT_DIR SUBFIND_DIR
+#endif
+
 struct MassList
 {
 	float *list;
@@ -209,10 +221,9 @@ for(i=NBIN-1;i>=0;i--)
 return;	
 }
 
-xmin=list[Fmin_of_vec(list,len)];
+xmin=NBOUNDMIN*partmass;
 #ifdef NORM
-float xmin_rel=NBOUNDMIN*partmass/mfun->Mbin[0];
-if(xmin<xmin_rel) xmin=xmin_rel;
+xmin/=mfun->Mbin[0];
 #endif
 xmax=list[Fmax_of_vec(list,len)]*1.001;
 

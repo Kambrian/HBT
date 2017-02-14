@@ -19,10 +19,10 @@ FTNLIB=-L$(IFORTLIB) -lifport -lifcore
 OBJS_FTN= $(IODIR)/fortread.o
 endif
 
-CC		=   icc
-FC		=   ifort 
-# CC		=   gcc
-# FC		=   gfortran 
+# CC		=   icc
+# FC		=   ifort 
+CC		=   gcc
+FC		=   gfortran 
 
 # GSLINC=-I/home/qypeng/bin/gsl-1.15/include
 # GSLLIB=-L/home/qypeng/bin/gsl-1.15/lib -lgsl -lgslcblas

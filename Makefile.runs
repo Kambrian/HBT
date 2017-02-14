@@ -13,9 +13,14 @@ NEED_FORTRAN=yes
 endif
 
 ifeq ($(NEED_FORTRAN),yes)
+ifeq ($(FC), ifort)
 #IFORTLIB=/home/kambrain/opt/intel/Compiler/11.1/059/lib/ia64 #a4700
 #IFORTLIB=/home/kambrain/intel/Compiler/11.1/059/lib/ia64  #altix
 FTNLIB=-L$(IFORTLIB) -lifport -lifcore
+endif
+ifeq ($(FC), gfortran)
+FTNLIB=-lgfortran
+endif
 OBJS_FTN= $(IODIR)/fortread.o
 endif
 

@@ -20,7 +20,7 @@ LDFLAGS= -openmp  $(FTNLIB) -limf
 FFLAGS= -openmp
 else 												#using gcc
 CFLAGS =-fopenmp -include $(PARAM) -I. -I $(IODIR) -g
-LDFLAGS=-lm -lgfortran -fopenmp 
+LDFLAGS=-lm $(FTNLIB) -fopenmp 
 FFLAGS= -fopenmp
 endif
 

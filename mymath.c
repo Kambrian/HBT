@@ -463,76 +463,163 @@ HBTInt linklist_fix_gridid(HBTInt i, LINKLIST *ll)
 }
 HBTInt linklist_get_hoc(LINKLIST *ll, HBTInt i,HBTInt j,HBTInt k)
 {
-	return ll->hoc[i+j*ll->ndiv+k*ll->ndiv*ll->ndiv];
+	return ll->hoc[i+j*ll->ndiv+k*ll->ndivsquare];
 }
 HBTInt linklist_get_hoc_safe(LINKLIST *ll, HBTInt i,HBTInt j,HBTInt k)
 {//force fixing of gridids
 	#define FIXGRID(i) linklist_fix_gridid(i,ll)
-	return ll->hoc[FIXGRID(i)+FIXGRID(j)*ll->ndiv+FIXGRID(k)*ll->ndiv*ll->ndiv];
+	return ll->hoc[FIXGRID(i)+FIXGRID(j)*ll->ndiv+FIXGRID(k)*ll->ndivsquare];
 }
-//TODO:discard the fortran-style ll; use struct or indexed table to parallelize the linklist!
-void make_linklist(LINKLIST *ll, HBTInt np,HBTInt ndiv, void *PosData, 
-								AccessPosFunc *GetPos, HBTInt UseFullBox)
+typedef struct 
 {
-	HBTInt i,j,grid[3];
-	HBTInt ind,ndiv2;
-	HBTReal x;
-	//~ float range[3][2],step[3];
-	printf("creating linked list..\n");
-	
-	ndiv2=ndiv*ndiv;
-	ll->ndiv=ndiv;
-	ll->np=np;
-	ll->UseFullBox=UseFullBox;
-	ll->hoc=mymalloc(sizeof(HBTInt)*ndiv*ndiv*ndiv);
-	ll->list=mymalloc(sizeof(HBTInt)*np);
-	ll->PosData=PosData;
-	ll->GetPos=GetPos;
-	/*determining enclosing cube*/
-	if(UseFullBox)
+  HBTInt *hoc;
+} ChainTable;
+void init_chaintable(ChainTable *table, HBTInt ncells)
+{
+  table->hoc=mymalloc(sizeof(HBTInt)*ncells);
+  HBTInt i;
+  for(i=0;i<ncells;i++)
+  {
+	table->hoc[i]=-1;
+  }
+}
+void free_chaintable(ChainTable *table)
+{
+  myfree(table->hoc);
+}
+HBTInt get_tail_of_chain(HBTInt p, HBTInt *list)
+{
+  if(p<0) //invalid particle
+    return p;
+  
+  while(list[p]>=0)
+    p=list[p];
+
+  return p;
+}
+void make_linklist(LINKLIST *ll, HBTInt np,HBTInt ndiv, void *PosData, 
+		   AccessPosFunc *GetPos, HBTInt UseFullBox)
+{
+  HBTInt i,j;
+  HBTInt ndiv2,ndiv3;
+  HBTReal x;
+  //~ float range[3][2],step[3];
+  printf("creating linked list..\n");
+  
+  ndiv2=ndiv*ndiv;
+  ndiv3=ndiv2*ndiv;
+  ll->ndiv=ndiv;
+  ll->ndivsquare=ndiv2;
+  ll->np=np;
+  ll->UseFullBox=UseFullBox;
+  ll->hoc=mymalloc(sizeof(HBTInt)*ndiv3);
+  ll->list=mymalloc(sizeof(HBTInt)*np);
+  ll->PosData=PosData;
+  ll->GetPos=GetPos;
+  /*determining enclosing cube*/
+  if(UseFullBox)
+  {
+    for(i=0;i<3;i++)
+    {
+      ll->range[i][0]=0.;
+      ll->range[i][1]=BOXSIZE;
+    }
+    for(j=0;j<3;j++)
+      ll->step[j]=BOXSIZE/ndiv;	
+  }
+  else
+  {
+    for(i=0;i<3;i++)
+      for(j=0;j<2;j++)
+	ll->range[i][j]=GetPos(0,PosData)[i];
+      for(i=1;i<np;i++)
+	for(j=0;j<3;j++)
 	{
-		for(i=0;i<3;i++)
-		{
-			ll->range[i][0]=0.;
-			ll->range[i][1]=BOXSIZE;
-		}
-		for(j=0;j<3;j++)
-			ll->step[j]=BOXSIZE/ndiv;	
+	  x=GetPos(i,PosData)[j];
+	  if(x<ll->range[j][0])
+	    ll->range[j][0]=x;
+	  else if(x>ll->range[j][1])
+	    ll->range[j][1]=x;
 	}
-	else
+	for(j=0;j<3;j++)
+	  ll->step[j]=(ll->range[j][1]-ll->range[j][0])/ll->ndiv;
+  }
+  /*initialize hoc*/
+  int FlagParallel=0;
+  int nthreads=1;
+  ChainTable *chains, chain;
+  #ifdef _OPENMP
+  FlagParallel=1;
+  if(omp_in_parallel()) FlagParallel=0; //already in a parallel region, swith off to avoid nested parallelization
+  #pragma omp parallel
+  #pragma omp single
+  {
+    nthreads=omp_get_num_threads(); 
+    if(1==nthreads) FlagParallel=0; //single thread, swith off parallelization
+    printf("building linkedlist with %d threads...\n", nthreads);
+    fflush(stdout);
+  }
+  #else
+  printf("building linkedlist...\n");fflush(stdout);
+  #endif
+  
+  if(FlagParallel) chains=mymalloc(sizeof(ChainTable)*nthreads);
+  #pragma omp parallel
+  {
+    int thread_id=0;
+    if(FlagParallel) 
+    {
+      #ifdef _OPENMP
+      thread_id=omp_get_thread_num();
+      #endif
+      init_chaintable(chains+thread_id, ndiv3);
+    }
+    else
+      init_chaintable(&chain, ndiv3);
+    #pragma omp for	//build chain in each thread
+    for(i=0;i<np;i++)
+    {
+      HBTInt *hoc;
+      if(FlagParallel)
+	hoc=chains[thread_id].hoc;
+      else
+	hoc=chain.hoc;
+      int j; HBTInt grid[3], ind;
+      for(j=0;j<3;j++)
+      {
+	grid[j]=floor((GetPos(i,PosData)[j]-ll->range[j][0])/ll->step[j]);
+	grid[j]=linklist_fix_gridid(grid[j],ll);
+      }
+      ind=grid[0]+grid[1]*ndiv+grid[2]*ndiv2;
+      ll->list[i]=hoc[ind];
+      hoc[ind]=i;/*use hoc[ind] as swap varible to temporarily 
+      store last ll index, and finally the head*/
+    }
+    //merge chains
+    if(FlagParallel)
+    {
+      #pragma omp single
+	ll->hoc=mymalloc(sizeof(HBTInt)*ndiv3);
+      #pragma omp for private(i,j)
+      for(i=0;i<ndiv3;i++)
+      {
+	for(j=0;j<nthreads-1;j++)
+	  if(chains[j].hoc[i]>=0) break;//skip empty chains until the last one
+	ll->hoc[i]=chains[j].hoc[i];
+	int chaintail=get_tail_of_chain(chains[j].hoc[i], ll->list);
+	for(j++;j<nthreads;j++)
 	{
-		for(i=0;i<3;i++)
-			for(j=0;j<2;j++)
-				ll->range[i][j]=GetPos(0,PosData)[i];
-		for(i=1;i<np;i++)
-			for(j=0;j<3;j++)
-			{
-				x=GetPos(i,PosData)[j];
-				if(x<ll->range[j][0])
-					ll->range[j][0]=x;
-				else if(x>ll->range[j][1])
-					ll->range[j][1]=x;
-			}
-		for(j=0;j<3;j++)
-			ll->step[j]=(ll->range[j][1]-ll->range[j][0])/ll->ndiv;
+	  if(chains[j].hoc[i]<0) continue; //skip empty chains
+	  ll->list[chaintail]=chains[j].hoc[i];
+	  chaintail=get_tail_of_chain(chains[j].hoc[i], ll->list);
 	}
-	/*initialize hoc*/
-	HBTInt *phoc=ll->hoc;
-	for(i=0;i<ndiv*ndiv*ndiv;i++,phoc++)
-		*phoc=-1;
-		
-	for(i=0;i<np;i++)
-	{
-		for(j=0;j<3;j++)
-		{
-			grid[j]=floor((GetPos(i,PosData)[j]-ll->range[j][0])/ll->step[j]);
-			grid[j]=linklist_fix_gridid(grid[j],ll);
-		}
-		ind=grid[0]+grid[1]*ndiv+grid[2]*ndiv2;
-		ll->list[i]=ll->hoc[ind];
-		ll->hoc[ind]=i; /*use hoc[ind] as swap varible to temporarily 
-			      						store last ll index, and finally the head*/
-	}
+      }
+      free_chaintable(chains+thread_id);
+    }
+    else
+      ll->hoc=chain.hoc;
+  }
+  if(FlagParallel)   myfree(chains);
 }
 
 void free_linklist(LINKLIST *ll)

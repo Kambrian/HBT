@@ -20,6 +20,7 @@ extern HBTInt * prepare_sub2halo(SUBCATALOGUE *SubCat);
 extern HBTInt check_dup(HBTInt l1, HBTInt *p1,HBTInt l2, HBTInt *p2);
 extern HBTReal position_modulus(HBTReal x);
 extern HBTReal distance(HBTReal x[3],HBTReal y[3]);
+extern HBTReal raw_distance(HBTReal x[3],HBTReal y[3]);
 extern void center_of_mass(HBTReal CoM[3], HBTInt *PInd, HBTInt np, HBTReal PPos[][3]);
 extern HBTReal comoving_virial_radius(HBTInt mass);
 extern HBTReal comoving_virial_radius_header(HBTInt mass, IO_HEADER *h);

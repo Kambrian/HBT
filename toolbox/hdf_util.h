@@ -9,6 +9,18 @@
 	#endif
 
 
+#ifdef HBT_REAL8
+#define H5T_HBTReal H5T_NATIVE_DOUBLE
+#else
+#define H5T_HBTReal H5T_NATIVE_FLOAT
+#endif
+#ifdef HBT_INT8
+#define H5T_HBTInt H5T_NATIVE_LONG
+#else 
+#define H5T_HBTInt H5T_NATIVE_INT
+#endif
+
+
 typedef struct 
 {
 	void *x; 
@@ -41,7 +53,7 @@ extern size_t load_hdfmatrixF(char *datafile, FloatMat var[], int nvar);
 extern size_t load_hdfmatrixD(char *datafile, DoubleMat var[], int nvar);
 extern size_t load_hdfmatrix(char *datafile, GenericMat var[], int nvar, hid_t datatype);
 //datatype: H5T_NATIVE_FLOAT; H5T_NATIVE_DOUBLE;...
-
+extern void writeHDFmatrix(hid_t file, const void * buf, const char * name, hsize_t ndim, const hsize_t *dims, hid_t dtype, hid_t dtype_file);
 #ifdef HDF_V16
 #define HDFcreate_group(file,group) H5Gcreate1(file,group,16)
 #else

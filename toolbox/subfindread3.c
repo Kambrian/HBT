@@ -11,6 +11,8 @@
 
 #define myfread(a,b,c,d) fread_swap(a,b,c,d,ByteOrder)
 
+// #define LOAD_SUBFIND_PARTICLES
+
 //~ typedef IDatReal MyReal; //shit, the real type for subfind is not necessarily the same as snapshot
 //~ typedef double MyReal;
 typedef float MyReal;  
@@ -197,7 +199,7 @@ for(i=0;i<TotNgroups;i++)
 #endif
 
   printf("tab ok\n");fflush(stdout);
-   
+   #ifdef LOAD_SUBFIND_PARTICLES
   long long Nloadid=0;
   for(i=0;i<FileCounts;i++)
   {
@@ -215,7 +217,7 @@ for(i=0;i<TotNgroups;i++)
   int dummy;
   myfread(&dummy,sizeof(int),1,fd);
   //printf("Send_Offset: %d, %ld\n",dummy, Nloadid);    
- 
+
   if(0==i)
   groupIDs = malloc(sizeof(IDatInt) * TotNids);
   
@@ -241,6 +243,7 @@ for(i=0;i<TotNgroups;i++)
 			break;
 		}
 	}
+	#endif
   printf("%d Subhalos loaded.\n",TotNsubhalos);fflush(stdout);  
   printf("average group particle mass: %g - %g, %g\n", GroupMass[0]/GroupLen[0], MP_DM,MP_GAS);
   printf("average sub particle mass: %g - %g, %g\n", SubMass[0]/SubLen[0],MP_DM,MP_GAS);
@@ -313,6 +316,7 @@ void subfindcat2BT(SUBCATALOGUE *SubCat)
 	for(i=0,subid=FirstSubOfHalo[grpid];subid<FirstSubOfHalo[grpid]+NsubPerHalo[grpid];subid++,i++)
 	{
 	  SubCat->SubRank[subid]=i;
+#ifdef LOAD_SUBFIND_PARTICLES
 	  SubCat->PSubArr[subid]=mymalloc(sizeof(HBTInt)*SubCat->SubLen[subid]);
 	  for(j=0;j<SubCat->SubLen[subid];j++)
 	  {
@@ -323,7 +327,7 @@ void subfindcat2BT(SUBCATALOGUE *SubCat)
 		SubCat->PSubArr[subid][j]=groupIDs[SubOffset[subid]+j];
 		#endif
 	  }
-	  
+#endif	  
 	  SubCat->HaloChains[subid].HostID=SubHostHalo[subid];
 	  for(j=0;j<3;j++)
 	  {
@@ -372,6 +376,10 @@ void load_subfind_halo_size(float Mvir[][3],float Rvir[][3],float partmass, HBTI
 		Rvir[i][1]=Halo_R_Crit200[i];
 		Rvir[i][2]=Halo_R_Mean200[i];
 	}
+}
+MyReal * export_Vmax()
+{
+    return SubVmax;
 }
 #endif	
 #ifdef STANDALONE

@@ -6,8 +6,8 @@ HISTDIR=../history
 
 USRINCL=-I /home/kambrain/opt/include
 USRLIB=-L /home/kambrain/opt/lib
-CFLAGS=-I$(BTDIR) -I$(BTDIR)/$(IODIR) -I$(GASDIR) -I$(HISTDIR) -I. -include $(PARAM) $(USRINCL) -openmp -g -I/usr/include/mpi
-LDFLAGS= -L$(BTDIR)/$(IODIR) -l$(RUN_NUM)io $(FTNLIB) $(USRLIB) -limf -openmp -g
+CFLAGS=-I$(BTDIR) -I$(BTDIR)/$(IODIR) -I$(GASDIR) -I$(HISTDIR) -I. -include $(PARAM) $(USRINCL) -fopenmp -g -I/usr/include/mpi
+LDFLAGS= -L$(BTDIR)/$(IODIR) -l$(RUN_NUM)io $(FTNLIB) $(USRLIB) -lm -fopenmp -g
 GASLIB= -L$(GASDIR) -lgasio
 HISTLIB= -L$(HISTDIR) -lhistio
 # GSLINC=-I/home/qypeng/bin/gsl-1.15/include
@@ -129,7 +129,8 @@ $(NEED_TREESEARCH): treesearch.o
 hdf_util.o: 
 
 StarPot: hdf_util.o tree.o
-StarPot : LDFLAGS+=-lhdf5_hl -lhdf5
+massfun_plot_subfind massfun_raw_subfind StarPot : LDFLAGS+=-lhdf5_hl -lhdf5
+massfun_plot_subfind massfun_raw_subfind: hdf_util.o subfindread.o
 
 saveHDFhalo saveHDFhalo_addstrm saveHDFhalo_debug: hdf_util.o
 saveHDFhalo saveHDFhalo_addstrm saveHDFhalo_debug: LDFLAGS+=-lhdf5_hl -lhdf5

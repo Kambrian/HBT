@@ -24,6 +24,7 @@ extern HBTReal raw_distance(HBTReal x[3],HBTReal y[3]);
 extern void center_of_mass(HBTReal CoM[3], HBTInt *PInd, HBTInt np, HBTReal PPos[][3]);
 extern HBTReal comoving_virial_radius(HBTInt mass);
 extern HBTReal comoving_virial_radius_header(HBTInt mass, IO_HEADER *h);
+extern HBTReal ComovingMean200Radius(HBTReal M200b, HBTReal OmegaM0);
 extern void *mymalloc(size_t n);
 extern void myfree(void *mem);
 extern void swap_Nbyte(void *data2swap,size_t nel,size_t mbyte);

@@ -53,6 +53,7 @@ typedef HBTReal HBTxyz[3];  //3-d pos/vel data
 #define FRSH_SRCCAT -3
 //#define FRSH_MBDCAT -4
 
+//flags for loading specific field of snapshots. use | (bitwise or) to combine.
 #define FLAG_LOAD_ID  0b001
 #define FLAG_LOAD_POS 0b010
 #define FLAG_LOAD_VEL 0b100

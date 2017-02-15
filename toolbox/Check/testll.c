@@ -25,7 +25,7 @@ int main(int argc, char** argv)
 // 	int ndiv=NDIV;
 	int id=0;
 	
-	HBTxyz Pos[np];
+	HBTxyz Pos=mymalloc(sizeof(HBTxyz)*np);
 	int i,j;
 	for(i=0;i<np;i++)
 	{
@@ -45,6 +45,7 @@ int main(int argc, char** argv)
 	
 	free_linklist(&l);
 	free_linklist(&l2);
+	myfree(Pos);
 	
 	return 0;
 }

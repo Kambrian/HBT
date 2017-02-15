@@ -293,7 +293,7 @@ void load_particle_data_bypart(HBTInt Nsnap, char *SnapPath, unsigned char loadf
 	flag_id=get_bit(loadflags,0);
 	flag_pos=get_bit(loadflags,1);
 	flag_vel=get_bit(loadflags,2);
-	
+// 	printf("loading flags=%d, %d, %d\n", flag_id, flag_pos, flag_vel);
 	Pdat.Nsnap=Nsnap;
 	
 #pragma omp parallel num_threads(NFILE_CHUNK)

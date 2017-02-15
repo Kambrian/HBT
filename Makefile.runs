@@ -1,16 +1,16 @@
 #~~~~~~~~ modify this to be the simulation name   ~~~~~~~#
-RUN_NUM=MilliMill#this is simulation name corresponding to some parameter file, see below
-# IODIR=JING_io#uncomment this for JING's data
-IODIR=gadget_io#uncomment this for gadget data
+RUN_NUM=6620#this is simulation name corresponding to some parameter file, see below
+IODIR=JING_io#uncomment this for JING's data
+# IODIR=gadget_io#uncomment this for gadget data
 #IODIR=merger_io
 #IODIR=star_io
 
 PARAM =param/param$(RUN_NUM).h
 
-# CC		=icc
-# FC		=ifort
-CC		=gcc
-FC		=gfortran
+CC		=icc
+FC		=ifort
+# CC		=gcc
+# FC		=gfortran
 
 NEED_FORTRAN=no
 ifeq ($(IODIR),JING_io)

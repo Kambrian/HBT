@@ -224,6 +224,10 @@ HBTReal comoving_virial_radius_header(HBTInt mass, IO_HEADER* h)
 	virialF=18.0*3.1416*3.1416+82.0*x-39.0*x*x;//<Rho_vir>/Rho_cri
 	return pow(2.0*G*mass*h->mass[1]/virialF/h->Hz/h->Hz,1.0/3)/scaleF;
 }
+HBTReal ComovingMean200Radius(HBTReal M200b, HBTReal OmegaM0)
+{
+  return pow(G*M200b/100./OmegaM0/HUBBLE0/HUBBLE0, 1./3); //physical R200b at z=0, is comoving at all redshift.
+}
 void *mymalloc(size_t n)
 {void * mem;
 	if(n)

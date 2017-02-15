@@ -19,7 +19,7 @@
 #define Factor_RMIN 1e-2
 #define Factor_relax 3
 
-#define NDIV 256
+#define NDIV 128
 LINKLIST ll;
 #ifdef PERIODIC_BDR
 #define MAKELL() make_linklist(&ll,NP_DM,NDIV,Pdat.Pos,GetArrPos,1)
@@ -101,16 +101,20 @@ HALOPROFILE *haloprof;
 	sprintf(outputdir,"%s/profile/logbin",SUBCAT_DIR);	
 	mkdir(outputdir,0755);
 
-	load_particle_data(Nsnap,SNAPSHOT_DIR);	
+	load_particle_data_bypart(Nsnap,SNAPSHOT_DIR, FLAG_LOAD_ID);	
 	load_group_catalogue(Nsnap,&Cat,GRPCAT_DIR);
-#ifndef WITHOUT_SUBCAT
-	load_sub_catalogue(Nsnap,&SubCat,SUBCAT_DIR);
-#endif
+
 	fill_PIDHash();
-	fresh_ID2Index(&Cat,-1); 	//fofcat of JING's data are originally PIndex rather than PID
+	fresh_ID2Index(&Cat,FRSH_GRPCAT);//fofcat of JING's data are originally PIndex rather than PID
+	#ifndef WITHOUT_SUBCAT
+	load_sub_table(Nsnap,&SubCat,SUBCAT_DIR);
+// 	fresh_ID2Index(&SubCat, FRSH_SUBCAT);
+	#endif
 	free_PIDHash();
 	prepare_ind2halo(&Cat);
-
+	free_particle_data();
+	
+	load_particle_data_bypart(Nsnap, SNAPSHOT_DIR, FLAG_LOAD_POS);	
 	MAKELL();
 	printf("finished linkedlist\n");
 
@@ -133,9 +137,10 @@ HALOPROFILE *haloprof;
 	free_catalogue(&Cat);
 #ifndef WITHOUT_SUBCAT
 	#ifndef SUBFIND_DIR
-	erase_sub_catalogue(&SubCat);
+	free_sub_table(&SubCat);
 	#endif
 #endif
+	free_particle_data();
 return 0;
 }
 void halo_radius_eq_global(HALOPROFILE *haloprof)//consider improving accuracy by interpolation or fitting

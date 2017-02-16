@@ -610,7 +610,7 @@ void make_linklist(LINKLIST *ll, HBTInt np,HBTInt ndiv, void *PosData,
 	for(j=0;j<nthreads-1;j++)
 	  if(chains[j].hoc[i]>=0) break;//skip empty chains until the last one
 	ll->hoc[i]=chains[j].hoc[i];
-	int chaintail=get_tail_of_chain(chains[j].hoc[i], ll->list);
+	HBTInt chaintail=get_tail_of_chain(chains[j].hoc[i], ll->list);
 	for(j++;j<nthreads;j++)
 	{
 	  if(chains[j].hoc[i]<0) continue; //skip empty chains

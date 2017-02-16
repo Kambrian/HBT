@@ -42,7 +42,7 @@ int main(int argc, char** argv)
 // 	make_linklist(&l2, np,NDIV, Pos, GetArrPos, 0);
 	
 	print_cell(id, &l);
-	print_cell(id, &l2);
+// 	print_cell(id, &l2);
 // 	print_cell2(id);
 	
 	free_linklist(&l);

@@ -26,14 +26,14 @@
 #define CEN_STR "cen_core"
 #endif
 
-#define SUBFIND_DIR GRPCAT_DIR
+// #define SUBFIND_DIR GRPCAT_DIR
 #ifdef SUBFIND_DIR
 extern void load_subfind_catalogue(int Nsnap,SUBCATALOGUE *SubCat,char *inputdir);	
 #define load_sub_catalogue load_subfind_catalogue
 #define INPUT_DIR SUBFIND_DIR
-#define EXTNAME ".subfind." CEN_STR
+#define EXTNAME ".subfind.big." CEN_STR
 #else
-#define EXTNAME "." CEN_STR
+#define EXTNAME ".big." CEN_STR
 #define INPUT_DIR SUBCAT_DIR
 #endif
 
@@ -46,7 +46,7 @@ extern void load_subfind_catalogue(int Nsnap,SUBCATALOGUE *SubCat,char *inputdir
 #endif
 
 // #define RMAX 5000. //Phoenix
-#define RMAX 500. //Aqua
+#define RMAX 1000. //Aqua
 
 struct PList
 {

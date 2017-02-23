@@ -19,7 +19,7 @@
 #define Factor_RMIN 1e-2
 #define Factor_relax 3
 
-#define NDIV 128
+#define NDIV 256
 LINKLIST ll;
 #ifdef PERIODIC_BDR
 #define MAKELL() make_linklist(&ll,NP_DM,NDIV,Pdat.Pos,GetArrPos,1)

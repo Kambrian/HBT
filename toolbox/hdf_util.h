@@ -54,6 +54,7 @@ extern size_t load_hdfmatrixD(char *datafile, DoubleMat var[], int nvar);
 extern size_t load_hdfmatrix(char *datafile, GenericMat var[], int nvar, hid_t datatype);
 //datatype: H5T_NATIVE_FLOAT; H5T_NATIVE_DOUBLE;...
 extern void writeHDFmatrix(hid_t file, const void * buf, const char * name, hsize_t ndim, const hsize_t *dims, hid_t dtype, hid_t dtype_file);
+extern int GetDatasetDims(hid_t dset, hsize_t dims[]);
 #ifdef HDF_V16
 #define HDFcreate_group(file,group) H5Gcreate1(file,group,16)
 #else

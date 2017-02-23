@@ -184,3 +184,11 @@ void writeHDFmatrix(hid_t file, const void * buf, const char * name, hsize_t ndi
   H5Sclose(dataspace);
   H5Dclose(dataset);
 }
+
+int GetDatasetDims(hid_t dset, hsize_t dims[])
+{
+  hid_t dspace=H5Dget_space(dset);
+  int ndim=H5Sget_simple_extent_dims(dspace, dims, NULL);
+  H5Sclose(dspace);
+  return ndim;
+}

@@ -129,8 +129,8 @@ $(NEED_TREESEARCH): treesearch.o
 hdf_util.o: 
 
 StarPot: hdf_util.o tree.o
-massfun_plot_subfind massfun_raw_subfind StarPot : LDFLAGS+=-lhdf5_hl -lhdf5
-massfun_plot_subfind massfun_raw_subfind: hdf_util.o subfindread.o
+massfun_plot_subfind massfun_raw_subfind massfun_raw_subfind_dtree StarPot : LDFLAGS+=-lhdf5_hl -lhdf5
+massfun_plot_subfind massfun_raw_subfind massfun_raw_subfind_dtree: hdf_util.o subfindread.o
 
 saveHDFhalo saveHDFhalo_addstrm saveHDFhalo_debug: hdf_util.o
 saveHDFhalo saveHDFhalo_addstrm saveHDFhalo_debug: LDFLAGS+=-lhdf5_hl -lhdf5

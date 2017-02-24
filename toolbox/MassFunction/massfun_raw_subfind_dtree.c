@@ -136,7 +136,11 @@ int main(int argc,char **argv)
 	free_PIDHash();	
 	
 	for(i=0;i<NumBranches;i++)
-	  memcpy(SubCat.Property[i].CoM, GetBranchPos(i, NULL), sizeof(HBTxyz));
+	  if(Branches[i].IsCentral)
+	  {
+	    HBTInt subid=SubCat.GrpOffset_Sub[Branches[i].HostID];
+	    memcpy(SubCat.Property[subid].CoM, GetBranchPos(i, NULL), sizeof(HBTxyz));
+	  }
 	
 	LINKLIST ll;
 	make_linklist(&ll, NumBranches, 128, NULL, GetBranchPos, 1);

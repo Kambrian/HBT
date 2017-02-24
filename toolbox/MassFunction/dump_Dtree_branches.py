@@ -11,16 +11,18 @@ def GetBranch(treefile, branchID):
   Nbound=0
   Vmax=0.
   IsCentral=0
-  HostId=-1;
+  HostId=-1
+  SubId=-1
   if snap0==MaxSnap:
     Nbound=nbound[0]
     Vmax=vmaxPhysical[0]
     IsCentral=treefile['/haloTrees/isFoFCentre'][offset]
     HostId=treefile['/haloTrees/fofIndex'][offset]-1
+    SubId=treefile['/haloTrees/positionInCatalogue'][offset]
   NboundPeak=nbound.max()
   VmaxPeak=vmaxPhysical.max()
   PID=treefile['/haloTrees/mostBoundID'][offset]
-  return PID, IsCentral, Nbound, NboundPeak, Vmax, VmaxPeak, branchID, HostId
+  return PID, IsCentral, Nbound, NboundPeak, Vmax, VmaxPeak, branchID, HostId, SubId
     
 def DumpParticles(ifile):
   print ifile
@@ -29,7 +31,7 @@ def DumpParticles(ifile):
       #os.mkdir(outdir)
   treefile=h5py.File(rootdir+'tree_067.%d.hdf5'%ifile,'r')
   nbranch=treefile['/treeIndex/firstNode'].shape[0]
-  branches=numpy.array([GetBranch(treefile, i) for i in xrange(nbranch)], dtype=[('MostBoundID', 'i8'), ('IsCentral', 'i4'), ('Nbound', 'i4'), ('NboundPeak', 'i4'), ('Vmax', 'f4'), ('VmaxPeak', 'f4'), ('BranchID', 'i4'), ('HostID', 'i4')])
+  branches=numpy.array([GetBranch(treefile, i) for i in xrange(nbranch)], dtype=[('MostBoundID', 'i8'), ('IsCentral', 'i4'), ('Nbound', 'i4'), ('NboundPeak', 'i4'), ('Vmax', 'f4'), ('VmaxPeak', 'f4'), ('BranchID', 'i4'), ('HostID', 'i4'), ('SubID', 'i4')])
   treefile.close()
 
   outdir='/gpfs/data/jvbq85/HBT/data/Millennium2/subcat/analysis/DTrees/'

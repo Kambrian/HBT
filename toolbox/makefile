@@ -6,8 +6,8 @@ HISTDIR=../history
 
 USRINCL=-I /home/kambrain/opt/include
 USRLIB=-L /home/kambrain/opt/lib
-CFLAGS=-I$(BTDIR) -I$(BTDIR)/$(IODIR) -I$(GASDIR) -I$(HISTDIR) -I. -include $(PARAM) $(USRINCL) -fopenmp -g -I/usr/include/mpi
-LDFLAGS= -L$(BTDIR)/$(IODIR) -l$(RUN_NUM)io $(FTNLIB) $(USRLIB) -lm -fopenmp -g
+CFLAGS=-I$(BTDIR) -I$(BTDIR)/$(IODIR) -I$(GASDIR) -I$(HISTDIR) -I. -include $(PARAM) $(USRINCL) $(OMPFLAGS) -g -I/usr/include/mpi
+LDFLAGS= -L$(BTDIR)/$(IODIR) -l$(RUN_NUM)io $(FTNLIB) $(USRLIB) $(MATHLIB) $(OMPFLAGS) -g
 GASLIB= -L$(GASDIR) -lgasio
 HISTLIB= -L$(HISTDIR) -lhistio
 # GSLINC=-I/home/qypeng/bin/gsl-1.15/include

@@ -56,9 +56,8 @@ void init_HaloSizes(HBTInt Nsnap);
 void free_HaloSizes();
 int main(int argc, char** argv)
 {
-	HBTInt i;
 	HBTInt Nsnap;
-	HBTInt grpid,subid;
+	HBTInt subid;
 
 	logfile=stdout;//redirect BT routines' log info to standard output
 	
@@ -71,6 +70,7 @@ int main(int argc, char** argv)
     for(Nsnap=Nsnap0;Nsnap<MaxSnap;Nsnap+=NsnapD)
     {
 	load_sub_catalogue(Nsnap,&SubCat,SUBCAT_DIR);
+	printf("Nsnap=%d, Nsubs=%ld\n",(int)Nsnap, SubCat.Nsubs);
 	HBTInt *pro2dest;
 	if(Nsnap<MaxSnap-1) 
 	{
@@ -81,6 +81,7 @@ int main(int argc, char** argv)
 	else
 	{
 	  pro2dest=mymalloc(sizeof(HBTInt)*SubCat.Nsubs);
+	  #pragma omp parallel for
 	  for(subid=0;subid<SubCat.Nsubs;subid++) pro2dest[subid]=-1;
 	}
 	HBTInt Npro, Nsplitter, *sp2pro;
@@ -88,19 +89,21 @@ int main(int argc, char** argv)
 	load_particle_header(Nsnap,SNAPSHOT_DIR);
 	float sqa = sqrt(header.time);
 	init_HaloSizes(Nsnap);
-	printf("Nsnap=%d, Nsubs=%ld\n",(int)Nsnap, SubCat.Nsubs);
+	
+	printf("filling tree...\n");fflush(stdout);
 // #define FixProId(x) ((x)<Npro?(x):(sp2pro[x])) //or assign -1?
 #define FixProId(x) ((x)<Npro?(x):-1)
 #define copy_xyz(x,y) {x[0]=y[0];x[1]=y[1];x[2]=y[2];}	
 	TREE *subtree=malloc(sizeof(TREE)*SubCat.Nsubs);
-	for(subid=0;subid<SubCat.Ngroups;subid++)
+	#pragma omp parallel for
+	for(subid=0;subid<SubCat.Nsubs;subid++)
 	{
 	  TREE *tree=subtree+subid;
 	  tree->subhaloId=subid;
 	  tree->mostBoundID=(SubCat.SubLen[subid]>0)?SubCat.PSubArr[subid][0]:-1;
 	  tree->descendantSubId=pro2dest[subid];
 	  tree->progenitorSubId=FixProId(SubCat.HaloChains[subid].ProSubID);
-	  grpid=SubCat.HaloChains[subid].HostID;
+	  HBTInt grpid=SubCat.HaloChains[subid].HostID;
 	  tree->hostFoFId=grpid;
 	  if(grpid<0)
 	  {
@@ -117,21 +120,20 @@ int main(int argc, char** argv)
 	    tree->firstSubInFoF=SubCat.GrpOffset_Sub[grpid];
 	    tree->isCentral=(SubCat.SubRank[subid]==0);
 	    tree->m_Mean200=Mvir[grpid][VIR_B200];
-	    tree->m200=SubMvir[grpid][VIR_C200];
-	    tree->m_TopHat=SubMvir[grpid][VIR_TOPHAT];
+	    tree->m200=Mvir[grpid][VIR_C200];
+	    tree->m_TopHat=Mvir[grpid][VIR_TOPHAT];
 	  }
 	  tree->numberOfSubsInFoF=(grpid<0?1:SubCat.GrpLen_Sub[grpid]);
 	  tree->firstSubInFoF=(grpid<0?subid:SubCat.GrpOffset_Sub[grpid]);
 	  tree->numberOfBoundParticles=SubCat.SubLen[subid];
-	  tree->isCentral=(SubCat.SubRank[subid]==0)||(grpid<0);
 	  copy_xyz(tree->comovingPosition, SubCat.Property[subid].CoM);
 	  copy_xyz(tree->physicalVelocity, SubCat.Property[subid].VCoM);
 	  copy_xyz(tree->physicalSpecificAngularMomentum, SubCat.Property[subid].AM);
-	  tree->physicalVelDisp=SubCat.Property[subid].Kin*2;//to improve: subtract (vcen-vmean)^2
+	  tree->physicalVelDisp=sqrt(SubCat.Property[subid].Kin*2);//to improve: subtract (vcen-vmean)^2
 	  tree->physicalVmax=Vmax[subid]/sqa;
 	  tree->comovingHalfMassRadius=Rhalf[subid];
 	}
-	
+	printf("saving ...\n");fflush(stdout);
 	FILE *fp;
 	char buf[1024];
 	sprintf(buf,"%s/anal/subtree_%03d",SUBCAT_DIR,(int)Nsnap);

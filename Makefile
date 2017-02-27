@@ -14,15 +14,9 @@ SRC =$(OBJS_COMM:%.o=%.c) $(addsuffix .c, $(targets))
 VPATH=toolbox/Image toolbox/MassFunction toolbox/Profile \
       toolbox/Profile/concentration   
       
-ifeq ($(CC), icc)
-CFLAGS=  -openmp -include $(PARAM) -I. -I $(IODIR) -g  
-LDFLAGS= -openmp  $(FTNLIB) -limf
-FFLAGS= -openmp
-else 												#using gcc
-CFLAGS =-fopenmp -include $(PARAM) -I. -I $(IODIR) -g
-LDFLAGS=-lm $(FTNLIB) -fopenmp 
-FFLAGS= -fopenmp
-endif
+CFLAGS=  $(OMPFLAGS) -include $(PARAM) -I. -I $(IODIR) -g  
+LDFLAGS= $(OMPFLAGS)  $(FTNLIB) $(MATHLIB)
+FFLAGS= $(OMPFLAGS)
 
 #this is used only when code+data size >2GB
 #CFLAGS+=-mcmodel=medium -shared-intel

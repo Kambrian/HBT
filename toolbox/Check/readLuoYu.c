@@ -42,10 +42,24 @@ int main(int argc, char** argv)
     fread(subtree, sizeof(TREE), Nsubs, fp);
     fclose(fp);
 
-    int i=2;
+    /*read in the DescendantList*/
+    int *descendantID=malloc(sizeof(int)*Nsubs);
+    sprintf(buf,"/mnt/ddnfs/jxhan/6620/subcat/anal/DescendantList/snap_%03d",Nsnap);
+    fp=fopen(buf,"r");
+    fread(descendantID, sizeof(int), Nsubs, fp);
+    fclose(fp);
+    /*fix the descendantID in the tree*/
+    int i;
+    for(i=0;i<Nsubs;i++)
+      subtree[i].descendantSubId=descendantID[i];
+    free(descendantID);
+    
+    
+    i=2;
     printf("snapid=%d, Ngroups=%d, Nsubs=%d, scale_factor=%g\n", snapid, Ngroups, Nsubs, scale_factor);
     printf("%d, %d, %ld, %d, %d, %g\n", subtree[i].subhaloId,  subtree[i].numberOfBoundParticles, subtree[i].mostBoundID, subtree[i].hostFoFId, subtree[i].isCentral, subtree[i].m200);
 
     free(subtree);
+        
     return 0;
 }

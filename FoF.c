@@ -72,7 +72,13 @@ static int comp_grplen(const void *a, const void *b)//in descending order
     return -1;
 
   if(GrpLen[((struct ParticleGroup *) a)->GrpID] < GrpLen[((struct ParticleGroup *) b)->GrpID])
-    return +1;
+    return +1;  
+//equal grplen, sort in ascending order of grpid
+  if(((struct ParticleGroup *) a)->GrpID > ((struct ParticleGroup*) b)->GrpID)
+    return 1;
+  
+  if(((struct ParticleGroup *) a)->GrpID < ((struct ParticleGroup*) b)->GrpID)
+    return -1;
 
   return 0;
 }

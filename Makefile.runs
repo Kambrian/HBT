@@ -18,9 +18,9 @@ FTNLIB=-L$(IFORTLIB) -lifport -lifcore
 OBJS_FTN= $(IODIR)/fortread.o
 endif
 
-CC		=   icc
-FC		=   ifort 
-# CC		=   gcc
-# FC		=   gfortran 
+#CC		=   icc
+#FC		=   ifort 
+CC		=   gcc
+FC		=   gfortran 
 
 

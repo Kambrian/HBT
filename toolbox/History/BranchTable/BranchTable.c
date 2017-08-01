@@ -14,15 +14,18 @@ extern void parse_snap_args(HBTInt SnapRange[2], int argc, char **argv);
 int main(int argc,char **argv)
 {
 	SUBCATALOGUE SubCat;
+        HBTReal *Vmax;
 	CATALOGUE Cat;
 	CrossSection Sec;
 	HBTInt *pro2dest, Npro,NsubLast;
 	HBTInt Nsnap,SnapRange[2];
-	
+	char outdir[1024];
+        sprintf(outdir, "%s/BranchTable", SUBCAT_DIR);
+        
 	logfile=stdout;
 	parse_snap_args(SnapRange, argc, argv);	
 	Nsnap=SnapRange[0]-1;
-	load_cross_section(Nsnap, &Sec);//load previous cross-section
+	load_cross_section(Nsnap, &Sec, outdir);//load previous cross-section
 	if(Nsnap<IniSnap)
 	  NsubLast=0;
 	else
@@ -38,6 +41,10 @@ int main(int argc,char **argv)
 	  load_group_catalogue(Nsnap, &Cat, GRPCAT_DIR);
 	  load_pro2dest(Nsnap-1, &pro2dest, &Npro, SUBCAT_DIR);
 	  load_particle_data(Nsnap, SNAPSHOT_DIR);
+          Vmax=load_Vmax(Nsnap);
+          HBTReal sqa=sqrt(header.time);
+          for(SubID=0;SubID<SubCat.Nsubs;SubID++)
+              Vmax[SubID]/=sqa;//convert to physical; bugfixed. previously *sqa.
 	  fill_PIDHash();
 	  fresh_ID2Index(&Cat,FRSH_GRPCAT); 
 	  fresh_ID2Index(&SubCat,FRSH_SUBCAT);//now CatB.PIDorIndex has been occupied with Index to the freshly loaded Pdat
@@ -49,7 +56,7 @@ int main(int argc,char **argv)
 	  HBTInt NodeID,SubID;
 	  #pragma omp parallel for
 	  for(NodeID=0;NodeID<Sec.NumNode;NodeID++)
-		node_update(Sec.Node+NodeID, pro2dest, &SubCat, &Cat);
+		node_update(Sec.Node+NodeID, pro2dest, &SubCat, &Cat, Vmax);
 	  NodeID=Sec.NumNode;//last node
 	  for(SubID=0;SubID<SubCat.Nsubs;SubID++)
 	  {
@@ -64,7 +71,7 @@ int main(int argc,char **argv)
 	  printf("NewNodes=%d, NewSub=%d\n", (int)(NumNodeNew-Sec.NumNode), (int)(SubCat.Nbirth+SubCat.Nsplitter));
 	  #pragma omp parallel for
 	  for(NodeID=Sec.NumNode;NodeID<NumNodeNew;NodeID++)
-		node_fill(Sec.Node+NodeID, &SubCat);
+		node_fill(Sec.Node+NodeID, &SubCat, Vmax);
 	  Sec.NumNode=NumNodeNew;
 	  //==========why the following does not work?? segfault at some stage, but does produce correct result before segfault.====
 	 /* #pragma omp parallel
@@ -89,9 +96,10 @@ int main(int argc,char **argv)
 	   }*/
 	  NsubLast=SubCat.Nsubs;
 	  section_Ind2ID(&Sec);
-	  save_cross_section(Nsnap, &Sec);
+	  save_cross_section(Nsnap, &Sec, outdir);
 	  free_catalogue(&Cat);
 	  free_sub_catalogue(&SubCat);
+          myfree(Vmax);
 	  free_pro2dest(pro2dest);
 	  free_particle_data();
 	}

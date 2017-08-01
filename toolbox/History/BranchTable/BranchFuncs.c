@@ -11,7 +11,35 @@
 #include "iovars.h"
 #include "proto.h"
 #include "BranchFuncs.h"
-
+HBTReal * load_Vmax(HBTInt Nsnap)
+{
+	char buf[1024];
+	FILE *fp;
+	HBTInt Nsubs,dummy;
+	HBTReal *vmax;
+        
+	sprintf(buf,"%s/profile/RmaxVmax_"HBTIFMT".MBD",SUBCAT_DIR,Nsnap);
+	myfopen(fp,buf,"r");	
+	fread(&Nsubs,sizeof(HBTInt),1,fp);
+        fseek(fp, sizeof(HBTReal)*Nsubs, SEEK_CUR);
+// 	fread(rmax,sizeof(HBTReal),Nsubs,fp);
+        vmax=mymalloc(sizeof(HBTReal)*Nsubs);
+	fread(vmax,sizeof(HBTReal),Nsubs,fp);
+	fseek(fp,sizeof(HBTReal)*Nsubs*5,SEEK_CUR);
+//         fread(rhalf,sizeof(HBTReal),Nsubs,fp);
+	//~ fread(rsig,sizeof(HBTReal),Nsubs,fp);
+	//~ fread(r2sig,sizeof(HBTReal),Nsubs,fp);
+	//~ fread(r3sig,sizeof(HBTReal),Nsubs,fp);
+	//~ fread(rpoisson,sizeof(HBTReal),Nsubs,fp);
+	fread(&dummy,sizeof(HBTInt),1,fp);
+	if(dummy!=Nsubs) 
+	{
+		printf("error loading %s:\n size not consistent "HBTIFMT"!="HBTIFMT"\n",buf,Nsubs,dummy);
+		exit(1);
+	}
+	fclose(fp);
+	return vmax;
+}
 void section_ID2Index(CrossSection *sec)
 {
   HBTInt NodeID;
@@ -41,13 +69,13 @@ void section_free(CrossSection *sec)
 {
   sec->NumNode=0;
   sec->NumNodeAlloc=0;
-  sec->Node=NULL;
+  myfree(sec->Node);
 }
-void save_cross_section(HBTInt Nsnap, CrossSection *sec)
+void save_cross_section(HBTInt Nsnap, CrossSection *sec, char *outdir)
 {
   FILE *fp;
-  char buf[1024],outdir[1024];
-  sprintf(outdir, "%s/BranchTable",SUBCAT_DIR);
+  char buf[1024];//outdir[1024];
+//   sprintf(outdir, "%s/BranchTable",SUBCAT_DIR);
   mkdir(outdir,0755);
   sprintf(buf, "%s/CrossSection_%03d", outdir, (int)Nsnap);
   myfopen(fp,buf,"w");
@@ -57,7 +85,7 @@ void save_cross_section(HBTInt Nsnap, CrossSection *sec)
   fclose(fp);
 }
 
-void load_cross_section(HBTInt Nsnap, CrossSection * sec)
+void load_cross_section(HBTInt Nsnap, CrossSection * sec, char *path)
 {
   if(Nsnap<IniSnap)//load nothing
   {
@@ -67,12 +95,12 @@ void load_cross_section(HBTInt Nsnap, CrossSection * sec)
   
   FILE *fp;
   char buf[1024];
-  sprintf(buf, "%s/BranchTable/CrossSection_%03d", SUBCAT_DIR, (int)Nsnap);
+  sprintf(buf, "%s/CrossSection_%03d", path, (int)Nsnap);
   myfopen(fp,buf,"r");
   fread(&sec->NumNode, sizeof(HBTInt), 1, fp);
   sec->NumNodeAlloc=(sec->NumNode<NumNodeAllocMin?NumNodeAllocMin:sec->NumNode);
   sec->Node=mymalloc(sizeof(BranchNode)*sec->NumNodeAlloc);
-  fread(sec->Node, sizeof(BranchNode), sec->NumNode, fp);
+  fseek(fp, sizeof(BranchNode)*sec->NumNode, SEEK_CUR);
   HBTInt n;
   fread(&n, sizeof(HBTInt), 1, fp);
   fclose(fp);
@@ -81,6 +109,22 @@ void load_cross_section(HBTInt Nsnap, CrossSection * sec)
 	fprintf(logfile, "Error: numbers of nodes do not match in %s\n"HBTIFMT","HBTIFMT"\nFile corruption?\n", buf, sec->NumNode, n);
 	exit(1);
   }
+  
+#define NUM_THREAD 10
+#pragma omp parallel num_threads(NUM_THREAD) 
+  {
+    int ithread=omp_get_thread_num();
+    HBTInt nread=sec->NumNode/NUM_THREAD;
+    HBTInt offset=nread*ithread;
+    if(ithread==NUM_THREAD-1)
+        nread=sec->NumNode-offset;
+    FILE *fpthis;
+    myfopen(fpthis, buf, "r");
+    fseek(fpthis, sizeof(HBTInt)+sizeof(BranchNode)*offset, SEEK_SET);
+    fread(sec->Node+offset, sizeof(BranchNode), nread, fpthis);
+    fclose(fpthis);
+  }
+
 }
 void get_phys_vel(HBTxyz vel, HBTInt PID)
 {
@@ -92,7 +136,7 @@ void get_phys_vel(HBTxyz vel, HBTInt PID)
 	vel[i]=Pdat.Vel[PID][i]*sqrt(header.time);
   #endif
 }
-void section_fill_new_node(CrossSection *sec, HBTInt NodeID, HBTInt SubID, SUBCATALOGUE *SubCat)
+void section_fill_new_node(CrossSection *sec, HBTInt NodeID, HBTInt SubID, SUBCATALOGUE *SubCat, HBTReal *Vmax)
 {
   if(NodeID>=sec->NumNodeAlloc)//the section should be large enough to hold the new node
   {
@@ -123,6 +167,9 @@ void section_fill_new_node(CrossSection *sec, HBTInt NodeID, HBTInt SubID, SUBCA
   node->NpBnd=SubCat->SubLen[SubID];
   node->NpBndPeak=node->NpBnd;
   node->SnapNumPeak=Pdat.Nsnap;
+  node->Vmax=Vmax[SubID];
+  node->VmaxPeak=node->Vmax;
+  node->SnapNumVpeak=Pdat.Nsnap;
 }
 void section_create_node(CrossSection * sec, HBTInt NodeID, HBTInt SubID)
 {
@@ -134,7 +181,7 @@ void section_create_node(CrossSection * sec, HBTInt NodeID, HBTInt SubID)
   sec->Node[NodeID].BranchID=NodeID;
   sec->Node[NodeID].SubID=SubID;
 }
-void node_fill(BranchNode *node, SUBCATALOGUE *SubCat)
+void node_fill(BranchNode *node, SUBCATALOGUE *SubCat, HBTReal *Vmax)
 {
   HBTInt SubID=node->SubID;
   node->HostID=SubCat->HaloChains[SubID].HostID;
@@ -158,8 +205,11 @@ void node_fill(BranchNode *node, SUBCATALOGUE *SubCat)
   node->NpBnd=SubCat->SubLen[SubID];
   node->NpBndPeak=node->NpBnd;
   node->SnapNumPeak=Pdat.Nsnap;
+  node->Vmax=Vmax[SubID];
+  node->VmaxPeak=node->Vmax;
+  node->SnapNumVpeak=Pdat.Nsnap;
 }
-void node_update(BranchNode *node, HBTInt *pro2dest, SUBCATALOGUE *SubCat, CATALOGUE *Cat)
+void node_update(BranchNode *node, HBTInt *pro2dest, SUBCATALOGUE *SubCat, CATALOGUE *Cat, HBTReal *Vmax)
 {
   HBTInt DestID;
   DestID=pro2dest[node->SubID]; //this maps -1 to -1.
@@ -177,6 +227,7 @@ void node_update(BranchNode *node, HBTInt *pro2dest, SUBCATALOGUE *SubCat, CATAL
 	  get_phys_vel(node->MstBndVel, node->MstBndID);
 	}
 	node->NpBnd=0;
+        node->Vmax=0;
   }
   else
   {
@@ -194,6 +245,12 @@ void node_update(BranchNode *node, HBTInt *pro2dest, SUBCATALOGUE *SubCat, CATAL
 	  node->NpBndPeak=node->NpBnd;
 	  node->SnapNumPeak=Pdat.Nsnap;
 	}
+	node->Vmax=Vmax[DestID];
+        if(node->VmaxPeak<node->Vmax)
+        {
+            node->VmaxPeak=node->Vmax;
+            node->SnapNumVpeak=Pdat.Nsnap;
+        }
   }
 }
 void parse_snap_args(HBTInt SnapRange[2], int argc, char **argv)

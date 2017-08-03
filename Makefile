@@ -58,6 +58,9 @@ syncuv:
 
 syncuvj:
 	rsync -e "ssh -p 4719" -avz $(shell pwd) jxhan@localhost:HBT/
+	
+syncuv3:
+	rsync -e "ssh -p 4735" -avz $(shell pwd) jxhan@localhost:HBT/
 
 sync: clean
 	rsync -avzL $(shell pwd) sussing@suss:Working/HBT/
